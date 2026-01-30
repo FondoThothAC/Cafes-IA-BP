@@ -1,0 +1,26 @@
+# System
+.DS_Store
+Thumbs.db
+
+# Environment & Secrets
+.env
+.env.*
+! .env.example
+
+# Large Data & AI Models (CRITICAL: Do not upload 14GB+)
+data/
+mysql_data/
+whatsapp_data/
+services/plania/public/screenshots/
+services/plania/services/web-scraper/knowledge_base/
+*.zip
+*.log
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# IDEs
+.vscode/
+.idea/

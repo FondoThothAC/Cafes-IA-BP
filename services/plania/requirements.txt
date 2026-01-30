@@ -1,0 +1,12 @@
+# =================================================================================
+# PROYECTO: PlanIA - Python Dependencies
+# ARCHIVO: requirements.txt
+# COPYRIGHT: © 2026 Fondo Thoth AC.
+# =================================================================================
+
+requests>=2.31.0
+mysql-connector-python>=8.2.0
+python-dotenv>=1.0.0
+
+# MCP - Model Context Protocol for AI data access
+mcp[cli]>=1.0.0

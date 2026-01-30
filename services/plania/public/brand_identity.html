@@ -1,0 +1,938 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/brand_identity.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Módulo de Identidad de Marca - Logotipo, Colores, Redes Sociales
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Identidad de Marca</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .identity-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .identity-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .identity-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .identity-card h3 {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--surface-light);
+        }
+
+        .logo-upload {
+            border: 2px dashed var(--surface-light);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .logo-upload:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .logo-upload input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .logo-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 1rem auto;
+            display: none;
+        }
+
+        .logo-preview.active {
+            display: block;
+        }
+
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .color-item {
+            text-align: center;
+        }
+
+        .color-item label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .color-picker {
+            width: 60px;
+            height: 60px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .color-hex {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            font-family: monospace;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .social-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .social-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border-radius: 8px;
+            font-size: 1.2rem;
+        }
+
+        .social-item input {
+            flex: 1;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+
+        .brand-preview {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .preview-logo {
+            max-width: 120px;
+            max-height: 80px;
+            margin-bottom: 1rem;
+        }
+
+        .preview-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .preview-slogan {
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        .preview-colors {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .preview-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+        }
+
+        .preview-socials {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .preview-socials a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .preview-socials a:hover {
+            color: var(--primary);
+        }
+
+        .font-preview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .font-sample {
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .font-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Brand Search Styles */
+        .brand-search-section {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .brand-search-section h3 {
+            margin: 0 0 1rem;
+            color: #a78bfa;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .search-input-group input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-search-brand {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-search-brand:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        #search-results {
+            margin-top: 1rem;
+        }
+
+        .search-loading {
+            text-align: center;
+            padding: 2rem;
+            color: #a78bfa;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .search-error {
+            text-align: center;
+            padding: 1rem;
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+            border-radius: 8px;
+        }
+
+        .search-results-header {
+            margin-bottom: 1rem;
+        }
+
+        .search-results-header h4 {
+            margin: 0;
+            color: white;
+        }
+
+        .industry-tag {
+            font-size: 0.85rem;
+            color: #60a5fa;
+            margin: 0.5rem 0 0;
+        }
+
+        .brand-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .brand-result-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .brand-result-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+
+        .brand-result-card.selected {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .result-logo-container {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .result-logo {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .logo-placeholder {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1.5rem;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-info h4 {
+            margin: 0 0 0.25rem;
+            color: white;
+        }
+
+        .suggested-slogan {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-style: italic;
+            margin: 0 0 0.5rem;
+        }
+
+        .social-links-preview {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .color-preview {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .result-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+
+        .confidence-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .confidence-badge.high {
+            background: #10b981;
+            color: white;
+        }
+
+        .confidence-badge.medium {
+            background: #f59e0b;
+            color: black;
+        }
+
+        .confidence-badge.low {
+            background: #64748b;
+            color: white;
+        }
+
+        .btn-select-brand {
+            padding: 0.5rem 1rem;
+            background: #10b981;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .btn-select-brand:hover {
+            background: #059669;
+        }
+
+        .brand-tips {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(96, 165, 250, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #60a5fa;
+        }
+
+        .brand-tips h5 {
+            margin: 0 0 0.5rem;
+            color: #60a5fa;
+        }
+
+        .brand-tips ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .selection-success {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            text-align: center;
+            color: #34d399;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>🎨 Identidad de Marca</h1>
+            <p class="subtitle">Logotipo, Colores Corporativos, Tipografía y Redes Sociales</p>
+        </div>
+
+        <!-- AI Brand Search Section -->
+        <div class="brand-search-section">
+            <h3>🤖 Búsqueda Inteligente de Marca</h3>
+            <p style="color: #94a3b8; margin: 0 0 1rem; font-size: 0.9rem;">
+                Ingresa el nombre de tu negocio y la IA buscará información existente, redes sociales y sugerencias.
+            </p>
+            <div class="search-input-group">
+                <input type="text" id="brand-search-input" placeholder="Escribe el nombre de tu negocio...">
+                <button class="btn-search-brand"
+                    onclick="BrandSearch.search(document.getElementById('brand-search-input').value)">
+                    🔍 Buscar con IA
+                </button>
+            </div>
+            <div id="search-results"></div>
+        </div>
+
+        <!-- Brand Preview -->
+        <div class="brand-preview" id="brandPreview">
+            <img id="previewLogo" class="preview-logo" src="" alt="Logo" style="display:none;">
+            <div class="preview-name" id="previewName">Nombre del Negocio</div>
+            <div class="preview-slogan" id="previewSlogan">Tu slogan aquí</div>
+            <div class="preview-colors">
+                <div class="preview-color" id="previewPrimary" style="background: #6366f1;"></div>
+                <div class="preview-color" id="previewSecondary" style="background: #3b82f6;"></div>
+                <div class="preview-color" id="previewAccent" style="background: #10b981;"></div>
+            </div>
+            <div class="preview-socials" id="previewSocials">
+                <a href="#" id="linkFacebook" style="display:none;">📘</a>
+                <a href="#" id="linkInstagram" style="display:none;">📷</a>
+                <a href="#" id="linkTiktok" style="display:none;">🎵</a>
+                <a href="#" id="linkWhatsapp" style="display:none;">💬</a>
+                <a href="#" id="linkWebsite" style="display:none;">🌐</a>
+            </div>
+        </div>
+
+        <div class="identity-grid">
+            <!-- Logo & Basic Info -->
+            <div class="identity-card">
+                <h3>🏷️ Información Básica</h3>
+                <div class="form-group">
+                    <label>Nombre Comercial</label>
+                    <input type="text" id="brandName" placeholder="Ej: Fisioterapia Alivia Sonora"
+                        oninput="updatePreview()">
+                </div>
+                <div class="form-group">
+                    <label>Slogan / Frase Distintiva</label>
+                    <input type="text" id="brandSlogan" placeholder="Ej: Cuidando tu bienestar"
+                        oninput="updatePreview()">
+                </div>
+                <div class="form-group">
+                    <label>Giro del Negocio</label>
+                    <select id="businessType" onchange="updatePreview()">
+                        <option value="">Seleccionar...</option>
+                        <option value="alimentos">Alimentos y Bebidas</option>
+                        <option value="servicios">Servicios Profesionales</option>
+                        <option value="salud">Salud y Bienestar</option>
+                        <option value="comercio">Comercio</option>
+                        <option value="manufactura">Manufactura</option>
+                        <option value="tecnologia">Tecnología</option>
+                        <option value="educacion">Educación</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción Corta</label>
+                    <textarea id="brandDescription" placeholder="Describe brevemente qué hace tu negocio..."
+                        oninput="updatePreview()"></textarea>
+                </div>
+            </div>
+
+            <!-- Logo Upload -->
+            <div class="identity-card">
+                <h3>📸 Logotipo</h3>
+                <div class="logo-upload" id="logoUpload">
+                    <input type="file" accept="image/*" id="logoInput" onchange="handleLogoUpload(event)">
+                    <div>📤 Arrastra tu logo o haz clic para subir</div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">PNG, JPG, SVG (máx. 2MB)</p>
+                </div>
+                <img id="logoPreview" class="logo-preview" alt="Vista previa del logo">
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>URL del Logo (alternativa)</label>
+                    <input type="url" id="logoUrl" placeholder="https://..." oninput="loadLogoFromUrl()">
+                </div>
+            </div>
+
+            <!-- Color Palette -->
+            <div class="identity-card">
+                <h3>🎨 Paleta de Colores</h3>
+                <div class="color-palette">
+                    <div class="color-item">
+                        <label>Primario</label>
+                        <input type="color" class="color-picker" id="colorPrimary" value="#6366f1"
+                            onchange="updatePreview()">
+                        <div class="color-hex" id="hexPrimary">#6366f1</div>
+                    </div>
+                    <div class="color-item">
+                        <label>Secundario</label>
+                        <input type="color" class="color-picker" id="colorSecondary" value="#3b82f6"
+                            onchange="updatePreview()">
+                        <div class="color-hex" id="hexSecondary">#3b82f6</div>
+                    </div>
+                    <div class="color-item">
+                        <label>Acento</label>
+                        <input type="color" class="color-picker" id="colorAccent" value="#10b981"
+                            onchange="updatePreview()">
+                        <div class="color-hex" id="hexAccent">#10b981</div>
+                    </div>
+                    <div class="color-item">
+                        <label>Fondo</label>
+                        <input type="color" class="color-picker" id="colorBackground" value="#ffffff"
+                            onchange="updatePreview()">
+                        <div class="color-hex" id="hexBackground">#ffffff</div>
+                    </div>
+                    <div class="color-item">
+                        <label>Texto</label>
+                        <input type="color" class="color-picker" id="colorText" value="#1f2937"
+                            onchange="updatePreview()">
+                        <div class="color-hex" id="hexText">#1f2937</div>
+                    </div>
+                    <div class="color-item">
+                        <label>Alerta</label>
+                        <input type="color" class="color-picker" id="colorAlert" value="#ef4444"
+                            onchange="updatePreview()">
+                        <div class="color-hex" id="hexAlert">#ef4444</div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Tipografía Principal</label>
+                    <select id="fontPrimary" onchange="updatePreview()">
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Inter', sans-serif">Inter</option>
+                        <option value="'Roboto', sans-serif">Roboto</option>
+                        <option value="'Montserrat', sans-serif">Montserrat</option>
+                        <option value="'Poppins', sans-serif">Poppins</option>
+                        <option value="'Open Sans', sans-serif">Open Sans</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Social Media -->
+            <div class="identity-card">
+                <h3>📱 Redes Sociales y Contacto</h3>
+                <div class="social-grid">
+                    <div class="social-item">
+                        <span class="social-icon">📘</span>
+                        <input type="text" id="socialFacebook" placeholder="facebook.com/usuario"
+                            oninput="updatePreview()">
+                    </div>
+                    <div class="social-item">
+                        <span class="social-icon">📷</span>
+                        <input type="text" id="socialInstagram" placeholder="@usuario" oninput="updatePreview()">
+                    </div>
+                    <div class="social-item">
+                        <span class="social-icon">🎵</span>
+                        <input type="text" id="socialTiktok" placeholder="@usuario" oninput="updatePreview()">
+                    </div>
+                    <div class="social-item">
+                        <span class="social-icon">💬</span>
+                        <input type="text" id="socialWhatsapp" placeholder="5212345678901" oninput="updatePreview()">
+                    </div>
+                    <div class="social-item">
+                        <span class="social-icon">📧</span>
+                        <input type="email" id="socialEmail" placeholder="correo@ejemplo.com" oninput="updatePreview()">
+                    </div>
+                    <div class="social-item">
+                        <span class="social-icon">🌐</span>
+                        <input type="url" id="socialWebsite" placeholder="www.tusitioweb.com" oninput="updatePreview()">
+                    </div>
+                    <div class="social-item">
+                        <span class="social-icon">📍</span>
+                        <input type="text" id="socialLocation" placeholder="Hermosillo, Sonora"
+                            oninput="updatePreview()">
+                    </div>
+                    <div class="social-item">
+                        <span class="social-icon">📞</span>
+                        <input type="tel" id="socialPhone" placeholder="662 123 4567" oninput="updatePreview()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let currentProjectId = null;
+        let logoData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadProjectData, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProjectData);
+        window.addEventListener('plania:save', saveProjectData);
+
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+
+            // Reset all form fields first
+            document.getElementById('brandName').value = '';
+            document.getElementById('brandSlogan').value = '';
+            document.getElementById('businessType').value = '';
+            document.getElementById('brandDescription').value = '';
+            document.getElementById('logoUrl').value = '';
+            document.getElementById('logoPreview').classList.remove('active');
+            document.getElementById('previewLogo').style.display = 'none';
+            document.getElementById('colorPrimary').value = '#6366f1';
+            document.getElementById('colorSecondary').value = '#3b82f6';
+            document.getElementById('colorAccent').value = '#10b981';
+            document.getElementById('colorBackground').value = '#ffffff';
+            document.getElementById('colorText').value = '#1f2937';
+            document.getElementById('colorAlert').value = '#ef4444';
+            document.getElementById('fontPrimary').value = 'Arial, sans-serif';
+            document.getElementById('socialFacebook').value = '';
+            document.getElementById('socialInstagram').value = '';
+            document.getElementById('socialTiktok').value = '';
+            document.getElementById('socialWhatsapp').value = '';
+            document.getElementById('socialEmail').value = '';
+            document.getElementById('socialWebsite').value = '';
+            document.getElementById('socialLocation').value = '';
+            document.getElementById('socialPhone').value = '';
+
+            if (!project) {
+                currentProjectId = null;
+                updatePreview();
+                return;
+            }
+            currentProjectId = project.id_proyecto;
+
+            // Load brand name from main project field (a1_nombre_negocio)
+            if (project.a1_nombre_negocio) {
+                document.getElementById('brandName').value = project.a1_nombre_negocio;
+            }
+
+            // Load description if available
+            if (project.b1_descripcion_negocio) {
+                document.getElementById('brandDescription').value = project.b1_descripcion_negocio;
+            }
+
+            // Load identity JSON if it exists (this overrides the above)
+            try {
+                const data = JSON.parse(project.i7_identidad_json || '{}');
+                if (data.brandName) document.getElementById('brandName').value = data.brandName;
+                if (data.brandSlogan) document.getElementById('brandSlogan').value = data.brandSlogan;
+                if (data.businessType) document.getElementById('businessType').value = data.businessType;
+                if (data.brandDescription) document.getElementById('brandDescription').value = data.brandDescription;
+                if (data.logoUrl) {
+                    document.getElementById('logoUrl').value = data.logoUrl;
+                    loadLogoFromUrl();
+                }
+                if (data.colors) {
+                    if (data.colors.primary) document.getElementById('colorPrimary').value = data.colors.primary;
+                    if (data.colors.secondary) document.getElementById('colorSecondary').value = data.colors.secondary;
+                    if (data.colors.accent) document.getElementById('colorAccent').value = data.colors.accent;
+                    if (data.colors.background) document.getElementById('colorBackground').value = data.colors.background;
+                    if (data.colors.text) document.getElementById('colorText').value = data.colors.text;
+                    if (data.colors.alert) document.getElementById('colorAlert').value = data.colors.alert;
+                }
+                if (data.fontPrimary) document.getElementById('fontPrimary').value = data.fontPrimary;
+                if (data.socials) {
+                    if (data.socials.facebook) document.getElementById('socialFacebook').value = data.socials.facebook;
+                    if (data.socials.instagram) document.getElementById('socialInstagram').value = data.socials.instagram;
+                    if (data.socials.tiktok) document.getElementById('socialTiktok').value = data.socials.tiktok;
+                    if (data.socials.whatsapp) document.getElementById('socialWhatsapp').value = data.socials.whatsapp;
+                    if (data.socials.email) document.getElementById('socialEmail').value = data.socials.email;
+                    if (data.socials.website) document.getElementById('socialWebsite').value = data.socials.website;
+                    if (data.socials.location) document.getElementById('socialLocation').value = data.socials.location;
+                    if (data.socials.phone) document.getElementById('socialPhone').value = data.socials.phone;
+                }
+            } catch (e) {
+                console.log('No identity data or parse error:', e);
+            }
+            updatePreview();
+        }
+
+        async function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('El archivo es muy grande (máx. 2MB)');
+                return;
+            }
+
+            // Show preview immediately using base64
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('logoPreview').src = e.target.result;
+                document.getElementById('logoPreview').classList.add('active');
+                document.getElementById('previewLogo').src = e.target.result;
+                document.getElementById('previewLogo').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // Upload to server
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'logo');
+            formData.append('project_id', currentProjectId || 'new');
+
+            try {
+                const res = await fetch('upload_file.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+
+                if (result.success && result.url) {
+                    logoData = result.url;
+                    document.getElementById('logoUrl').value = result.url;
+                    console.log('Logo uploaded:', result.url);
+                } else {
+                    console.error('Upload failed:', result.error);
+                    alert('Error subiendo logo: ' + (result.error || 'Error desconocido'));
+                }
+            } catch (err) {
+                console.error('Upload error:', err);
+                // Keep the base64 data as fallback
+                logoData = reader.result;
+            }
+        }
+
+        function loadLogoFromUrl() {
+            const url = document.getElementById('logoUrl').value;
+            if (url) {
+                document.getElementById('previewLogo').src = url;
+                document.getElementById('previewLogo').style.display = 'block';
+                document.getElementById('logoPreview').src = url;
+                document.getElementById('logoPreview').classList.add('active');
+            }
+        }
+
+        function updatePreview() {
+            // Name & Slogan
+            document.getElementById('previewName').textContent = document.getElementById('brandName').value || 'Nombre del Negocio';
+            document.getElementById('previewSlogan').textContent = document.getElementById('brandSlogan').value || 'Tu slogan aquí';
+
+            // Colors
+            const colors = ['Primary', 'Secondary', 'Accent', 'Background', 'Text', 'Alert'];
+            colors.forEach(c => {
+                const val = document.getElementById('color' + c).value;
+                document.getElementById('hex' + c).textContent = val;
+                if (c === 'Primary' || c === 'Secondary' || c === 'Accent') {
+                    document.getElementById('preview' + c).style.background = val;
+                }
+            });
+
+            // Social links visibility
+            const socials = {
+                Facebook: 'socialFacebook',
+                Instagram: 'socialInstagram',
+                Tiktok: 'socialTiktok',
+                Whatsapp: 'socialWhatsapp',
+                Website: 'socialWebsite'
+            };
+            Object.entries(socials).forEach(([key, id]) => {
+                const val = document.getElementById(id).value;
+                const link = document.getElementById('link' + key);
+                if (val) {
+                    link.style.display = 'inline';
+                    if (key === 'Whatsapp') link.href = 'https://wa.me/' + val.replace(/\D/g, '');
+                    else if (key === 'Website') link.href = val.startsWith('http') ? val : 'https://' + val;
+                    else link.href = '#';
+                } else {
+                    link.style.display = 'none';
+                }
+            });
+        }
+
+        async function saveProjectData() {
+            if (!currentProjectId) { PlanIA.notifySaveError(); return; }
+
+            const data = {
+                brandName: document.getElementById('brandName').value,
+                brandSlogan: document.getElementById('brandSlogan').value,
+                businessType: document.getElementById('businessType').value,
+                brandDescription: document.getElementById('brandDescription').value,
+                logoUrl: document.getElementById('logoUrl').value || logoData,
+                colors: {
+                    primary: document.getElementById('colorPrimary').value,
+                    secondary: document.getElementById('colorSecondary').value,
+                    accent: document.getElementById('colorAccent').value,
+                    background: document.getElementById('colorBackground').value,
+                    text: document.getElementById('colorText').value,
+                    alert: document.getElementById('colorAlert').value,
+                },
+                fontPrimary: document.getElementById('fontPrimary').value,
+                socials: {
+                    facebook: document.getElementById('socialFacebook').value,
+                    instagram: document.getElementById('socialInstagram').value,
+                    tiktok: document.getElementById('socialTiktok').value,
+                    whatsapp: document.getElementById('socialWhatsapp').value,
+                    email: document.getElementById('socialEmail').value,
+                    website: document.getElementById('socialWebsite').value,
+                    location: document.getElementById('socialLocation').value,
+                    phone: document.getElementById('socialPhone').value,
+                }
+            };
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', id_proyecto: currentProjectId, i7_identidad_json: JSON.stringify(data) })
+                });
+                const result = await res.json();
+                result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
+            } catch (err) { PlanIA.notifySaveError(); }
+        }
+    </script>
+    <script src="js/brand-search.js"></script>
+</body>
+
+</html>

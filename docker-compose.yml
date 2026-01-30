@@ -1,0 +1,202 @@
+# AI-Toolkit: Gateway + Moltbot + Whisper
+# ========================================
+
+services:
+  # ============================================
+  # IA TOOLS - API Gateway (Hub Central)
+  # ============================================
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: ia-tools-gateway
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - HOST_PLATFORM=darwin
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - MLX_HOST=http://host.docker.internal:8000
+      - WHISPER_HOST=http://ai-whisper:9000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - whisper
+      - moltbot
+    networks:
+      - ai-network
+
+  # ============================================
+  # WHISPER - Transcripción de Audio/Video
+  # ============================================
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: ai-whisper
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./data/transcriptions:/data/transcriptions
+    environment:
+      - ASR_MODEL=base
+      - ASR_ENGINE=openai_whisper
+    networks:
+      - ai-network
+
+  # ============================================
+  # MOLTBOT - Agente + OSINT (ARM64 Mac)
+  # ============================================
+  moltbot:
+    build:
+      context: ./services/moltbot
+      dockerfile: Dockerfile
+    container_name: ai-moltbot
+    restart: unless-stopped
+    ports:
+      - "8085:8080"
+    volumes:
+      - ./data/moltbot:/data/moltbot
+      - ./data/knowledge_base:/data/knowledge_base:ro
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - MOLTBOT_DATA_DIR=/data/moltbot
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    stdin_open: true
+    tty: true
+    networks:
+      - ai-network
+
+  # ============================================
+  # MYSQL - Base de Datos
+  # ============================================
+  mysql-db:
+    image: mysql:8.0
+    container_name: plania-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=plania2026
+      - MYSQL_DATABASE=plania
+      - MYSQL_USER=plania_user
+      - MYSQL_PASSWORD=plania_pass
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ai-network
+
+  # ============================================
+  # PLANIA WEB - Frontend PHP/Apache
+  # ============================================
+  plania-web:
+    build:
+      context: ./services/plania
+      dockerfile: Dockerfile
+    container_name: plania-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - DB_HOST=mysql-db
+      - DB_USER=plania_user
+      - DB_PASS=plania_pass
+      - DB_NAME=plania
+      - IA_GATEWAY=http://api-gateway:3002
+    depends_on:
+      - mysql-db
+      - api-gateway
+    networks:
+      - ai-network
+
+  # ============================================
+  # PLANIA LOGIC - Python Financial Brain
+  # ============================================
+  plania-python:
+    build:
+      context: ./services/plania
+      dockerfile: Dockerfile.python
+    container_name: plania-python
+    restart: unless-stopped
+    environment:
+      - DB_HOST=mysql-db
+      - DB_USER=plania_user
+      - DB_PASS=plania_pass
+      - DB_NAME=plania
+      - LOOP_MODE=true
+    depends_on:
+      - mysql-db
+    networks:
+      - ai-network
+
+  # ============================================
+  # TELEGRAM BOT - Bob (Asistente Multi-rol)
+  # ============================================
+  telegram-bot:
+    build:
+      context: ./services/telegram-bot
+      dockerfile: Dockerfile
+    container_name: bob-telegram
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - PLANIA_API=http://host.docker.internal:3001
+      - IA_GATEWAY=http://api-gateway:3002
+      - MASTER_PIN=${MASTER_PIN:-1234}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - api-gateway
+    networks:
+      - ai-network
+
+  # ============================================
+  # WHATSAPP BOT - Bob (Requiere QR scan inicial)
+  # ============================================
+  whatsapp-bot:
+    build:
+      context: ./services/whatsapp-bot
+      dockerfile: Dockerfile
+    container_name: bob-whatsapp
+    restart: unless-stopped
+    environment:
+      - PLANIA_API=http://host.docker.internal:3001
+      - IA_GATEWAY=http://api-gateway:3002
+      - MASTER_PIN=${MASTER_PIN:-1234}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - whatsapp_data:/data
+    depends_on:
+      - api-gateway
+    networks:
+      - ai-network
+
+networks:
+  ai-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  whatsapp_data:
+
+    # ============================================
+    # ARQUITECTURA
+    # ============================================
+    #
+    #   Ollama (nativo :11434)
+    #          │
+    #          ▼
+    #   ┌──────────────────┐
+    #   │ IA TOOLS GATEWAY │ :3002
+    #   │   /api/chat      │
+    #   │   /api/osint/*   │
+    #   │   /api/transcribe│
+    #   └──────────────────┘
+    #          │
+    #    ┌─────┼─────┐
+    #    ▼     ▼     ▼
+    # PlanIA CAFES  OSINT

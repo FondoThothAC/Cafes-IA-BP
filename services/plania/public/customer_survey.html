@@ -1,0 +1,605 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/customer_survey.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Encuesta pública para clientes - URL compartible
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta - Tu opinión nos importa</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .survey-container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .survey-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .survey-header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .survey-header p {
+            color: var(--text-muted);
+        }
+
+        .product-card {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .product-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            font-size: 1.25rem;
+            color: #4ade80;
+        }
+
+        .product-desc {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .question-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--surface-light);
+            background: var(--bg);
+            color: var(--text);
+            border-radius: 10px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .option-btn.selected {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .option-btn.selected::before {
+            content: '✓ ';
+            color: var(--primary);
+        }
+
+        .price-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .price-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .price-btn {
+            padding: 1rem;
+            border: 2px solid var(--surface-light);
+            background: var(--bg);
+            color: var(--text);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .price-btn:hover {
+            border-color: #22c55e;
+        }
+
+        .price-btn.selected {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .price-btn .amount {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .thank-you {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .thank-you .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .thank-you h2 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .thank-you p {
+            color: var(--text-muted);
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--surface-light);
+            background: var(--bg);
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .error-state {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--surface-light);
+            border-radius: 2px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="survey-container">
+        <!-- Survey Form -->
+        <div id="surveyForm">
+            <div class="survey-header">
+                <h1>📋 Tu opinión nos importa</h1>
+                <p>Ayúdanos a crear el producto perfecto para ti</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+            </div>
+
+            <!-- Product Card -->
+            <div class="product-card">
+                <div class="product-name" id="productName">Cargando...</div>
+                <div class="product-price" id="productPrice"></div>
+                <div class="product-desc" id="productDesc"></div>
+            </div>
+
+            <!-- Question 1: Necesidad -->
+            <div class="question-section" id="q1Section">
+                <div class="question-text">
+                    <span class="question-number">1</span>
+                    <span id="q1Text">¿Alguna vez has necesitado un producto como este?</span>
+                </div>
+                <div class="options-grid">
+                    <button class="option-btn" data-q="necesidad" data-v="1">Sí, lo he necesitado varias veces</button>
+                    <button class="option-btn" data-q="necesidad" data-v="2">Sí, en alguna ocasión</button>
+                    <button class="option-btn" data-q="necesidad" data-v="0">No, nunca lo he necesitado</button>
+                </div>
+            </div>
+
+            <!-- Question 2: Deseo -->
+            <div class="question-section" id="q2Section">
+                <div class="question-text">
+                    <span class="question-number">2</span>
+                    <span id="q2Text">Si estuviera disponible hoy, ¿te interesaría?</span>
+                </div>
+                <div class="options-grid">
+                    <button class="option-btn" data-q="deseo" data-v="1">¡Sí, definitivamente lo quiero!</button>
+                    <button class="option-btn" data-q="deseo" data-v="2">Me interesa, pero quisiera comparar
+                        opciones</button>
+                    <button class="option-btn" data-q="deseo" data-v="0">No me interesa en este momento</button>
+                </div>
+            </div>
+
+            <!-- Question 3: Precio -->
+            <div class="question-section" id="q3Section">
+                <div class="question-text">
+                    <span class="question-number">3</span>
+                    <span id="q3Text">¿Cuánto estarías dispuesto a pagar por este producto?</span>
+                </div>
+                <div class="price-options" id="priceOptions">
+                    <!-- Generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Question 4: Frecuencia -->
+            <div class="question-section" id="q4Section">
+                <div class="question-text">
+                    <span class="question-number">4</span>
+                    <span id="q4Text">¿Con qué frecuencia lo comprarías?</span>
+                </div>
+                <div class="options-grid">
+                    <button class="option-btn" data-q="frecuencia" data-v="semanal">Cada semana</button>
+                    <button class="option-btn" data-q="frecuencia" data-v="mensual">Cada mes</button>
+                    <button class="option-btn" data-q="frecuencia" data-v="trimestral">Cada 3 meses</button>
+                    <button class="option-btn" data-q="frecuencia" data-v="anual">Una vez al año</button>
+                    <button class="option-btn" data-q="frecuencia" data-v="unico">Solo una vez</button>
+                </div>
+            </div>
+
+            <!-- Question 5: Canal -->
+            <div class="question-section" id="q5Section">
+                <div class="question-text">
+                    <span class="question-number">5</span>
+                    ¿Dónde te gustaría poder comprarlo?
+                </div>
+                <div class="options-grid">
+                    <button class="option-btn" data-q="canal" data-v="tienda">En una tienda física</button>
+                    <button class="option-btn" data-q="canal" data-v="online">En una página web</button>
+                    <button class="option-btn" data-q="canal" data-v="whatsapp">Por WhatsApp</button>
+                    <button class="option-btn" data-q="canal" data-v="redes">En redes sociales (Instagram,
+                        Facebook)</button>
+                    <button class="option-btn" data-q="canal" data-v="domicilio">Que me lo lleven a casa</button>
+                </div>
+            </div>
+
+            <!-- Optional: Name & Contact -->
+            <div class="question-section">
+                <div class="question-text">
+                    <span class="question-number">+</span>
+                    ¿Te gustaría que te avisemos cuando esté disponible? (opcional)
+                </div>
+                <input type="text" class="text-input" id="clientName" placeholder="Tu nombre">
+                <input type="email" class="text-input" id="clientEmail" placeholder="Tu correo electrónico"
+                    style="margin-top: 0.5rem;">
+                <input type="tel" class="text-input" id="clientPhone" placeholder="Tu WhatsApp (opcional)"
+                    style="margin-top: 0.5rem;">
+            </div>
+
+            <!-- Submit -->
+            <button class="submit-btn" id="submitBtn" onclick="submitSurvey()">
+                Enviar mi opinión 🚀
+            </button>
+        </div>
+
+        <!-- Thank You State -->
+        <div id="thankYou" style="display: none;">
+            <div class="thank-you">
+                <div class="icon">🎉</div>
+                <h2>¡Gracias por tu opinión!</h2>
+                <p>Tu respuesta nos ayuda a crear mejores productos para ti.</p>
+                <p style="margin-top: 1rem; font-size: 0.9rem;" id="thankYouMessage"></p>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" style="display: none;">
+            <div class="error-state">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                <h2>Encuesta no encontrada</h2>
+                <p>Esta encuesta no está disponible o el enlace es incorrecto.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let surveyData = {};
+        let productInfo = null;
+        let projectId = null;
+        let productIdx = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            projectId = params.get('p'); // Project ID
+            productIdx = params.get('prod'); // Product index
+
+            if (!projectId) {
+                showError();
+                return;
+            }
+
+            await loadSurveyData();
+            setupOptionButtons();
+        });
+
+        async function loadSurveyData() {
+            try {
+                const res = await fetch(`get_rows.php?p=proyectos&id=${projectId}`);
+                const projects = await res.json();
+                const project = projects.find(p => p.id == projectId) || projects[0];
+
+                if (!project) {
+                    showError();
+                    return;
+                }
+
+                // Get products from revenue module
+                let products = [];
+                if (project.g12_proyeccion_ingresos_json) {
+                    const revenueData = JSON.parse(project.g12_proyeccion_ingresos_json);
+                    products = revenueData.productos || [];
+                }
+
+                if (products.length === 0) {
+                    showError();
+                    return;
+                }
+
+                // Select product (default to first if not specified)
+                const idx = productIdx ? parseInt(productIdx) : 0;
+                productInfo = products[idx] || products[0];
+                productInfo._projectId = project.id;
+                productInfo._idx = idx;
+                productInfo._businessName = project.a1_nombre_negocio || 'Negocio';
+
+                // Update UI with product info
+                document.getElementById('productName').textContent = productInfo.nombre || 'Producto';
+                document.getElementById('productPrice').textContent = '$' + (productInfo.precio || 0).toLocaleString() + ' MXN';
+
+                // Personalize questions
+                const productName = productInfo.nombre || 'este producto';
+                document.getElementById('q1Text').textContent =
+                    `¿Alguna vez has necesitado "${productName}" o algo similar?`;
+                document.getElementById('q2Text').textContent =
+                    `Si "${productName}" estuviera disponible hoy, ¿te interesaría comprarlo?`;
+                document.getElementById('q3Text').textContent =
+                    `¿Cuánto estarías dispuesto a pagar por "${productName}"?`;
+                document.getElementById('q4Text').textContent =
+                    `¿Con qué frecuencia comprarías "${productName}"?`;
+
+                // Generate price options
+                generatePriceOptions(productInfo.precio || 100);
+
+            } catch (err) {
+                console.error('Error loading survey:', err);
+                showError();
+            }
+        }
+
+        function generatePriceOptions(basePrice) {
+            const container = document.getElementById('priceOptions');
+            const ranges = [
+                { pct: 0.5, label: 'Máximo' },
+                { pct: 0.75, label: 'Hasta' },
+                { pct: 1.0, label: '✓ Precio sugerido' },
+                { pct: 1.25, label: 'Hasta' },
+            ];
+
+            container.innerHTML = ranges.map(range => {
+                const price = Math.round(basePrice * range.pct);
+                return `
+                    <button class="price-btn" data-q="demanda" data-v="${range.pct}" data-price="${price}">
+                        <div class="amount">$${price.toLocaleString()}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">${range.label}</div>
+                    </button>
+                `;
+            }).join('') + `
+                <button class="price-btn" data-q="demanda" data-v="0" style="grid-column: 1 / -1; border-color: #ef4444;">
+                    <div style="color: #ef4444;">No lo compraría</div>
+                </button>
+            `;
+
+            // Re-attach handlers
+            document.querySelectorAll('.price-btn').forEach(btn => {
+                btn.addEventListener('click', () => selectOption(btn, 'demanda'));
+            });
+        }
+
+        function setupOptionButtons() {
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const question = btn.dataset.q;
+                    selectOption(btn, question);
+                });
+            });
+        }
+
+        function selectOption(btn, question) {
+            // Deselect siblings
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.option-btn, .price-btn').forEach(b => b.classList.remove('selected'));
+
+            // Select this
+            btn.classList.add('selected');
+
+            // Store answer
+            surveyData[question] = btn.dataset.v;
+            if (btn.dataset.price) {
+                surveyData.precioSeleccionado = parseFloat(btn.dataset.price);
+            }
+
+            // Update progress
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const requiredFields = ['necesidad', 'deseo', 'demanda', 'frecuencia', 'canal'];
+            const answered = requiredFields.filter(f => surveyData[f] !== undefined).length;
+            const pct = (answered / requiredFields.length) * 100;
+            document.getElementById('progressFill').style.width = pct + '%';
+        }
+
+        async function submitSurvey() {
+            // Validate required
+            if (!surveyData.necesidad || !surveyData.deseo || !surveyData.demanda) {
+                alert('Por favor responde al menos las 3 primeras preguntas.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
+
+            // Build response object
+            const response = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                source: 'public_survey',
+                productName: productInfo.nombre,
+                productPrice: productInfo.precio,
+                name: document.getElementById('clientName').value || 'Encuesta Pública',
+                email: document.getElementById('clientEmail').value,
+                phone: document.getElementById('clientPhone').value,
+                necesidad: parseInt(surveyData.necesidad) > 0 ? 1 : 0,
+                necesidadLevel: surveyData.necesidad, // 1=varias veces, 2=alguna vez, 0=nunca
+                deseo: parseInt(surveyData.deseo) > 0 ? 1 : 0,
+                deseoLevel: surveyData.deseo, // 1=definitivamente, 2=comparar, 0=no
+                demanda: parseFloat(surveyData.demanda) > 0 ? 1 : 0,
+                precioSeleccionado: surveyData.precioSeleccionado || 0,
+                precioPct: parseFloat(surveyData.demanda) || 0,
+                frecuencia: surveyData.frecuencia,
+                canal: surveyData.canal
+            };
+
+            try {
+                // Load existing responses
+                const res = await fetch(`get_rows.php?p=proyectos&id=${productInfo._projectId}`);
+                const projects = await res.json();
+                const project = projects.find(p => p.id == productInfo._projectId);
+
+                let allResponses = {};
+                if (project.i_ndd_responses_json) {
+                    allResponses = JSON.parse(project.i_ndd_responses_json);
+                }
+
+                const productKey = `product_${productInfo._idx}`;
+                if (!allResponses[productKey]) {
+                    allResponses[productKey] = [];
+                }
+                allResponses[productKey].push(response);
+
+                // Save
+                await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        table: 'proyectos',
+                        id: productInfo._projectId,
+                        i_ndd_responses_json: JSON.stringify(allResponses)
+                    })
+                });
+
+                // Show thank you
+                document.getElementById('surveyForm').style.display = 'none';
+                document.getElementById('thankYou').style.display = 'block';
+
+                if (document.getElementById('clientEmail').value) {
+                    document.getElementById('thankYouMessage').textContent =
+                        'Te avisaremos cuando esté disponible.';
+                }
+
+            } catch (err) {
+                console.error('Error saving survey:', err);
+                alert('Hubo un error al enviar. Por favor intenta de nuevo.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar mi opinión 🚀';
+            }
+        }
+
+        function showError() {
+            document.getElementById('surveyForm').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+        }
+    </script>
+    <script src="js/moltbot_widget.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,24 @@
+# =================================================================================
+# PROYECTO: PlanIA - Python Container
+# ARCHIVO: Dockerfile.python
+# COPYRIGHT: © 2026 Fondo Thoth AC.
+# =================================================================================
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application files
+COPY modules/ /app/modules/
+COPY main_controller.py /app/
+
+# Create logs directory
+RUN mkdir -p /app/logs
+
+# Default command (can be overridden)
+CMD ["python", "main_controller.py"]

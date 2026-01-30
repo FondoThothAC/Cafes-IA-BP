@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Toolkit - Model Manager</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text: #e2e8f0;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: var(--success);
+            color: #000;
+        }
+
+        .status-offline {
+            background: var(--error);
+            color: #fff;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .model-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .model-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .model-item:hover {
+            background: var(--bg-primary);
+            border: 1px solid var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .model-item.active {
+            border: 2px solid var(--accent);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .model-info h3 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .model-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .model-size {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--bg-primary);
+            border-radius: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .terminal {
+            background: #000;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            color: #22c55e;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .terminal-line {
+            margin: 0.25rem 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .download-progress {
+            height: 4px;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .download-progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI-Toolkit <span id="platformBadge" class="status-badge">Detectando...</span></h1>
+            <div>
+                <span id="statusBadge" class="status-badge status-offline">Offline</span>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- System Stats -->
+            <div class="card">
+                <h2>📊 Sistema</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="cpuUsage">--</div>
+                        <div class="stat-label">CPU</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="ramUsage">--</div>
+                        <div class="stat-label">RAM</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="gpuVram">--</div>
+                        <div class="stat-label">VRAM/Metal</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Model -->
+            <div class="card">
+                <h2>⚡ Modelo Activo</h2>
+                <div id="activeModel" class="model-item active">
+                    <div class="model-info">
+                        <h3>gemma3n:4b</h3>
+                        <p>Multimodal • Cargando...</p>
+                    </div>
+                    <span class="model-size">2.5 GB</span>
+                </div>
+                <button class="btn btn-secondary" style="width:100%; margin-top:1rem" onclick="showModelSelector()">
+                    Cambiar Modelo
+                </button>
+            </div>
+
+            <!-- Available Models -->
+            <div class="card" style="grid-column: span 2;">
+                <h2>📦 Modelos Disponibles</h2>
+                <div class="model-list" id="modelList">
+                    <div class="model-item" onclick="selectModel('gemma3n:4b')">
+                        <div class="model-info">
+                            <h3>gemma3n:4b ⭐</h3>
+                            <p>Multimodal • Recomendado para Plan de Negocios + OSINT</p>
+                        </div>
+                        <span class="model-size">2.5 GB</span>
+                    </div>
+                    <div class="model-item" onclick="selectModel('qwen2.5:7b')">
+                        <div class="model-info">
+                            <h3>qwen2.5:7b</h3>
+                            <p>Texto • Excelente español y código</p>
+                        </div>
+                        <span class="model-size">4.5 GB</span>
+                    </div>
+                    <div class="model-item" onclick="selectModel('deepseek-r1:7b')">
+                        <div class="model-info">
+                            <h3>deepseek-r1:7b 🧠</h3>
+                            <p>Razonamiento • "Thinking" mode</p>
+                        </div>
+                        <span class="model-size">4.5 GB</span>
+                    </div>
+                    <div class="model-item" onclick="selectModel('llava:7b')">
+                        <div class="model-info">
+                            <h3>llava:7b 👁️</h3>
+                            <p>Visión • Análisis de imágenes para OSINT</p>
+                        </div>
+                        <span class="model-size">4.7 GB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Output -->
+            <div class="card" style="grid-column: span 2;">
+                <h2>💻 Terminal</h2>
+                <div class="terminal" id="terminal">
+                    <div class="terminal-line">$ ai-toolkit status</div>
+                    <div class="terminal-line">Conectando a servicios...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+
+        // Check health
+        async function checkHealth() {
+            try {
+                const res = await fetch(`${API_URL}/health`);
+                const data = await res.json();
+
+                document.getElementById('statusBadge').className = 'status-badge status-online';
+                document.getElementById('statusBadge').textContent = 'Online';
+
+                addToTerminal('✅ Servicios conectados');
+                addToTerminal(`   Ollama: ${data.services.ollama}`);
+                addToTerminal(`   Whisper: ${data.services.whisper}`);
+
+                // Detect platform
+                const platform = navigator.platform.includes('Mac') ? 'Mac' : 'Windows';
+                document.getElementById('platformBadge').textContent = platform;
+                document.getElementById('platformBadge').style.background =
+                    platform === 'Mac' ? '#6366f1' : '#22c55e';
+
+            } catch (e) {
+                document.getElementById('statusBadge').className = 'status-badge status-offline';
+                document.getElementById('statusBadge').textContent = 'Offline';
+                addToTerminal('❌ Error conectando a servicios');
+            }
+        }
+
+        // List models
+        async function listModels() {
+            try {
+                const res = await fetch(`${API_URL}/api/models`);
+                const data = await res.json();
+
+                if (data.models) {
+                    data.models.forEach(m => {
+                        addToTerminal(`   📦 ${m.name} (${formatSize(m.size)})`);
+                    });
+                }
+            } catch (e) {
+                // Models endpoint might not exist yet
+            }
+        }
+
+        // Select model
+        async function selectModel(modelName) {
+            addToTerminal(`$ ollama pull ${modelName}`);
+            addToTerminal('⏳ Descargando modelo...');
+
+            try {
+                const res = await fetch(`${API_URL}/api/pull`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: modelName })
+                });
+
+                addToTerminal('✅ Modelo descargado correctamente');
+
+                // Update active model display
+                document.querySelector('#activeModel h3').textContent = modelName;
+
+            } catch (e) {
+                addToTerminal(`❌ Error: ${e.message}`);
+            }
+        }
+
+        function addToTerminal(text) {
+            const terminal = document.getElementById('terminal');
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.textContent = text;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function formatSize(bytes) {
+            const gb = bytes / (1024 * 1024 * 1024);
+            return gb.toFixed(1) + ' GB';
+        }
+
+        // Initialize
+        checkHealth();
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+
+</html>

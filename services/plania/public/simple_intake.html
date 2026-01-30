@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - App Emprendedor</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>🚀 Mi Negocio - Datos Iniciales</h1>
+        <p style="text-align: center; margin-bottom: 2rem; color: #64748b;">
+            Llena estos datos básicos sobre tu idea de negocio y guarda el archivo para enviarlo a tu asesor.
+        </p>
+
+        <form id="miniForm">
+            <div class="form-group">
+                <label>Nombre del Negocio</label>
+                <input type="text" id="a1_nombre_negocio" placeholder="Ej: Tacos El Primo">
+            </div>
+
+            <div class="form-group">
+                <label>Nombre del Emprendedor</label>
+                <input type="text" id="a2_nombre_emprendedor" placeholder="Tu nombre completo">
+            </div>
+
+            <div class="form-group">
+                <label>Descripción de tu idea</label>
+                <textarea id="b1_descripcion_negocio" rows="4" placeholder="¿Qué vendes y a quién?"></textarea>
+                <p class="help-text">Explica brevemente qué producto o servicio ofreces.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Monto que necesitas ($)</label>
+                <input type="number" id="b5_monto_solicitado" placeholder="50000">
+            </div>
+
+            <div class="form-group">
+                <label>Costos Fijos Mensuales Estimados ($)</label>
+                <input type="number" id="g5_costos_fijos_mensuales" placeholder="Renta, luz, sueldos...">
+            </div>
+
+            <button type="button" class="btn" onclick="exportData()">💾 Guardar Datos</button>
+        </form>
+    </div>
+
+    <script>
+        function exportData() {
+            const data = {
+                a1_nombre_negocio: document.getElementById('a1_nombre_negocio').value,
+                a2_nombre_emprendedor: document.getElementById('a2_nombre_emprendedor').value,
+                b1_descripcion_negocio: document.getElementById('b1_descripcion_negocio').value,
+                b5_monto_solicitado: document.getElementById('b5_monto_solicitado').value,
+                g5_costos_fijos_mensuales: document.getElementById('g5_costos_fijos_mensuales').value,
+                timestamp: new Date().toISOString()
+            };
+
+            if (!data.a1_nombre_negocio) {
+                alert("Por favor escribe al menos el nombre del negocio.");
+                return;
+            }
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `datos_${data.a1_nombre_negocio.replace(/\s+/g, '_')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+
+</body>
+
+</html>

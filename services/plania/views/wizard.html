@@ -1,0 +1,618 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend - Wizard)
+ARCHIVO: views/wizard.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT (Interfaz de usuario).
+DESCRIPCIÓN: Formulario paso a paso basado en el índice SAETA/CBIT.
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Nuevo Proyecto</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .progress-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--surface-light);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            z-index: 1;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active {
+            background: var(--primary);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        }
+
+        .progress-step.completed {
+            background: var(--success);
+        }
+
+        /* Form Steps */
+        .step {
+            display: none;
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+        }
+
+        .step-icon {
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* BOM Builder */
+        .bom-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .bom-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-remove {
+            background: var(--error);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .btn-add {
+            width: 100%;
+            padding: 1rem;
+            background: transparent;
+            border: 2px dashed var(--surface-light);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-add:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Navigation */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 PlanIA</h1>
+            <p class="subtitle">Sistema de Gestión de Planes de Negocio</p>
+        </header>
+
+        <!-- Progress Steps -->
+        <div class="progress-container">
+            <div class="progress-step active" data-step="1">1</div>
+            <div class="progress-step" data-step="2">2</div>
+            <div class="progress-step" data-step="3">3</div>
+            <div class="progress-step" data-step="4">4</div>
+            <div class="progress-step" data-step="5">5</div>
+            <div class="progress-step" data-step="6">6</div>
+        </div>
+
+        <form id="wizardForm">
+            <!-- Step 1: Portada -->
+            <div class="step active" data-step="1">
+                <h2 class="step-title"><span class="step-icon">📋</span> Portada y Datos Generales</h2>
+
+                <div class="form-group">
+                    <label for="a1_nombre_negocio">Nombre del Negocio *</label>
+                    <input type="text" id="a1_nombre_negocio" name="a1_nombre_negocio" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="a2_nombre_emprendedor">Nombre del Emprendedor *</label>
+                    <input type="text" id="a2_nombre_emprendedor" name="a2_nombre_emprendedor" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="a4_carta_presentacion">Carta de Presentación</label>
+                    <textarea id="a4_carta_presentacion" name="a4_carta_presentacion"
+                        placeholder="Breve descripción de quién eres y por qué emprendes este negocio..."></textarea>
+                </div>
+            </div>
+
+            <!-- Step 2: Resumen Ejecutivo -->
+            <div class="step" data-step="2">
+                <h2 class="step-title"><span class="step-icon">💡</span> Resumen Ejecutivo</h2>
+
+                <div class="form-group">
+                    <label for="b1_descripcion_negocio">Descripción del Negocio *</label>
+                    <textarea id="b1_descripcion_negocio" name="b1_descripcion_negocio" required
+                        placeholder="¿Qué es tu negocio y qué ofrece?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="b2_problema_oportunidad">Problema u Oportunidad</label>
+                    <textarea id="b2_problema_oportunidad" name="b2_problema_oportunidad"
+                        placeholder="¿Qué problema resuelve o qué oportunidad aprovecha?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="b3_propuesta_valor">Propuesta de Valor</label>
+                    <textarea id="b3_propuesta_valor" name="b3_propuesta_valor"
+                        placeholder="¿Qué te hace diferente de la competencia?"></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="b4_cliente_objetivo_resumen">Cliente Objetivo</label>
+                        <input type="text" id="b4_cliente_objetivo_resumen" name="b4_cliente_objetivo_resumen"
+                            placeholder="Ej: Familias de clase media">
+                    </div>
+                    <div class="form-group">
+                        <label for="b5_monto_solicitado">Monto Solicitado ($)</label>
+                        <input type="number" id="b5_monto_solicitado" name="b5_monto_solicitado" min="0" step="0.01">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Estudio de Mercado -->
+            <div class="step" data-step="3">
+                <h2 class="step-title"><span class="step-icon">📊</span> Estudio de Mercado</h2>
+
+                <div class="form-group">
+                    <label for="d1_segmento_cliente">Segmento de Cliente</label>
+                    <textarea id="d1_segmento_cliente" name="d1_segmento_cliente"
+                        placeholder="Describe tu cliente ideal..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="d5_ventaja_competitiva">Ventaja Competitiva</label>
+                    <textarea id="d5_ventaja_competitiva" name="d5_ventaja_competitiva"
+                        placeholder="¿Por qué los clientes te elegirán a ti?"></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="d6_latitud">Latitud</label>
+                        <input type="number" id="d6_latitud" name="d6_latitud" step="0.00000001"
+                            placeholder="Ej: 29.0729">
+                    </div>
+                    <div class="form-group">
+                        <label for="d7_longitud">Longitud</label>
+                        <input type="number" id="d7_longitud" name="d7_longitud" step="0.00000001"
+                            placeholder="Ej: -110.9559">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="d8_direccion_formateada">Dirección del Negocio</label>
+                    <input type="text" id="d8_direccion_formateada" name="d8_direccion_formateada"
+                        placeholder="Calle, Número, Colonia, Ciudad">
+                </div>
+            </div>
+
+            <!-- Step 4: Producción y BOM -->
+            <div class="step" data-step="4">
+                <h2 class="step-title"><span class="step-icon">🏭</span> Producción y Productos</h2>
+
+                <div class="form-group">
+                    <label for="e1_proceso_produccion">Proceso de Producción</label>
+                    <textarea id="e1_proceso_produccion" name="e1_proceso_produccion"
+                        placeholder="Describe cómo produces tu producto/servicio..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="e2_capacidad_produccion">Capacidad de Producción</label>
+                    <input type="text" id="e2_capacidad_produccion" name="e2_capacidad_produccion"
+                        placeholder="Ej: 100 pasteles por semana">
+                </div>
+
+                <div class="form-group">
+                    <label>Productos (BOM - Bill of Materials)</label>
+                    <div id="bomContainer">
+                        <div class="bom-item">
+                            <div class="bom-item-header">
+                                <strong>Producto 1</strong>
+                            </div>
+                            <div class="row">
+                                <input type="text" placeholder="Nombre del producto" class="bom-producto">
+                                <input type="number" placeholder="Precio de venta ($)" class="bom-precio" min="0"
+                                    step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add" onclick="addBomItem()">+ Agregar Producto</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Plan Financiero -->
+            <div class="step" data-step="5">
+                <h2 class="step-title"><span class="step-icon">💰</span> Plan Financiero</h2>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="g5_costos_fijos_mensuales">Costos Fijos Mensuales ($)</label>
+                        <input type="number" id="g5_costos_fijos_mensuales" name="g5_costos_fijos_mensuales" min="0"
+                            step="0.01" placeholder="Ej: 15000">
+                    </div>
+                    <div class="form-group">
+                        <label for="g8_inversion_inicial">Inversión Inicial ($)</label>
+                        <input type="number" id="g8_inversion_inicial" name="g8_inversion_inicial" min="0" step="0.01"
+                            placeholder="Ej: 100000">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="f2_estrategia_precios">Estrategia de Precios</label>
+                    <textarea id="f2_estrategia_precios" name="f2_estrategia_precios"
+                        placeholder="¿Cómo defines tus precios?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="f4_estrategia_promocion">Estrategia de Promoción</label>
+                    <textarea id="f4_estrategia_promocion" name="f4_estrategia_promocion"
+                        placeholder="¿Cómo darás a conocer tu negocio?"></textarea>
+                </div>
+            </div>
+
+            <!-- Step 6: Impacto y Confirmación -->
+            <div class="step" data-step="6">
+                <h2 class="step-title"><span class="step-icon">🌟</span> Impacto y Confirmación</h2>
+
+                <div class="form-group">
+                    <label for="h1_impacto_social">Impacto Social</label>
+                    <textarea id="h1_impacto_social" name="h1_impacto_social"
+                        placeholder="¿Cómo beneficia tu negocio a la comunidad?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="h2_impacto_economico">Impacto Económico</label>
+                    <textarea id="h2_impacto_economico" name="h2_impacto_economico"
+                        placeholder="¿Cuántos empleos generará? ¿Qué derrama económica?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="ia_flag_procesar" name="ia_flag_procesar" checked>
+                        Procesar con IA (obtener datos de APIs automáticamente)
+                    </label>
+                </div>
+            </div>
+        </form>
+
+        <div class="nav-buttons">
+            <button type="button" class="btn-secondary" id="prevBtn" onclick="changeStep(-1)"
+                style="visibility: hidden;">← Anterior</button>
+            <button type="button" class="btn-primary" id="nextBtn" onclick="changeStep(1)">Siguiente →</button>
+        </div>
+
+        <footer>
+            © 2026 Fondo Thoth AC. Licencia MIT.
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = '../public/save_row.php';
+        let currentStep = 1;
+        const totalSteps = 6;
+
+        function updateProgress() {
+            document.querySelectorAll('.progress-step').forEach((el, idx) => {
+                el.classList.remove('active', 'completed');
+                if (idx + 1 < currentStep) el.classList.add('completed');
+                if (idx + 1 === currentStep) el.classList.add('active');
+            });
+
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+
+            document.getElementById('prevBtn').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentStep === totalSteps) {
+                nextBtn.textContent = '✓ Guardar Proyecto';
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-success');
+            } else {
+                nextBtn.textContent = 'Siguiente →';
+                nextBtn.classList.remove('btn-success');
+                nextBtn.classList.add('btn-primary');
+            }
+        }
+
+        function changeStep(delta) {
+            if (currentStep === totalSteps && delta > 0) {
+                submitForm();
+                return;
+            }
+
+            const newStep = currentStep + delta;
+            if (newStep >= 1 && newStep <= totalSteps) {
+                currentStep = newStep;
+                updateProgress();
+            }
+        }
+
+        function addBomItem() {
+            const container = document.getElementById('bomContainer');
+            const count = container.children.length + 1;
+            const item = document.createElement('div');
+            item.className = 'bom-item';
+            item.innerHTML = `
+                <div class="bom-item-header">
+                    <strong>Producto ${count}</strong>
+                    <button type="button" class="btn-remove" onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+                <div class="row">
+                    <input type="text" placeholder="Nombre del producto" class="bom-producto">
+                    <input type="number" placeholder="Precio de venta ($)" class="bom-precio" min="0" step="0.01">
+                </div>
+            `;
+            container.appendChild(item);
+        }
+
+        function buildBomJson() {
+            const items = document.querySelectorAll('.bom-item');
+            const bom = [];
+            items.forEach(item => {
+                const producto = item.querySelector('.bom-producto').value.trim();
+                const precio = parseFloat(item.querySelector('.bom-precio').value) || 0;
+                if (producto) {
+                    bom.push({
+                        producto,
+                        precio_venta: precio,
+                        insumos: [] // To be filled later via admin or scraper
+                    });
+                }
+            });
+            return bom;
+        }
+
+        async function submitForm() {
+            const form = document.getElementById('wizardForm');
+            const formData = new FormData(form);
+
+            const data = {
+                action: 'create',
+                uuid_usuario: localStorage.getItem('uuid_usuario') || 'demo-user-' + Date.now(),
+            };
+
+            formData.forEach((value, key) => {
+                if (key === 'ia_flag_procesar') {
+                    data[key] = true;
+                } else {
+                    data[key] = value;
+                }
+            });
+
+            // Build BOM JSON
+            data.e3_productos_bom_json = JSON.stringify(buildBomJson());
+
+            // Save UUID for future sessions
+            localStorage.setItem('uuid_usuario', data.uuid_usuario);
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+                if (result.success || result.id_proyecto) {
+                    alert('¡Proyecto guardado exitosamente! ID: ' + result.id_proyecto);
+                    window.location.href = 'admin_grid.html';
+                } else {
+                    alert('Error: ' + (result.error || 'No se pudo guardar'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error de conexión al servidor');
+            }
+        }
+
+        // Initialize
+        updateProgress();
+    </script>
+</body>
+
+</html>

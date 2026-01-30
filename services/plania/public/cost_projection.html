@@ -1,0 +1,567 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/cost_projection.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Proyección de Costos Fijos y Variables a 5 años
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Proyección de Costos</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .config-bar {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            background: var(--surface);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .config-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .config-item label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .config-item input {
+            width: 80px;
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .summary-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .summary-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .table-container {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        td input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        td input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        td.calc {
+            font-weight: 500;
+            text-align: right;
+            color: var(--text);
+        }
+
+        .row-total {
+            background: var(--surface-light);
+            font-weight: 600;
+        }
+
+        .row-total td {
+            text-align: right;
+        }
+
+        .row-total td:first-child {
+            text-align: left;
+        }
+
+        .btn-add-row {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .fixed-tag {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .variable-tag {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>📊 Proyección de Costos</h1>
+            <p class="subtitle">Define tus costos fijos y variables proyectados a 5 años</p>
+        </div>
+
+        <!-- Config Bar -->
+        <div class="config-bar">
+            <div class="config-item">
+                <label>📈 Inflación Anual:</label>
+                <input type="number" id="inflacion" value="5" min="0" max="30" step="0.5" onchange="recalculate()">
+                <span>%</span>
+            </div>
+            <div class="config-item">
+                <span class="fixed-tag">🔒 Costos Fijos</span>
+                <span style="color: var(--text-muted); margin: 0 0.5rem;">vs</span>
+                <span class="variable-tag">📦 Costos Variables</span>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-value" id="totalMensual" style="color: var(--primary);">$0</div>
+                <div class="summary-label">Costo Mensual Total</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="totalFijos" style="color: #60a5fa;">$0</div>
+                <div class="summary-label">Costos Fijos Año 1</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="totalVariables" style="color: #fbbf24;">$0</div>
+                <div class="summary-label">Costos Variables Año 1</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="section-title">
+                <h3>🔒 Costos Fijos</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn-add-row" onclick="importPayroll()" style="background: #10b981;">👥 Importar
+                        Nómina</button>
+                    <button class="btn-add-row" onclick="addRow('fijos')">+ Agregar</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Concepto</th>
+                        <th style="width: 12%;">Mensual</th>
+                        <th>Año 1</th>
+                        <th>Año 2</th>
+                        <th>Año 3</th>
+                        <th>Año 4</th>
+                        <th>Año 5</th>
+                        <th style="width: 5%;"></th>
+                    </tr>
+                </thead>
+                <tbody id="fijosBody"></tbody>
+                <tfoot id="fijosFoot"></tfoot>
+            </table>
+        </div>
+
+        <!-- Variable Costs Table -->
+        <div class="table-container">
+            <div class="section-title">
+                <h3>📦 Costos Variables</h3>
+                <button class="btn-add-row" onclick="addRow('variables')">+ Agregar</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Concepto</th>
+                        <th style="width: 12%;">Mensual</th>
+                        <th>Año 1</th>
+                        <th>Año 2</th>
+                        <th>Año 3</th>
+                        <th>Año 4</th>
+                        <th>Año 5</th>
+                        <th style="width: 5%;"></th>
+                    </tr>
+                </thead>
+                <tbody id="variablesBody"></tbody>
+                <tfoot id="variablesFoot"></tfoot>
+            </table>
+        </div>
+
+        <!-- Grand Total -->
+        <div class="table-container">
+            <h3>📋 Resumen Total de Costos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Año 1</th>
+                        <th>Año 2</th>
+                        <th>Año 3</th>
+                        <th>Año 4</th>
+                        <th>Año 5</th>
+                    </tr>
+                </thead>
+                <tbody id="resumenBody"></tbody>
+            </table>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let data = {
+            fijos: [],
+            variables: [],
+            inflacion: 5
+        };
+        let currentProjectId = null;
+
+        const defaultFijos = [
+            { concepto: 'Renta', mensual: 5000 },
+            { concepto: 'Luz', mensual: 800 },
+            { concepto: 'Agua', mensual: 200 },
+            { concepto: 'Internet/Teléfono', mensual: 500 },
+            { concepto: 'Salarios Fijos', mensual: 15000 },
+        ];
+
+        const defaultVariables = [
+            { concepto: 'Materia Prima', mensual: 8000 },
+            { concepto: 'Empaque', mensual: 1500 },
+            { concepto: 'Comisiones Ventas', mensual: 2000 },
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadProjectData, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProjectData);
+        window.addEventListener('plania:save', saveProjectData);
+
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+
+            // Reset to defaults first
+            data = { fijos: [...defaultFijos], variables: [...defaultVariables], inflacion: 5 };
+            document.getElementById('inflacion').value = 5;
+
+            if (!project) {
+                currentProjectId = null;
+                renderAll();
+                return;
+            }
+
+            currentProjectId = project.id_proyecto;
+
+            try {
+                const saved = JSON.parse(project.g11_proyeccion_costos_json || '{}');
+                data.fijos = saved.fijos?.length > 0 ? saved.fijos : [...defaultFijos];
+                data.variables = saved.variables?.length > 0 ? saved.variables : [...defaultVariables];
+                data.inflacion = saved.inflacion || 5;
+            } catch (e) {
+                data = { fijos: [...defaultFijos], variables: [...defaultVariables], inflacion: 5 };
+            }
+
+            document.getElementById('inflacion').value = data.inflacion;
+            renderAll();
+        }
+
+        function renderAll() {
+            renderTable('fijos');
+            renderTable('variables');
+            renderResumen();
+            updateSummary();
+        }
+
+        function renderTable(type) {
+            const tbody = document.getElementById(type + 'Body');
+            const items = data[type];
+            const inflacion = parseFloat(document.getElementById('inflacion').value) / 100;
+
+            tbody.innerHTML = items.map((item, idx) => {
+                const years = calculateYears(item.mensual, inflacion);
+                return `
+                    <tr>
+                        <td><input type="text" value="${item.concepto}" onchange="updateItem('${type}', ${idx}, 'concepto', this.value)"></td>
+                        <td><input type="number" value="${item.mensual}" min="0" onchange="updateItem('${type}', ${idx}, 'mensual', this.value)"></td>
+                        ${years.map(y => `<td class="calc">$${formatNumber(y)}</td>`).join('')}
+                        <td><button class="btn-delete" onclick="deleteRow('${type}', ${idx})">🗑️</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Footer totals
+            const tfoot = document.getElementById(type + 'Foot');
+            const totals = [0, 0, 0, 0, 0];
+            items.forEach(item => {
+                const years = calculateYears(item.mensual, inflacion);
+                years.forEach((y, i) => totals[i] += y);
+            });
+
+            tfoot.innerHTML = `
+                <tr class="row-total">
+                    <td><strong>TOTAL ${type.toUpperCase()}</strong></td>
+                    <td class="calc">$${formatNumber(items.reduce((s, i) => s + i.mensual, 0))}</td>
+                    ${totals.map(t => `<td class="calc">$${formatNumber(t)}</td>`).join('')}
+                    <td></td>
+                </tr>
+            `;
+        }
+
+        function calculateYears(mensual, inflacion) {
+            const years = [];
+            let base = mensual * 12;
+            for (let i = 0; i < 5; i++) {
+                years.push(base);
+                base = base * (1 + inflacion);
+            }
+            return years;
+        }
+
+        function renderResumen() {
+            const tbody = document.getElementById('resumenBody');
+            const inflacion = parseFloat(document.getElementById('inflacion').value) / 100;
+
+            const totalsFijos = [0, 0, 0, 0, 0];
+            const totalsVars = [0, 0, 0, 0, 0];
+
+            data.fijos.forEach(item => {
+                calculateYears(item.mensual, inflacion).forEach((y, i) => totalsFijos[i] += y);
+            });
+
+            data.variables.forEach(item => {
+                calculateYears(item.mensual, inflacion).forEach((y, i) => totalsVars[i] += y);
+            });
+
+            const totalsAll = totalsFijos.map((f, i) => f + totalsVars[i]);
+
+            tbody.innerHTML = `
+                <tr>
+                    <td><span class="fixed-tag">Costos Fijos</span></td>
+                    ${totalsFijos.map(t => `<td class="calc">$${formatNumber(t)}</td>`).join('')}
+                </tr>
+                <tr>
+                    <td><span class="variable-tag">Costos Variables</span></td>
+                    ${totalsVars.map(t => `<td class="calc">$${formatNumber(t)}</td>`).join('')}
+                </tr>
+                <tr class="row-total">
+                    <td><strong>TOTAL COSTOS</strong></td>
+                    ${totalsAll.map(t => `<td class="calc"><strong>$${formatNumber(t)}</strong></td>`).join('')}
+                </tr>
+            `;
+        }
+
+        function updateSummary() {
+            const inflacion = parseFloat(document.getElementById('inflacion').value) / 100;
+
+            const mensualFijos = data.fijos.reduce((s, i) => s + i.mensual, 0);
+            const mensualVars = data.variables.reduce((s, i) => s + i.mensual, 0);
+
+            document.getElementById('totalMensual').textContent = '$' + formatNumber(mensualFijos + mensualVars);
+            document.getElementById('totalFijos').textContent = '$' + formatNumber(mensualFijos * 12);
+            document.getElementById('totalVariables').textContent = '$' + formatNumber(mensualVars * 12);
+        }
+
+        function updateItem(type, idx, field, value) {
+            if (field === 'mensual') {
+                data[type][idx][field] = parseFloat(value) || 0;
+            } else {
+                data[type][idx][field] = value;
+            }
+            renderAll();
+        }
+
+        function addRow(type) {
+            data[type].push({ concepto: '', mensual: 0 });
+            renderAll();
+        }
+
+        function deleteRow(type, idx) {
+            if (data[type].length > 1) {
+                data[type].splice(idx, 1);
+                renderAll();
+            }
+        }
+
+        function recalculate() {
+            data.inflacion = parseFloat(document.getElementById('inflacion').value);
+            renderAll();
+        }
+
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString('es-MX');
+        }
+
+        async function saveProjectData() {
+            if (!currentProjectId) {
+                PlanIA.notifySaveError();
+                return;
+            }
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: currentProjectId,
+                        g11_proyeccion_costos_json: JSON.stringify(data),
+                        g5_costos_fijos_mensuales: data.fijos.reduce((s, i) => s + i.mensual, 0)
+                    })
+                });
+
+                const result = await res.json();
+                result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
+            } catch (err) {
+                console.error('Error saving:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+
+        // Import payroll data from Organization module
+        async function importPayroll() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) {
+                alert('Selecciona un proyecto primero');
+                return;
+            }
+
+            try {
+                const orgData = JSON.parse(project.c4_organigrama_json || '{}');
+                const roles = orgData.roles || [];
+
+                if (roles.length === 0) {
+                    alert('No hay datos de nómina en el módulo de Organización. Por favor, configura los puestos primero.');
+                    return;
+                }
+
+                // Social charges calculation (simplified - ~35% over base salary)
+                const CARGA_SOCIAL = 0.35;
+
+                // Remove existing payroll entries (those starting with "Nómina:" or "Personal:")
+                data.fijos = data.fijos.filter(item =>
+                    !item.concepto.startsWith('Nómina:') &&
+                    !item.concepto.startsWith('Personal:') &&
+                    item.concepto !== 'Salarios Fijos' &&
+                    item.concepto !== 'Carga Social (IMSS, ISN)'
+                );
+
+                // Calculate total payroll with social charges
+                let totalNomina = 0;
+                let totalCargaSocial = 0;
+
+                roles.forEach(role => {
+                    const count = role.count || 1;
+                    const salary = role.salary || 0;
+                    const monthlyTotal = salary * count;
+                    totalNomina += monthlyTotal;
+                    totalCargaSocial += monthlyTotal * CARGA_SOCIAL;
+
+                    // Add individual role as cost item
+                    data.fijos.push({
+                        concepto: `Personal: ${role.name} (${count})`,
+                        mensual: monthlyTotal
+                    });
+                });
+
+                // Add social charges as separate item
+                data.fijos.push({
+                    concepto: 'Carga Social (IMSS, ISN)',
+                    mensual: Math.round(totalCargaSocial)
+                });
+
+                renderAll();
+                alert(`✅ Nómina importada:\n- ${roles.length} puestos\n- Salarios: $${totalNomina.toLocaleString()}/mes\n- Carga social: $${Math.round(totalCargaSocial).toLocaleString()}/mes\n- Total: $${(totalNomina + totalCargaSocial).toLocaleString()}/mes`);
+            } catch (err) {
+                console.error('Error importing payroll:', err);
+                alert('Error al importar la nómina: ' + err.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

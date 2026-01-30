@@ -1,0 +1,407 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/customers.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Módulo de Clientes para CAC, CLV, Churn, Retención
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Gestión de Clientes</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .positive {
+            color: #10b981;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .warning {
+            color: #f59e0b;
+        }
+
+        .data-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .data-section h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .formula-box {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+
+        .kpi-explanation {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .status-good {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-bad {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>👥 Gestión de Clientes</h1>
+            <p class="subtitle">Métricas de adquisición, retención y valor de vida del cliente</p>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="cacValue">$0</div>
+                <div class="kpi-label">CAC</div>
+                <div class="kpi-explanation">Costo Adquisición Cliente</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="clvValue">$0</div>
+                <div class="kpi-label">CLV</div>
+                <div class="kpi-explanation">Valor de Vida Cliente</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="clvCacValue">0:1</div>
+                <div class="kpi-label">CLV:CAC</div>
+                <span class="status-badge status-good" id="clvCacStatus">Saludable ≥3:1</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value negative" id="churnValue">0%</div>
+                <div class="kpi-label">Churn Rate</div>
+                <div class="kpi-explanation">Tasa de Abandono</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="retentionValue">0%</div>
+                <div class="kpi-label">Retención</div>
+                <div class="kpi-explanation">Tasa de Retención</div>
+            </div>
+        </div>
+
+        <!-- CAC Section -->
+        <div class="data-section">
+            <h3>💰 Costo de Adquisición de Cliente (CAC)</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Inversión en Marketing ($)</label>
+                    <input type="number" id="inversionMarketing" value="50000" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Inversión en Ventas ($)</label>
+                    <input type="number" id="inversionVentas" value="30000" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Nuevos Clientes en Período</label>
+                    <input type="number" id="nuevosClientes" value="100" min="1" onchange="calculate()">
+                </div>
+            </div>
+            <div class="formula-box">
+                CAC = (Inversión Marketing + Inversión Ventas) / Nuevos Clientes
+            </div>
+        </div>
+
+        <!-- CLV Section -->
+        <div class="data-section">
+            <h3>🎯 Valor de Vida del Cliente (CLV)</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Ticket Promedio ($)</label>
+                    <input type="number" id="ticketPromedio" value="500" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Compras por Año</label>
+                    <input type="number" id="frecuenciaCompra" value="4" min="0" step="0.5" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Vida del Cliente (años)</label>
+                    <input type="number" id="vidaCliente" value="3" min="0.5" step="0.5" onchange="calculate()">
+                </div>
+            </div>
+            <div class="formula-box">
+                CLV = Ticket Promedio × Frecuencia de Compra × Vida del Cliente
+            </div>
+        </div>
+
+        <!-- Churn Section -->
+        <div class="data-section">
+            <h3>📉 Análisis de Retención</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Clientes al Inicio del Período</label>
+                    <input type="number" id="clientesInicio" value="1000" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Clientes al Final del Período</label>
+                    <input type="number" id="clientesFinal" value="950" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Clientes Perdidos</label>
+                    <input type="number" id="clientesPerdidos" value="80" min="0" onchange="calculate()">
+                </div>
+            </div>
+            <div class="formula-box">
+                Churn Rate = (Clientes Perdidos / Clientes Inicio) × 100<br>
+                Retención = ((Clientes Final - Nuevos) / Clientes Inicio) × 100
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let currentProjectId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadProjectData, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProjectData);
+        window.addEventListener('plania:save', saveProjectData);
+
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+
+            // Reset all form fields to defaults first
+            document.getElementById('inversionMarketing').value = 50000;
+            document.getElementById('inversionVentas').value = 30000;
+            document.getElementById('nuevosClientes').value = 100;
+            document.getElementById('ticketPromedio').value = 500;
+            document.getElementById('frecuenciaCompra').value = 4;
+            document.getElementById('vidaCliente').value = 3;
+            document.getElementById('clientesInicio').value = 1000;
+            document.getElementById('clientesFinal').value = 950;
+            document.getElementById('clientesPerdidos').value = 80;
+
+            if (!project) {
+                currentProjectId = null;
+                calculate();
+                return;
+            }
+
+            currentProjectId = project.id_proyecto;
+
+            try {
+                const data = JSON.parse(project.i1_clientes_json || '{}');
+                if (data.inversionMarketing !== undefined) document.getElementById('inversionMarketing').value = data.inversionMarketing;
+                if (data.inversionVentas !== undefined) document.getElementById('inversionVentas').value = data.inversionVentas;
+                if (data.nuevosClientes !== undefined) document.getElementById('nuevosClientes').value = data.nuevosClientes;
+                if (data.ticketPromedio !== undefined) document.getElementById('ticketPromedio').value = data.ticketPromedio;
+                if (data.frecuenciaCompra !== undefined) document.getElementById('frecuenciaCompra').value = data.frecuenciaCompra;
+                if (data.vidaCliente !== undefined) document.getElementById('vidaCliente').value = data.vidaCliente;
+                if (data.clientesInicio !== undefined) document.getElementById('clientesInicio').value = data.clientesInicio;
+                if (data.clientesFinal !== undefined) document.getElementById('clientesFinal').value = data.clientesFinal;
+                if (data.clientesPerdidos !== undefined) document.getElementById('clientesPerdidos').value = data.clientesPerdidos;
+            } catch (e) {
+                console.log('No customer data or parse error:', e);
+            }
+
+            calculate();
+        }
+
+        function calculate() {
+            const invMkt = parseFloat(document.getElementById('inversionMarketing').value) || 0;
+            const invVentas = parseFloat(document.getElementById('inversionVentas').value) || 0;
+            const nuevos = parseFloat(document.getElementById('nuevosClientes').value) || 1;
+
+            const ticket = parseFloat(document.getElementById('ticketPromedio').value) || 0;
+            const frecuencia = parseFloat(document.getElementById('frecuenciaCompra').value) || 0;
+            const vida = parseFloat(document.getElementById('vidaCliente').value) || 1;
+
+            const inicio = parseFloat(document.getElementById('clientesInicio').value) || 1;
+            const final = parseFloat(document.getElementById('clientesFinal').value) || 0;
+            const perdidos = parseFloat(document.getElementById('clientesPerdidos').value) || 0;
+
+            // CAC
+            const cac = (invMkt + invVentas) / nuevos;
+            document.getElementById('cacValue').textContent = '$' + cac.toFixed(0);
+
+            // CLV
+            const clv = ticket * frecuencia * vida;
+            document.getElementById('clvValue').textContent = '$' + clv.toFixed(0);
+
+            // CLV:CAC Ratio
+            const ratio = cac > 0 ? clv / cac : 0;
+            document.getElementById('clvCacValue').textContent = ratio.toFixed(1) + ':1';
+
+            const clvCacEl = document.getElementById('clvCacValue');
+            const clvCacStatus = document.getElementById('clvCacStatus');
+            if (ratio >= 3) {
+                clvCacEl.className = 'kpi-value positive';
+                clvCacStatus.textContent = '✓ Saludable ≥3:1';
+                clvCacStatus.className = 'status-badge status-good';
+            } else if (ratio >= 1) {
+                clvCacEl.className = 'kpi-value warning';
+                clvCacStatus.textContent = '⚠ Mejorable 1-3:1';
+                clvCacStatus.className = 'status-badge status-warning';
+            } else {
+                clvCacEl.className = 'kpi-value negative';
+                clvCacStatus.textContent = '✗ Problema <1:1';
+                clvCacStatus.className = 'status-badge status-bad';
+            }
+
+            // Churn
+            const churn = inicio > 0 ? (perdidos / inicio) * 100 : 0;
+            document.getElementById('churnValue').textContent = churn.toFixed(1) + '%';
+            document.getElementById('churnValue').className = 'kpi-value ' + (churn <= 5 ? 'positive' : churn <= 10 ? 'warning' : 'negative');
+
+            // Retention
+            const retention = inicio > 0 ? ((final - nuevos) / inicio) * 100 : 0;
+            document.getElementById('retentionValue').textContent = Math.max(0, retention).toFixed(1) + '%';
+            document.getElementById('retentionValue').className = 'kpi-value ' + (retention >= 80 ? 'positive' : retention >= 60 ? 'warning' : 'negative');
+        }
+
+        async function saveProjectData() {
+            if (!currentProjectId) {
+                PlanIA.notifySaveError();
+                return;
+            }
+
+            const data = {
+                inversionMarketing: parseFloat(document.getElementById('inversionMarketing').value),
+                inversionVentas: parseFloat(document.getElementById('inversionVentas').value),
+                nuevosClientes: parseFloat(document.getElementById('nuevosClientes').value),
+                ticketPromedio: parseFloat(document.getElementById('ticketPromedio').value),
+                frecuenciaCompra: parseFloat(document.getElementById('frecuenciaCompra').value),
+                vidaCliente: parseFloat(document.getElementById('vidaCliente').value),
+                clientesInicio: parseFloat(document.getElementById('clientesInicio').value),
+                clientesFinal: parseFloat(document.getElementById('clientesFinal').value),
+                clientesPerdidos: parseFloat(document.getElementById('clientesPerdidos').value),
+            };
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: currentProjectId,
+                        i1_clientes_json: JSON.stringify(data)
+                    })
+                });
+
+                const result = await res.json();
+                result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
+            } catch (err) {
+                console.error('Error saving:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+    </script>
+</body>
+
+</html>

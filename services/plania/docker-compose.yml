@@ -1,0 +1,107 @@
+# =================================================================================
+# PROYECTO: PlanIA
+# ARCHIVO: docker-compose.yml
+# COPYRIGHT: © 2026 Fondo Thoth AC.
+# LICENCIA: GPLv2
+# =================================================================================
+
+version: '3.8'
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: plania_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-plania_root_2026}
+      MYSQL_DATABASE: ${DB_NAME:-plania}
+      MYSQL_USER: ${DB_USER:-plania_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-plania_pass_2026}
+    ports:
+      - "3306:3306"
+    volumes:
+      - plania_db_data:/var/lib/mysql
+      - ./database/schema_master.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - plania_network
+
+  # PHP Backend API
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile.php
+    container_name: plania_php
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./public:/var/www/html/public
+      - ./config:/var/www/html/config
+      - ./views:/var/www/html/views
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-plania}
+      DB_USER: ${DB_USER:-plania_user}
+      DB_PASSWORD: ${DB_PASSWORD:-plania_pass_2026}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - plania_network
+
+  # Python Processing Agent
+  python:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: plania_python
+    restart: unless-stopped
+    volumes:
+      - ./modules:/app/modules
+      - ./main_controller.py:/app/main_controller.py
+      - ./logs:/app/logs
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-plania}
+      DB_USER: ${DB_USER:-plania_user}
+      DB_PASSWORD: ${DB_PASSWORD:-plania_pass_2026}
+      INEGI_TOKEN: ${INEGI_TOKEN:-1b9e230f-2ae0-48db-bd20-8810b1db575e}
+      BANXICO_TOKEN: ${BANXICO_TOKEN:-898a538159ee2d3c3741018fec6dc22462759cf51d713475980b9ebd1458a49d}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - plania_network
+    # Run once on startup, then can be triggered manually
+    command: [ "tail", "-f", "/dev/null" ]
+
+  # phpMyAdmin (Optional - for DB management)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: plania_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER:-plania_user}
+      PMA_PASSWORD: ${DB_PASSWORD:-plania_pass_2026}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - plania_network
+
+volumes:
+  plania_db_data:
+
+
+networks:
+  plania_network:
+    driver: bridge

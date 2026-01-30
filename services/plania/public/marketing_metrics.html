@@ -1,0 +1,316 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/marketing_metrics.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Métricas de Marketing: ROAS, CTR, CPC, CPM, CPA
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Métricas de Marketing</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .positive {
+            color: #10b981;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .warning {
+            color: #f59e0b;
+        }
+
+        .data-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .data-section h3 {
+            margin-bottom: 1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+        }
+
+        .formula-box {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>📣 Métricas de Marketing Digital</h1>
+            <p class="subtitle">ROAS, ROMI, CTR, CPC, CPM y CPA</p>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="roasValue">0%</div>
+                <div class="kpi-label">ROAS</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="romiValue">0%</div>
+                <div class="kpi-label">ROMI</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="ctrValue">0%</div>
+                <div class="kpi-label">CTR</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="cpcValue">$0</div>
+                <div class="kpi-label">CPC</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="cpmValue">$0</div>
+                <div class="kpi-label">CPM</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="cpaValue">$0</div>
+                <div class="kpi-label">CPA</div>
+            </div>
+        </div>
+
+        <!-- Campaign Data -->
+        <div class="data-section">
+            <h3>📊 Datos de Campaña</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Costo Total Campaña ($)</label>
+                    <input type="number" id="costoCampana" value="10000" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Impresiones</label>
+                    <input type="number" id="impresiones" value="500000" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Clics</label>
+                    <input type="number" id="clics" value="5000" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Conversiones</label>
+                    <input type="number" id="conversiones" value="100" min="0" onchange="calculate()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Data -->
+        <div class="data-section">
+            <h3>💰 Ingresos Generados</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Ingresos por Publicidad ($)</label>
+                    <input type="number" id="ingresosPub" value="50000" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Ingresos Totales ($)</label>
+                    <input type="number" id="ingresosTotales" value="100000" min="0" onchange="calculate()">
+                </div>
+                <div class="form-group">
+                    <label>Costos Marketing Total ($)</label>
+                    <input type="number" id="costosMarketing" value="15000" min="0" onchange="calculate()">
+                </div>
+            </div>
+            <div class="formula-box">
+                ROAS = (Ingresos Publicidad / Costo Campaña) × 100<br>
+                ROMI = ((Ingresos - Costos Marketing) / Costos Marketing) × 100<br>
+                CTR = (Clics / Impresiones) × 100 | CPC = Costo / Clics | CPM = (Costo / Impresiones) × 1000 | CPA =
+                Costo / Conversiones
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let currentProjectId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadProjectData, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProjectData);
+        window.addEventListener('plania:save', saveProjectData);
+
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+
+            // Reset to defaults first
+            document.getElementById('costoCampana').value = 10000;
+            document.getElementById('impresiones').value = 500000;
+            document.getElementById('clics').value = 5000;
+            document.getElementById('conversiones').value = 100;
+            document.getElementById('ingresosPub').value = 50000;
+            document.getElementById('ingresosTotales').value = 100000;
+            document.getElementById('costosMarketing').value = 15000;
+
+            if (!project) {
+                currentProjectId = null;
+                calculate();
+                return;
+            }
+            currentProjectId = project.id_proyecto;
+
+            try {
+                const data = JSON.parse(project.i3_marketing_json || '{}');
+                if (data.costoCampana !== undefined) document.getElementById('costoCampana').value = data.costoCampana;
+                if (data.impresiones !== undefined) document.getElementById('impresiones').value = data.impresiones;
+                if (data.clics !== undefined) document.getElementById('clics').value = data.clics;
+                if (data.conversiones !== undefined) document.getElementById('conversiones').value = data.conversiones;
+                if (data.ingresosPub !== undefined) document.getElementById('ingresosPub').value = data.ingresosPub;
+                if (data.ingresosTotales !== undefined) document.getElementById('ingresosTotales').value = data.ingresosTotales;
+                if (data.costosMarketing !== undefined) document.getElementById('costosMarketing').value = data.costosMarketing;
+            } catch (e) {
+                console.log('No marketing data or parse error:', e);
+            }
+            calculate();
+        }
+
+        function calculate() {
+            const costo = parseFloat(document.getElementById('costoCampana').value) || 0;
+            const impresiones = parseFloat(document.getElementById('impresiones').value) || 1;
+            const clics = parseFloat(document.getElementById('clics').value) || 0;
+            const conversiones = parseFloat(document.getElementById('conversiones').value) || 0;
+            const ingresosPub = parseFloat(document.getElementById('ingresosPub').value) || 0;
+            const ingresosTotales = parseFloat(document.getElementById('ingresosTotales').value) || 0;
+            const costosMarketing = parseFloat(document.getElementById('costosMarketing').value) || 1;
+
+            // ROAS
+            const roas = costo > 0 ? (ingresosPub / costo) * 100 : 0;
+            document.getElementById('roasValue').textContent = roas.toFixed(0) + '%';
+            document.getElementById('roasValue').className = 'kpi-value ' + (roas >= 400 ? 'positive' : roas >= 200 ? 'warning' : 'negative');
+
+            // ROMI
+            const romi = costosMarketing > 0 ? ((ingresosTotales - costosMarketing) / costosMarketing) * 100 : 0;
+            document.getElementById('romiValue').textContent = romi.toFixed(0) + '%';
+            document.getElementById('romiValue').className = 'kpi-value ' + (romi >= 100 ? 'positive' : romi >= 0 ? 'warning' : 'negative');
+
+            // CTR
+            const ctr = impresiones > 0 ? (clics / impresiones) * 100 : 0;
+            document.getElementById('ctrValue').textContent = ctr.toFixed(2) + '%';
+            document.getElementById('ctrValue').className = 'kpi-value ' + (ctr >= 2 ? 'positive' : ctr >= 1 ? 'warning' : '');
+
+            // CPC
+            const cpc = clics > 0 ? costo / clics : 0;
+            document.getElementById('cpcValue').textContent = '$' + cpc.toFixed(2);
+
+            // CPM
+            const cpm = impresiones > 0 ? (costo / impresiones) * 1000 : 0;
+            document.getElementById('cpmValue').textContent = '$' + cpm.toFixed(2);
+
+            // CPA
+            const cpa = conversiones > 0 ? costo / conversiones : 0;
+            document.getElementById('cpaValue').textContent = '$' + cpa.toFixed(2);
+        }
+
+        async function saveProjectData() {
+            if (!currentProjectId) { PlanIA.notifySaveError(); return; }
+
+            const data = {
+                costoCampana: parseFloat(document.getElementById('costoCampana').value),
+                impresiones: parseFloat(document.getElementById('impresiones').value),
+                clics: parseFloat(document.getElementById('clics').value),
+                conversiones: parseFloat(document.getElementById('conversiones').value),
+                ingresosPub: parseFloat(document.getElementById('ingresosPub').value),
+                ingresosTotales: parseFloat(document.getElementById('ingresosTotales').value),
+                costosMarketing: parseFloat(document.getElementById('costosMarketing').value),
+            };
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', id_proyecto: currentProjectId, i3_marketing_json: JSON.stringify(data) })
+                });
+                const result = await res.json();
+                result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
+            } catch (err) { PlanIA.notifySaveError(); }
+        }
+    </script>
+</body>
+
+</html>

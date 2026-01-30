@@ -1,0 +1,605 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/financial_planner.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Plan Financiero Interactivo con gráficas y punto de equilibrio
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Plan Financiero</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .summary-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--success), #34d399);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .summary-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 0.5rem;
+            text-align: right;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: left;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            text-align: right;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .positive {
+            color: var(--success);
+        }
+
+        .negative {
+            color: var(--error);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Break Even */
+        .break-even-display {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .break-even-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--warning);
+        }
+
+        .break-even-label {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-value" id="totalIngresos">$0</div>
+                <div class="summary-label">Ingresos Anuales</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="totalCostos"
+                    style="background: linear-gradient(135deg, #ef4444, #f87171); -webkit-background-clip: text; background-clip: text;">
+                    $0</div>
+                <div class="summary-label">Costos Anuales</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="utilidadNeta">$0</div>
+                <div class="summary-label">Utilidad Neta</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="roiAnual">0%</div>
+                <div class="summary-label">ROI Anual</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Cash Flow Table -->
+            <div class="card" style="grid-column: span 2;">
+                <h3 class="card-title">📊 Flujo de Efectivo Mensual</h3>
+                <div style="overflow-x: auto;">
+                    <table id="cashFlowTable">
+                        <thead>
+                            <tr>
+                                <th>Mes</th>
+                                <th>Unidades</th>
+                                <th>Ingresos</th>
+                                <th>Costos Variables</th>
+                                <th>Costos Fijos</th>
+                                <th>Utilidad</th>
+                                <th>Acumulado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashFlowBody"></tbody>
+                        <tfoot>
+                            <tr style="font-weight: 600; background: var(--surface-light);">
+                                <td>TOTAL</td>
+                                <td id="totalUnits">0</td>
+                                <td id="totalRevenue">$0</td>
+                                <td id="totalVarCosts">$0</td>
+                                <td id="totalFixedCosts">$0</td>
+                                <td id="totalProfit">$0</td>
+                                <td>-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Break Even -->
+            <div class="card">
+                <h3 class="card-title">⚖️ Punto de Equilibrio</h3>
+                <div class="break-even-display">
+                    <div class="break-even-value" id="breakEvenUnits">0 unidades</div>
+                    <div class="break-even-label">Unidades mensuales para cubrir costos fijos</div>
+                    <div style="margin-top: 1rem;">
+                        <span class="break-even-value" style="font-size: 1.5rem;" id="breakEvenMoney">$0</span>
+                        <div class="break-even-label">En ventas mensuales</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="card">
+                <h3 class="card-title">⚙️ Parámetros</h3>
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <label style="display: block; color: var(--text-muted); margin-bottom: 0.25rem;">Precio Promedio
+                            Venta ($)</label>
+                        <input type="number" id="avgPrice" value="150" min="0" onchange="recalculate()">
+                    </div>
+                    <div>
+                        <label style="display: block; color: var(--text-muted); margin-bottom: 0.25rem;">Costo Variable
+                            Unitario ($)</label>
+                        <input type="number" id="varCost" value="60" min="0" onchange="recalculate()">
+                    </div>
+                    <div>
+                        <label style="display: block; color: var(--text-muted); margin-bottom: 0.25rem;">Costos Fijos
+                            Mensuales ($)</label>
+                        <input type="number" id="fixedCosts" value="15000" min="0" onchange="recalculate()">
+                    </div>
+                    <div>
+                        <label style="display: block; color: var(--text-muted); margin-bottom: 0.25rem;">Inversión
+                            Inicial ($)</label>
+                        <input type="number" id="initialInvestment" value="100000" min="0" onchange="recalculate()">
+                    </div>
+                    <button class="btn-primary" onclick="recalculate()">Recalcular</button>
+                </div>
+            </div>
+
+            <!-- Cash Flow Chart -->
+            <div class="card" style="grid-column: span 2;">
+                <h3 class="card-title">📈 Gráfica de Flujo de Efectivo</h3>
+                <div class="chart-container">
+                    <canvas id="cashFlowChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        let monthlyUnits = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320];
+        let chart = null;
+        let currentProjectId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for PlanIA to initialize
+            setTimeout(() => {
+                loadProjectData();
+                initTable();
+                recalculate();
+            }, 500);
+        });
+
+        // Listen for project changes
+        window.addEventListener('plania:projectChanged', (e) => {
+            loadProjectData();
+        });
+
+        // Listen for save trigger
+        window.addEventListener('plania:save', saveProjectData);
+
+        // Load financial data from current project
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+
+            // Reset to defaults first
+            document.getElementById('avgPrice').value = 150;
+            document.getElementById('varCost').value = 60;
+            document.getElementById('fixedCosts').value = 15000;
+            document.getElementById('initialInvestment').value = 100000;
+            monthlyUnits = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320];
+
+            if (!project) {
+                currentProjectId = null;
+                initTable();
+                recalculate();
+                return;
+            }
+
+            currentProjectId = project.id_proyecto;
+
+            // Load parameters from project
+            if (project.g5_costos_fijos_mensuales) {
+                document.getElementById('fixedCosts').value = project.g5_costos_fijos_mensuales;
+            }
+            if (project.g8_inversion_inicial) {
+                document.getElementById('initialInvestment').value = project.g8_inversion_inicial;
+            }
+
+            // Try to load saved financial data
+            try {
+                const finData = JSON.parse(project.g9_flujo_efectivo_json || '{}');
+                if (finData.avgPrice) document.getElementById('avgPrice').value = finData.avgPrice;
+                if (finData.varCost) document.getElementById('varCost').value = finData.varCost;
+                if (finData.monthlyUnits && finData.monthlyUnits.length === 12) {
+                    monthlyUnits = finData.monthlyUnits;
+                }
+            } catch (e) {
+                console.log('No saved financial data, using defaults');
+            }
+
+            initTable();
+            recalculate();
+        }
+
+        // Save financial data to project
+        async function saveProjectData() {
+            if (!currentProjectId) {
+                PlanIA.notifySaveError();
+                return;
+            }
+
+            const finData = {
+                avgPrice: parseFloat(document.getElementById('avgPrice').value) || 0,
+                varCost: parseFloat(document.getElementById('varCost').value) || 0,
+                monthlyUnits: monthlyUnits,
+            };
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: currentProjectId,
+                        g5_costos_fijos_mensuales: parseFloat(document.getElementById('fixedCosts').value) || 0,
+                        g8_inversion_inicial: parseFloat(document.getElementById('initialInvestment').value) || 0,
+                        g9_flujo_efectivo_json: JSON.stringify(finData)
+                    })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    PlanIA.notifySaved();
+                } else {
+                    PlanIA.notifySaveError();
+                }
+            } catch (err) {
+                console.error('Error saving:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+
+        function initTable() {
+            const tbody = document.getElementById('cashFlowBody');
+            tbody.innerHTML = months.map((month, i) => `
+                <tr>
+                    <td>${month}</td>
+                    <td><input type="number" class="units-input" value="${monthlyUnits[i]}" min="0" data-month="${i}" onchange="updateUnits(this)"></td>
+                    <td class="revenue">$0</td>
+                    <td class="var-cost">$0</td>
+                    <td class="fixed-cost">$0</td>
+                    <td class="profit">$0</td>
+                    <td class="cumulative">$0</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateUnits(input) {
+            const month = parseInt(input.dataset.month);
+            monthlyUnits[month] = parseInt(input.value) || 0;
+            recalculate();
+        }
+
+        function recalculate() {
+            const avgPrice = parseFloat(document.getElementById('avgPrice').value) || 0;
+            const varCost = parseFloat(document.getElementById('varCost').value) || 0;
+            const fixedCosts = parseFloat(document.getElementById('fixedCosts').value) || 0;
+            const initialInvestment = parseFloat(document.getElementById('initialInvestment').value) || 0;
+
+            const margin = avgPrice - varCost;
+
+            // Break Even
+            const breakEvenUnits = margin > 0 ? Math.ceil(fixedCosts / margin) : 0;
+            const breakEvenMoney = breakEvenUnits * avgPrice;
+            document.getElementById('breakEvenUnits').textContent = `${breakEvenUnits.toLocaleString()} unidades`;
+            document.getElementById('breakEvenMoney').textContent = `$${breakEvenMoney.toLocaleString()}`;
+
+            // Calculate monthly data
+            let cumulative = -initialInvestment;
+            let totalUnits = 0, totalRevenue = 0, totalVarCosts = 0, totalProfit = 0;
+            const revenueData = [], profitData = [], cumulativeData = [];
+
+            const rows = document.querySelectorAll('#cashFlowBody tr');
+            rows.forEach((row, i) => {
+                const units = monthlyUnits[i];
+                const revenue = units * avgPrice;
+                const varCosts = units * varCost;
+                const profit = revenue - varCosts - fixedCosts;
+                cumulative += profit;
+
+                totalUnits += units;
+                totalRevenue += revenue;
+                totalVarCosts += varCosts;
+                totalProfit += profit;
+
+                row.querySelector('.revenue').textContent = `$${revenue.toLocaleString()}`;
+                row.querySelector('.var-cost').textContent = `$${varCosts.toLocaleString()}`;
+                row.querySelector('.fixed-cost').textContent = `$${fixedCosts.toLocaleString()}`;
+                row.querySelector('.profit').textContent = `$${profit.toLocaleString()}`;
+                row.querySelector('.profit').className = `profit ${profit >= 0 ? 'positive' : 'negative'}`;
+                row.querySelector('.cumulative').textContent = `$${cumulative.toLocaleString()}`;
+                row.querySelector('.cumulative').className = `cumulative ${cumulative >= 0 ? 'positive' : 'negative'}`;
+
+                revenueData.push(revenue);
+                profitData.push(profit);
+                cumulativeData.push(cumulative);
+            });
+
+            // Totals
+            const totalFixed = fixedCosts * 12;
+            document.getElementById('totalUnits').textContent = totalUnits.toLocaleString();
+            document.getElementById('totalRevenue').textContent = `$${totalRevenue.toLocaleString()}`;
+            document.getElementById('totalVarCosts').textContent = `$${totalVarCosts.toLocaleString()}`;
+            document.getElementById('totalFixedCosts').textContent = `$${totalFixed.toLocaleString()}`;
+            document.getElementById('totalProfit').textContent = `$${totalProfit.toLocaleString()}`;
+            document.getElementById('totalProfit').className = totalProfit >= 0 ? 'positive' : 'negative';
+
+            // Summary cards
+            document.getElementById('totalIngresos').textContent = `$${totalRevenue.toLocaleString()}`;
+            document.getElementById('totalCostos').textContent = `$${(totalVarCosts + totalFixed).toLocaleString()}`;
+            document.getElementById('utilidadNeta').textContent = `$${totalProfit.toLocaleString()}`;
+            document.getElementById('utilidadNeta').style.background = totalProfit >= 0
+                ? 'linear-gradient(135deg, #10b981, #34d399)'
+                : 'linear-gradient(135deg, #ef4444, #f87171)';
+
+            const roi = initialInvestment > 0 ? ((totalProfit / initialInvestment) * 100).toFixed(1) : 0;
+            document.getElementById('roiAnual').textContent = `${roi}%`;
+
+            // Update chart
+            updateChart(revenueData, profitData, cumulativeData);
+        }
+
+        function updateChart(revenueData, profitData, cumulativeData) {
+            const ctx = document.getElementById('cashFlowChart').getContext('2d');
+
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: revenueData,
+                            backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Utilidad',
+                            data: profitData,
+                            backgroundColor: profitData.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Acumulado',
+                            data: cumulativeData,
+                            type: 'line',
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

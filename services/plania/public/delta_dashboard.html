@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta Model - PlanIA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="css/plania-core.css?v=3" rel="stylesheet">
+    <style>
+        .delta-card {
+            transition: transform 0.3s;
+            cursor: pointer;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .delta-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .delta-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .card-best-product {
+            background: linear-gradient(135deg, #FF6B6B 0%, #EE5253 100%);
+            color: white;
+        }
+
+        .card-customer-solution {
+            background: linear-gradient(135deg, #4834D4 0%, #686DE0 100%);
+            color: white;
+        }
+
+        .card-system-lockin {
+            background: linear-gradient(135deg, #6AB04C 0%, #BADC58 100%);
+            color: white;
+        }
+
+        .connection-line {
+            height: 4px;
+            background: #e0e0e0;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .connection-active {
+            height: 100%;
+            background: #6AB04C;
+            width: 0%;
+            transition: width 2s;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <!-- Navbar -->
+    <!-- Container for Standard Navbar -->
+    <div id="plania-navbar"></div>
+
+    <div class="container mt-4">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold">Estrategia Delta Model</h1>
+
+        </div>
+
+        <!-- Delta Triangle Visualization -->
+        <p class="text-center mb-4">Selecciona tu posición estratégica en el triángulo:</p>
+
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <div class="delta-triangle-container text-center position-relative p-4 bg-white rounded shadow-sm">
+                    <!-- SVG Triangle -->
+                    <svg viewBox="0 0 800 650" class="delta-svg" style="max-width: 100%; height: auto;">
+
+                        <!-- Triangle Background -->
+                        <polygon points="400,50 100,550 700,550" fill="#f8fafc" stroke="#334155" stroke-width="3"
+                            stroke-dasharray="5,5" />
+
+                        <!-- Axis Lines -->
+                        <!-- BP Axis -->
+                        <line x1="700" y1="550" x2="400" y2="50" stroke="#EF4444" stroke-width="2" opacity="0.3" />
+                        <!-- TCS Axis -->
+                        <line x1="100" y1="550" x2="400" y2="50" stroke="#3B82F6" stroke-width="2" opacity="0.3" />
+                        <!-- Lock-In Axis (Base) -->
+                        <line x1="100" y1="550" x2="700" y2="550" stroke="#10B981" stroke-width="2" opacity="0.3" />
+
+                        <!-- System Lock-In Corner (Top) -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('System Lock-In', 'System Lock-In')">
+                            <circle cx="400" cy="50" r="40" fill="#10B981" stroke="white" stroke-width="3"
+                                class="node-circle" />
+                            <text x="400" y="30" text-anchor="middle" font-weight="bold" font-size="16">System
+                                Lock-in</text>
+                            <text x="400" y="110" text-anchor="middle" font-size="12" fill="#64748b">(Estándar
+                                Propietario)</text>
+                        </g>
+
+                        <!-- Total Customer Solution Corner (Left Bottom) -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('Total Customer Solution', 'Total Customer Solution')">
+                            <circle cx="100" cy="550" r="40" fill="#3B82F6" stroke="white" stroke-width="3"
+                                class="node-circle" />
+                            <text x="100" y="610" text-anchor="middle" font-weight="bold" font-size="16">Customer
+                                Solution</text>
+                            <text x="100" y="630" text-anchor="middle" font-size="12" fill="#64748b">(Redefinir
+                                Relación)</text>
+                        </g>
+
+                        <!-- Best Product Corner (Right Bottom) -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('Best Product', 'Best Product')">
+                            <circle cx="700" cy="550" r="40" fill="#EF4444" stroke="white" stroke-width="3"
+                                class="node-circle" />
+                            <text x="700" y="610" text-anchor="middle" font-weight="bold" font-size="16">Best
+                                Product</text>
+                            <text x="700" y="630" text-anchor="middle" font-size="12" fill="#64748b">(Bajos
+                                Costos)</text>
+                        </g>
+
+                        <!-- Strategic Positions (Axioms) -->
+
+                        <!-- Top Left: Dominant Exchange -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('Dominant Exchange', 'System Lock-In')">
+                            <circle cx="280" cy="220" r="25" fill="#10B981" opacity="0.8" class="node-circle" />
+                            <text x="240" y="220" text-anchor="end" font-size="14" font-weight="500">Dominant
+                                Exchange</text>
+                        </g>
+
+                        <!-- Top Right: Proprietary Standard -->
+                        <!-- Actually System Lock in is Proprietary Standard in some diagrams, but let's put it as a sub-node if requested -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('Proprietary Standard', 'System Lock-In')">
+                            <circle cx="520" cy="220" r="25" fill="#10B981" opacity="0.8" class="node-circle" />
+                            <text x="560" y="220" text-anchor="start" font-size="14" font-weight="500">Exclusive
+                                Channel</text>
+                        </g>
+
+                        <!-- Left Side: Horizontal Breadth -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('Horizontal Breadth', 'Total Customer Solution')">
+                            <circle cx="200" cy="380" r="25" fill="#3B82F6" opacity="0.8" class="node-circle" />
+                            <text x="160" y="380" text-anchor="end" font-size="14" font-weight="500">Horizontal
+                                Breadth</text>
+                        </g>
+
+                        <!-- Bottom Left: Customer Integration -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('Customer Integration', 'Total Customer Solution')">
+                            <circle cx="220" cy="550" r="20" fill="#3B82F6" opacity="0.6" class="node-circle" />
+                            <text x="220" y="520" text-anchor="middle" font-size="12">Integration</text>
+                        </g>
+
+                        <!-- Right Side: Low Cost -->
+                        <!-- Actually BP usually splits into Low Cost and Differentiation -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('Low Cost', 'Best Product')">
+                            <circle cx="600" cy="380" r="25" fill="#EF4444" opacity="0.8" class="node-circle" />
+                            <text x="640" y="380" text-anchor="start" font-size="14" font-weight="500">Low Cost</text>
+                        </g>
+
+                        <!-- Bottom Right: Differentiation -->
+                        <g class="delta-node" style="cursor: pointer;"
+                            onclick="selectStrategy('Differentiation', 'Best Product')">
+                            <circle cx="580" cy="550" r="20" fill="#EF4444" opacity="0.6" class="node-circle" />
+                            <text x="580" y="520" text-anchor="middle" font-size="12">Differentiation</text>
+                        </g>
+
+                    </svg>
+
+                    <div id="selected-strategy-display" class="mt-4 p-4 rounded border text-start"
+                        style="background: var(--surface-light); display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h4 id="strategy-title" class="mb-1 fw-bold" style="color: var(--primary);"></h4>
+                                <span class="badge bg-secondary" id="strategy-badge" style="font-size: 0.9rem;"></span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="runDeltaAnalysis()">🤖 Actualizar
+                                Diagnóstico</button>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 1px;">
+                                    Axiomas Recomendados</h6>
+                                <ul class="list-group list-group-flush bg-transparent" id="axioms-list">
+                                    <!-- Axioms injected by JS -->
+                                </ul>
+                            </div>
+                            <div class="col-md-6 border-start">
+                                <h6 class="text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 1px;">
+                                    Siguientes Pasos (Action Items)</h6>
+                                <div id="action-items-list" class="small text-muted fst-italic mt-2">
+                                    Selecciona una posición para ver recomendaciones.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strategic Diagnostic Report (Hidden until analysis is run) -->
+        <div id="analysis-results" class="card shadow-sm mb-5" style="display:none">
+            <div class="card-header bg-white border-bottom-0">
+                <h5 class="mb-0 text-primary"><i class="fas fa-clipboard-check me-2"></i>Resultados del Diagnóstico de
+                    Negocio</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Left: Explanation -->
+                    <div class="col-md-7 border-end">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Racional Estratégico</h6>
+                        <div id="analysis-reasoning" class="mb-4">
+                            <!-- Injected via JS -->
+                        </div>
+
+                        <div class="alert alert-light border">
+                            <strong>¿Qué significa esto?</strong>
+                            <p class="mb-0 small text-muted mt-1" id="analysis-explanation">
+                                El sistema analiza la distribución de tus ingresos y la densidad de tu competencia para
+                                determinar si debes competir por precio/producto, por relación con el cliente o por
+                                dominio del sistema.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Right: Key Metrics -->
+                    <div class="col-md-5">
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Métricas Clave Detectadas</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Productos Activos
+                                <span class="badge bg-primary rounded-pill" id="metric-products">-</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Concentración de Ingresos (Top 1)
+                                <span class="badge bg-info rounded-pill" id="metric-concentration">-</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Competidores Locales (DENUE)
+                                <span class="badge bg-warning text-dark rounded-pill" id="metric-competitors">-</span>
+                            </li>
+                        </ul>
+
+                        <div class="mt-4">
+                            <h6 class="text-uppercase text-muted small fw-bold">Puntajes de Ajuste</h6>
+                            <div class="progress mb-2" style="height: 5px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" id="score-bp"
+                                    title="Best Product"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Best Product</span>
+                                <span id="val-bp">0</span>
+                            </div>
+
+                            <div class="progress mb-2" style="height: 5px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="score-tcs"
+                                    title="Total Customer Solution"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                <span>Customer Solution</span>
+                                <span id="val-tcs">0</span>
+                            </div>
+
+                            <div class="progress mb-2" style="height: 5px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="score-sli"
+                                    title="System Lock-In"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted">
+                                <span>System Lock-In</span>
+                                <span id="val-sli">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light text-end">
+                <small class="text-muted">Análisis generado por Delta Logic Engine v1.0</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/plania-core.js?v=3"></script>
+    <script>
+        const strategiesData = {
+            'System Lock-In': {
+                axioms: ['Restricted Access', 'Dominant Exchange', 'Proprietary Standard'],
+                actions: ['Desarrollar barreras de entrada altas.', 'Crear ecosistema exclusivo para socios.', 'Establecer estándares propietarios.']
+            },
+            'Total Customer Solution': {
+                axioms: ['Customer Integration', 'Horizontal Breadth', 'Redefining Relationship'],
+                actions: ['Integrar procesos del cliente con los propios.', 'Ofrecer paquete completo de servicios.', 'Enfocarse en la retención a largo plazo.']
+            },
+            'Best Product': {
+                axioms: ['Low Cost', 'Differentiation'],
+                actions: ['Optimizar cadena de suministro (BOM).', 'Innovar en características únicas.', 'Competir agresivamente en precio o calidad.']
+            }
+        };
+
+        // Also map sub-nodes to their parents to show relevant info
+        const subNodeMap = {
+            'Dominant Exchange': 'System Lock-In',
+            'Proprietary Standard': 'System Lock-In',
+            'Exclusive Channel': 'System Lock-In',
+            'Horizontal Breadth': 'Total Customer Solution',
+            'Customer Integration': 'Total Customer Solution',
+            'Redefining Relationship': 'Total Customer Solution',
+            'Low Cost': 'Best Product',
+            'Differentiation': 'Best Product'
+        };
+
+        function selectStrategy(name, category) {
+            // Visualize Selection
+            document.querySelectorAll('.node-circle').forEach(c => {
+                c.setAttribute('stroke', 'white');
+                c.setAttribute('stroke-width', '2');
+                c.style.filter = 'none';
+            });
+
+            // Render Details
+            const display = document.getElementById('selected-strategy-display');
+            const title = document.getElementById('strategy-title');
+            const badge = document.getElementById('strategy-badge');
+            const axiomList = document.getElementById('axioms-list');
+            const actionList = document.getElementById('action-items-list');
+
+            display.style.display = 'block';
+            title.textContent = name;
+            badge.textContent = category;
+
+            // Dynamic Coloring based on Category
+            let bgColor = "#1f2937"; // default dark
+            let accentColor = "var(--primary)";
+
+            if (category.includes("Best Product") || name.includes("Low Cost") || name.includes("Differentiation")) {
+                bgColor = "linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%)"; // Dark Red
+                accentColor = "#fca5a5";
+            } else if (category.includes("Total Customer Solution") || name.includes("Horizontal") || name.includes("Integration")) {
+                bgColor = "linear-gradient(135deg, #1e3a8a 0%, #172554 100%)"; // Dark Blue
+                accentColor = "#93c5fd";
+            } else if (category.includes("System Lock")) {
+                bgColor = "linear-gradient(135deg, #064e3b 0%, #022c22 100%)"; // Dark Green
+                accentColor = "#6ee7b7";
+            }
+
+            display.style.background = bgColor;
+            title.style.color = "white"; // Always white title
+            title.style.textShadow = "0 2px 4px rgba(0,0,0,0.3)";
+
+            // Determine data source
+            const mainCat = strategiesData[name] ? name : (subNodeMap[name] ? subNodeMap[name] : category);
+            const data = strategiesData[mainCat] || { axioms: [], actions: [] };
+
+            // Render Axioms with better contrast
+            axiomList.innerHTML = data.axioms.map(ax =>
+                `<li class="list-group-item bg-transparent py-1 text-white border-bottom border-secondary border-opacity-25">
+                    <i class="fas fa-check-circle me-2" style="color: ${accentColor}"></i>${ax}
+                </li>`
+            ).join('');
+
+            // Render Actions with better contrast
+            actionList.innerHTML = data.actions.map(act =>
+                `<div class="mb-2 text-light opacity-75">
+                    <i class="fas fa-angle-right me-2" style="color: ${accentColor}"></i>${act}
+                </div>`
+            ).join('');
+
+            // Save state
+            localStorage.setItem('delta_strategy', name);
+            localStorage.setItem('delta_category', category);
+        }
+
+        // Global state
+        let currentPolling = null;
+
+        function runDeltaAnalysis() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) {
+                alert("Por favor selecciona un proyecto primero.");
+                return;
+            }
+
+            const btn = document.querySelector('button[onclick="runDeltaAnalysis()"]');
+
+            // UI Feedback
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analizando...';
+            }
+
+            // 1. Trigger Flag
+            fetch('save_row.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update',
+                    id_proyecto: project.id_proyecto,
+                    ia_flag_procesar: 1
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        startPolling(project.id_proyecto);
+                    } else {
+                        alert(`Error al conectar: ${data.message || 'Unknown'}`);
+                        resetButton(btn);
+                    }
+                })
+                .catch(err => {
+                    alert(`Error de red: ${err.message}`);
+                    resetButton(btn);
+                });
+        }
+
+        function resetButton(btn) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '🤖 Actualizar Diagnóstico';
+            }
+        }
+
+        function startPolling(projectId) {
+            let attempts = 0;
+
+            if (currentPolling) clearInterval(currentPolling);
+
+            currentPolling = setInterval(() => {
+                attempts++;
+
+                if (attempts > 30) { // Timeout 60s
+                    clearInterval(currentPolling);
+                    alert("Tiempo de espera agotado. Intente de nuevo.");
+                    resetButton(document.querySelector('button[onclick="runDeltaAnalysis()"]'));
+                    return;
+                }
+
+                // Poll status
+                fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'get',
+                        id_proyecto: projectId
+                    })
+                })
+                    .then(res => res.json())
+                    .then(project => {
+                        // Check if flag is cleared
+                        if (project.ia_flag_procesar == 0) {
+                            clearInterval(currentPolling);
+
+                            // Parse Log for details
+                            const log = project.ia_ultimo_log || "";
+                            if (log.includes("[DELTA LOGIC]")) {
+                                displayResults(log, project.d5_ventaja_competitiva);
+                            } else {
+                                // Fallback if no logic log found
+                                alert("El análisis finalizó, pero no se encontraron resultados detallados.");
+                            }
+
+                            resetButton(document.querySelector('button[onclick="runDeltaAnalysis()"]'));
+
+                            // Refresh PlanIA local state
+                            if (PlanIA) PlanIA.loadProjects();
+                        }
+                    });
+
+            }, 2000);
+        }
+
+        function displayResults(log, strategyRaw) {
+            // Show Container
+            document.getElementById('analysis-results').style.display = 'block';
+
+            // Extract Reasoning Section
+            try {
+                const parts = log.split("[DELTA LOGIC]:")[1];
+                const cleanParts = parts.split("\n").filter(line => line.trim() !== "");
+
+                // Parse Reasoning
+                // Log format is roughly: "Posición Recomendada: ...\nReasoning: val1; val2"
+                let advice = "";
+                if (cleanParts.length >= 2) {
+                    const reasonLine = cleanParts.find(l => l.includes("Reasoning:"));
+                    if (reasonLine) {
+                        advice = reasonLine.replace('Reasoning: ', '').split('; ');
+                    }
+                }
+
+                if (advice) {
+                    const reasonHtml = advice.map(r =>
+                        `<div class="d-flex align-items-start mb-2">
+                            <i class="fas fa-check-circle text-success mt-1 me-2"></i>
+                            <span>${r}</span>
+                         </div>`
+                    ).join('');
+                    document.getElementById('analysis-reasoning').innerHTML = reasonHtml;
+                }
+
+                // Defaults
+                let prodCount = "0";
+                let revConc = "Unknown";
+                let compCount = "0";
+
+                // Regex search
+                const matchProd = log.match(/Análisis de Ingresos: (\d+) productos/);
+                if (matchProd) prodCount = matchProd[1];
+
+                const matchComp = log.match(/Análisis de Competencia: (\d+) competidores/);
+                if (matchComp) compCount = matchComp[1];
+
+                // Check concentration
+                if (log.includes("Mono-producto")) revConc = "Alta (>70%)";
+                else if (log.includes("Portafolio balanceado")) revConc = "Balanceada (15-35%)";
+                else revConc = "Mixta";
+
+                // Update UI Metrics
+                document.getElementById('metric-products').textContent = prodCount;
+                document.getElementById('metric-concentration').textContent = revConc;
+                document.getElementById('metric-competitors').textContent = compCount;
+
+                // Update Progress Bars (Heuristic visualization)
+                let bp = 20, tcs = 20, sli = 20;
+
+                if (strategyRaw.includes("Best Product")) { bp = 80; tcs = 40; sli = 20; }
+                else if (strategyRaw.includes("Total Customer Solution")) { bp = 40; tcs = 80; sli = 30; }
+                else if (strategyRaw.includes("System Lock-In")) { bp = 20; tcs = 50; sli = 80; }
+
+                setBar('score-bp', 'val-bp', bp);
+                setBar('score-tcs', 'val-tcs', tcs);
+                setBar('score-sli', 'val-sli', sli);
+
+            } catch (e) {
+                console.error("Error parsing analysis log", e);
+                document.getElementById('analysis-reasoning').innerHTML = "<p class='text-muted'>Se encontraron resultados, pero no se pudo analizar el detalle técnico.</p>";
+            }
+
+            // Auto-Select on Triangle
+            if (strategyRaw) {
+                const mainStrat = strategyRaw.split(' - ')[0].trim();
+                const subStrat = strategyRaw.split(' - ')[1] ? strategyRaw.split(' - ')[1].trim() : mainStrat;
+                selectStrategy(subStrat, mainStrat);
+            }
+
+            // Scroll to results
+            document.getElementById('analysis-results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function setBar(idBar, idVal, val) {
+            const bar = document.getElementById(idBar);
+            const label = document.getElementById(idVal);
+            if (bar && label) {
+                bar.style.width = val + "%";
+                label.textContent = val + "%";
+            }
+        }
+    </script>
+</body>
+
+</html>

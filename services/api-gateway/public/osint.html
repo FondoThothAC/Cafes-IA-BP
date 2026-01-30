@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Tools - Investigación Digital</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface-light: #1a1a2e;
+            --primary: #00d9ff;
+            --secondary: #a855f7;
+            --success: #4ade80;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #e5e5e5;
+            --text-muted: #888;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .tool-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-icon {
+            font-size: 2.5rem;
+        }
+
+        .tool-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .tool-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: var(--surface-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 8px;
+            padding: 1rem 2rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            background: var(--surface-light);
+            transition: transform 0.2s;
+        }
+
+        .result-item:hover {
+            transform: translateX(5px);
+        }
+
+        .result-item a {
+            color: var(--primary);
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .result-item a:hover {
+            text-decoration: underline;
+        }
+
+        .platform-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--surface);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--surface-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .stats {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--surface-light);
+            border-radius: 8px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--success);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            padding: 1rem;
+            border-radius: 8px;
+            color: var(--danger);
+        }
+
+        .domain-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .domain-field {
+            background: var(--surface-light);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .domain-field label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .domain-field value {
+            display: block;
+            color: var(--text);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--surface);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 OSINT Tools</h1>
+            <p class="subtitle">Herramientas de Investigación Digital - Powered by Moltbot</p>
+        </header>
+
+        <div class="tools-grid">
+            <!-- User Search -->
+            <div class="tool-card">
+                <div class="tool-header">
+                    <span class="tool-icon">👤</span>
+                    <div>
+                        <h2 class="tool-title">Búsqueda de Usuario</h2>
+                        <p class="tool-desc">Encuentra perfiles en redes sociales (Sherlock)</p>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Nombre de usuario a buscar..."
+                        onkeypress="if(event.key==='Enter') searchUser()">
+                    <button onclick="searchUser()" id="searchUserBtn">🔎 Buscar</button>
+                </div>
+
+                <div id="userResults" class="results">
+                    <div id="userStats" class="stats" style="display:none;">
+                        <div class="stat">
+                            <div class="stat-value" id="foundCount">0</div>
+                            <div class="stat-label">Perfiles encontrados</div>
+                        </div>
+                    </div>
+                    <div id="userResultsList"></div>
+                </div>
+            </div>
+
+            <!-- Domain Search -->
+            <div class="tool-card">
+                <div class="tool-header">
+                    <span class="tool-icon">🌐</span>
+                    <div>
+                        <h2 class="tool-title">Información de Dominio</h2>
+                        <p class="tool-desc">Consulta WHOIS y DNS de un dominio</p>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="domain" placeholder="ejemplo.com"
+                        onkeypress="if(event.key==='Enter') searchDomain()">
+                    <button onclick="searchDomain()" id="searchDomainBtn">🔎 Consultar</button>
+                </div>
+
+                <div id="domainResults" class="results">
+                    <div id="domainResultsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chat (Future) -->
+        <div class="tool-card" style="opacity: 0.6;">
+            <div class="tool-header">
+                <span class="tool-icon">🤖</span>
+                <div>
+                    <h2 class="tool-title">Chat con IA</h2>
+                    <p class="tool-desc">Próximamente - Análisis inteligente con Gemma3</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3002';
+
+        async function searchUser() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) return;
+
+            const btn = document.getElementById('searchUserBtn');
+            const results = document.getElementById('userResults');
+            const list = document.getElementById('userResultsList');
+            const stats = document.getElementById('userStats');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Buscando...';
+            results.classList.add('active');
+            stats.style.display = 'none';
+            list.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando en redes sociales...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/osint/user`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, timeout: 30 })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    list.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                } else {
+                    document.getElementById('foundCount').textContent = data.found;
+                    stats.style.display = 'flex';
+
+                    if (data.results && data.results.length > 0) {
+                        list.innerHTML = data.results.map(r => `
+                            <div class="result-item">
+                                <div class="platform-icon">🔗</div>
+                                <div>
+                                    <strong>${r.platform}</strong><br>
+                                    <a href="${r.url}" target="_blank">${r.url}</a>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        list.innerHTML = '<div class="error">No se encontraron perfiles</div>';
+                    }
+                }
+            } catch (error) {
+                list.innerHTML = `<div class="error">❌ Error de conexión: ${error.message}</div>`;
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🔎 Buscar';
+        }
+
+        async function searchDomain() {
+            const domain = document.getElementById('domain').value.trim();
+            if (!domain) return;
+
+            const btn = document.getElementById('searchDomainBtn');
+            const results = document.getElementById('domainResults');
+            const list = document.getElementById('domainResultsList');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Consultando...';
+            results.classList.add('active');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div>Consultando información del dominio...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/osint/domain`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    list.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                } else {
+                    list.innerHTML = `
+                        <div class="domain-info">
+                            <div class="domain-field">
+                                <label>Dominio</label>
+                                <value>${data.domain || domain}</value>
+                            </div>
+                            <div class="domain-field">
+                                <label>Registrar</label>
+                                <value>${data.registrar || 'N/A'}</value>
+                            </div>
+                            <div class="domain-field">
+                                <label>Fecha de Creación</label>
+                                <value>${data.creation_date || 'N/A'}</value>
+                            </div>
+                            <div class="domain-field">
+                                <label>Fecha de Expiración</label>
+                                <value>${data.expiration_date || 'N/A'}</value>
+                            </div>
+                        </div>
+                        ${data.name_servers && data.name_servers.length > 0 ? `
+                            <div class="domain-field" style="margin-top: 1rem;">
+                                <label>Name Servers</label>
+                                <value>${data.name_servers.join('<br>')}</value>
+                            </div>
+                        ` : ''}
+                    `;
+                }
+            } catch (error) {
+                list.innerHTML = `<div class="error">❌ Error de conexión: ${error.message}</div>`;
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🔎 Consultar';
+        }
+    </script>
+</body>
+
+</html>

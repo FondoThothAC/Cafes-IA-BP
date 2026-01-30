@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Llenado - Plan de Negocios</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        :root {
+            --primary: #000;
+            /* Black for print */
+            --border: #ccc;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            color: #000;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            text-transform: uppercase;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 18px;
+            border-bottom: 1px solid black;
+            padding-bottom: 5px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 14px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: #444;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        .field-group {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+            /* Prevent splitting a question */
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .input-box {
+            border: 1px solid var(--border);
+            height: 35px;
+            width: 100%;
+            background: transparent;
+        }
+
+        .textarea-box {
+            border: 1px solid var(--border);
+            height: 100px;
+            width: 100%;
+            background: transparent;
+            /* Optional: Add lines for writing */
+            background-image: repeating-linear-gradient(transparent, transparent 31px, #eee 32px);
+            background-attachment: local;
+            line-height: 32px;
+        }
+
+        .textarea-box.short {
+            height: 64px;
+            /* 2 lines */
+        }
+
+        .textarea-box.tall {
+            height: 160px;
+            /* 5 lines */
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .header-fields {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .header-fields .field-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            .textarea-box {
+                border-color: #999;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print"
+        style="background: #eef2ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #c7d2fe; text-align: center;">
+        <h3 style="margin: 0 0 10px 0; color: #3730a3;">🖨️ Instrucciones de Impresión</h3>
+        <p style="margin: 0;">Presiona <strong>Ctrl + P</strong> (o Cmd + P en Mac) y selecciona "Guardar como PDF" o tu
+            impresora.</p>
+        <p style="margin-top: 5px; font-size: 0.9em; color: #555;">(Este recuadro azul no saldrá impreso)</p>
+    </div>
+
+    <h1>Guía de Llenado - Plan de Negocios</h1>
+
+    <div class="header-fields">
+        <div class="field-group">
+            <label>Nombre del Negocio:</label>
+            <div class="input-box"></div>
+        </div>
+        <div class="field-group">
+            <label>Fecha:</label>
+            <div class="input-box"></div>
+        </div>
+    </div>
+
+    <!-- I. PORTADA -->
+    <div class="section">
+        <h2>I. DATOS GENERALES</h2>
+
+        <div class="field-group">
+            <label>Nombre Completo del Emprendedor:</label>
+            <div class="input-box"></div>
+        </div>
+
+        <div class="field-group">
+            <label>Carta de Presentación:</label>
+            <div class="textarea-box tall"></div>
+            <div class="hint">Breve descripción de quién eres, tu experiencia y por qué emprendes.</div>
+        </div>
+    </div>
+
+    <!-- II. RESUMEN EJECUTIVO -->
+    <div class="section">
+        <h2>II. RESUMEN EJECUTIVO</h2>
+
+        <div class="field-group">
+            <label>Descripción del Negocio:</label>
+            <div class="textarea-box"></div>
+            <div class="hint">¿Qué es tu negocio y qué ofrece exactamente?</div>
+        </div>
+
+        <div class="field-group">
+            <label>Problema u Oportunidad:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">¿Qué problema resuelve o qué necesidad satisface en el mercado?</div>
+        </div>
+
+        <div class="field-group">
+            <label>Propuesta de Valor:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">¿Qué te hace diferente de la competencia? ¿Por qué te elegirían a ti?</div>
+        </div>
+
+        <div class="field-group">
+            <label>Cliente Objetivo (Resumen):</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">Ej: Familias de la colonia X, trabajadores de oficina, estudiantes...</div>
+        </div>
+
+        <div class="field-group">
+            <label>Monto Solicitado ($):</label>
+            <div class="input-box" style="width: 50%;"></div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- III. PERFIL EMPRENDEDOR -->
+    <div class="section">
+        <h2>III. PERFIL DEL EMPRENDEDOR</h2>
+
+        <div class="field-group">
+            <label>Experiencia y Habilidades:</label>
+            <div class="textarea-box"></div>
+            <div class="hint">¿Qué sabes hacer que te ayudará a tener éxito en este negocio?</div>
+        </div>
+
+        <div class="field-group">
+            <label>Motivación:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">¿Por qué quieres iniciar este negocio?</div>
+        </div>
+
+        <div class="field-group">
+            <label>Disponibilidad de Tiempo:</label>
+            <div class="input-box"></div>
+            <div class="hint">Ej: Tiempo completo, fines de semana, etc.</div>
+        </div>
+    </div>
+
+    <!-- IV. MERCADO -->
+    <div class="section">
+        <h2>IV. ESTUDIO DE MERCADO</h2>
+
+        <div class="field-group">
+            <label>Segmento de Cliente Detallado:</label>
+            <div class="textarea-box"></div>
+            <div class="hint">Edad, género, dónde viven, qué les gusta, cuánto ganan aprox.</div>
+        </div>
+
+        <div class="field-group">
+            <label>Ventaja Competitiva:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">¿Qué ofreces que nadie más ofrece? (Precio, calidad, servicio, ubicación...)</div>
+        </div>
+
+        <h3>Análisis de Necesidad</h3>
+        <div class="field-group">
+            <label>NECESIDAD (¿Qué les falta?):</label>
+            <div class="textarea-box short"></div>
+        </div>
+        <div class="field-group">
+            <label>DESEO (¿Cómo quieren solucionarlo?):</label>
+            <div class="textarea-box short"></div>
+        </div>
+        <div class="field-group">
+            <label>DEMANDA (¿Pueden pagarlo?):</label>
+            <div class="textarea-box short"></div>
+        </div>
+
+        <h3>Embudo de Ventas (Estimación)</h3>
+        <div class="header-fields">
+            <div class="field-group">
+                <label>Mercado Potencial (Nº Personas):</label>
+                <div class="input-box"></div>
+            </div>
+            <div class="field-group">
+                <label>Ticket Promedio ($):</label>
+                <div class="input-box"></div>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <label>Dirección / Ubicación del Negocio:</label>
+            <div class="input-box"></div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- V. ORGANIZACIÓN -->
+    <div class="section">
+        <h2>V. ORGANIZACIÓN Y PRODUCCIÓN</h2>
+
+        <div class="field-group">
+            <label>Proceso de Producción / Servicio:</label>
+            <div class="textarea-box tall"></div>
+            <div class="hint">Describe paso a paso cómo elaboras tu producto o das tu servicio.</div>
+        </div>
+
+        <div class="field-group">
+            <label>Capacidad de Producción:</label>
+            <div class="input-box"></div>
+            <div class="hint">¿Cuánto puedes producir o atender al día/semana?</div>
+        </div>
+
+        <label>Lista de Productos Principales:</label>
+        <div style="border: 1px solid var(--border); margin-top: 5px;">
+            <!-- Simple manual table -->
+            <div
+                style="display: flex; border-bottom: 1px solid var(--border); padding: 5px; font-weight: bold; background: #f9f9f9;">
+                <div style="flex: 3;">Producto / Servicio</div>
+                <div style="flex: 1;">Precio Venta</div>
+            </div>
+            <!-- Rows -->
+            <div style="display: flex; border-bottom: 1px solid #eee; height: 35px;">
+                <div style="flex: 3; border-right: 1px solid #eee;"></div>
+                <div style="flex: 1;"></div>
+            </div>
+            <div style="display: flex; border-bottom: 1px solid #eee; height: 35px;">
+                <div style="flex: 3; border-right: 1px solid #eee;"></div>
+                <div style="flex: 1;"></div>
+            </div>
+            <div style="display: flex; border-bottom: 1px solid #eee; height: 35px;">
+                <div style="flex: 3; border-right: 1px solid #eee;"></div>
+                <div style="flex: 1;"></div>
+            </div>
+            <div style="display: flex; border-bottom: 1px solid #eee; height: 35px;">
+                <div style="flex: 3; border-right: 1px solid #eee;"></div>
+                <div style="flex: 1;"></div>
+            </div>
+            <div style="display: flex; height: 35px;">
+                <div style="flex: 3; border-right: 1px solid #eee;"></div>
+                <div style="flex: 1;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VI. MARKETING -->
+    <div class="section">
+        <h2>VI. MARKETING Y VENTAS</h2>
+
+        <div class="field-group">
+            <label>Nombre del Negocio (Marca):</label>
+            <div class="input-box"></div>
+        </div>
+
+        <div class="field-group">
+            <label>Estrategia de Precios:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">¿Tus precios serán altos, bajos o promedio? ¿Por qué?</div>
+        </div>
+
+        <div class="field-group">
+            <label>Canales de Venta:</label>
+            <div class="input-box"></div>
+            <div class="hint">¿Dónde venderás? (Local, internet, teléfono, visitas...)</div>
+        </div>
+
+        <div class="field-group">
+            <label>Estrategia de Promoción:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">¿Cómo harás que la gente te conozca? (Redes sociales, volantes, letreros...)</div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- VII. FINANZAS -->
+    <div class="section">
+        <h2>VII. PLAN FINANCIERO</h2>
+
+        <div style="display: flex; gap: 20px;">
+            <div class="field-group" style="flex: 1;">
+                <label>Costos Fijos Mensuales ($):</label>
+                <div class="input-box"></div>
+                <div class="hint">Renta, luz, agua, internet, sueldos fijos.</div>
+            </div>
+            <div class="field-group" style="flex: 1;">
+                <label>Inversión Inicial Total ($):</label>
+                <div class="input-box"></div>
+                <div class="hint">Cuánto dinero necesitas para arrancar.</div>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <label>Plan de uso del Capital (Detalle de Inversión):</label>
+            <div class="textarea-box"></div>
+            <div class="hint">Lista detallada de en qué gastarás el dinero de la inversión.</div>
+        </div>
+    </div>
+
+    <!-- VIII. IMPACTO -->
+    <div class="section">
+        <h2>VIII. IMPACTO Y COMPROMISOS</h2>
+
+        <div class="field-group">
+            <label>Impacto Social:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">¿Cómo beneficia tu negocio a tu comunidad?</div>
+        </div>
+
+        <div class="field-group">
+            <label>Impacto Económico Familiar:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">¿Cuánto ingreso adicional esperas generar para tu familia?</div>
+        </div>
+
+        <div class="field-group">
+            <label>Compromiso del Emprendedor:</label>
+            <div class="textarea-box short"></div>
+            <div class="hint">Tu compromiso con la continuidad del negocio.</div>
+        </div>
+    </div>
+
+</body>
+
+</html>

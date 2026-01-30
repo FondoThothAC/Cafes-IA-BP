@@ -1,0 +1,593 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/foda.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Análisis FODA (SWOT) interactivo
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Análisis FODA</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --strength: #10b981;
+            --weakness: #ef4444;
+            --opportunity: #3b82f6;
+            --threat: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .project-selector {
+            background: var(--surface);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        select {
+            padding: 0.75rem;
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            min-width: 250px;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* FODA Grid */
+        .foda-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .foda-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .foda-card {
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-height: 300px;
+        }
+
+        .foda-card.fortalezas {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            border: 2px solid var(--strength);
+        }
+
+        .foda-card.debilidades {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.1));
+            border: 2px solid var(--weakness);
+        }
+
+        .foda-card.oportunidades {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+            border: 2px solid var(--opportunity);
+        }
+
+        .foda-card.amenazas {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
+            border: 2px solid var(--threat);
+        }
+
+        .foda-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .foda-header.fortalezas {
+            color: var(--strength);
+        }
+
+        .foda-header.debilidades {
+            color: var(--weakness);
+        }
+
+        .foda-header.oportunidades {
+            color: var(--opportunity);
+        }
+
+        .foda-header.amenazas {
+            color: var(--threat);
+        }
+
+        .foda-items {
+            list-style: none;
+        }
+
+        .foda-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .foda-item input {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            color: var(--text);
+        }
+
+        .foda-item input:focus {
+            outline: 1px solid var(--primary);
+        }
+
+        .btn-remove-item {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .btn-remove-item:hover {
+            color: var(--weakness);
+        }
+
+        .btn-add-item {
+            margin-top: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem;
+            border-radius: 6px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .btn-add-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--text);
+        }
+
+        /* Strategies */
+        .strategies {
+            margin-top: 2rem;
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .strategies h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .strategy-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .strategy-item {
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+
+        .strategy-item h4 {
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .strategy-item textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text);
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>⚡ Análisis FODA</h1>
+            <p class="subtitle">Fortalezas, Oportunidades, Debilidades y Amenazas</p>
+        </div>
+
+        <div style="text-align: right; margin-bottom: 1rem;">
+            <button class="btn btn-primary" onclick="saveFoda()">💾 Guardar FODA</button>
+        </div>
+
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-warning" onclick="generateFODAAI()">🤖 Auto-completar con IA</button>
+        </div>
+
+        <div class="foda-grid">
+            <div class="foda-card fortalezas">
+                <div class="foda-header fortalezas">💪 Fortalezas</div>
+                <ul class="foda-items" id="fortalezas"></ul>
+                <button class="btn-add-item" onclick="addItem('fortalezas')">+ Agregar fortaleza</button>
+            </div>
+
+            <div class="foda-card oportunidades">
+                <div class="foda-header oportunidades">🚀 Oportunidades</div>
+                <ul class="foda-items" id="oportunidades"></ul>
+                <button class="btn-add-item" onclick="addItem('oportunidades')">+ Agregar oportunidad</button>
+            </div>
+
+            <div class="foda-card debilidades">
+                <div class="foda-header debilidades">⚠️ Debilidades</div>
+                <ul class="foda-items" id="debilidades"></ul>
+                <button class="btn-add-item" onclick="addItem('debilidades')">+ Agregar debilidad</button>
+            </div>
+
+            <div class="foda-card amenazas">
+                <div class="foda-header amenazas">🔥 Amenazas</div>
+                <ul class="foda-items" id="amenazas"></ul>
+                <button class="btn-add-item" onclick="addItem('amenazas')">+ Agregar amenaza</button>
+            </div>
+        </div>
+
+        <!-- Matrix CAME -->
+        <div class="strategies mt-5">
+            <h3>🛡️ Matriz CAME (Corregir, Afrontar, Mantener, Explotar)</h3>
+            <p class="text-muted">Acciones concretas derivadas del FODA.</p>
+            <div class="strategy-grid">
+                <div class="strategy-item">
+                    <h4>Corregir (Debilidades)</h4>
+                    <textarea id="came-corregir" placeholder="Acciones para corregir las debilidades..."></textarea>
+                </div>
+                <div class="strategy-item">
+                    <h4>Afrontar (Amenazas)</h4>
+                    <textarea id="came-afrontar" placeholder="Acciones para afrontar las amenazas..."></textarea>
+                </div>
+                <div class="strategy-item">
+                    <h4>Mantener (Fortalezas)</h4>
+                    <textarea id="came-mantener" placeholder="Acciones para mantener las fortalezas..."></textarea>
+                </div>
+                <div class="strategy-item">
+                    <h4>Explotar (Oportunidades)</h4>
+                    <textarea id="came-explotar" placeholder="Acciones para explotar las oportunidades..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cross SWOT -->
+        <div class="strategies">
+            <h3>❌ Matriz FODA Cruzado</h3>
+            <div class="strategy-grid">
+                <div class="strategy-item">
+                    <h4>FO (Maxi-Maxi)</h4>
+                    <p class="small text-muted">Usar Fortalezas para aprovechar Oportunidades</p>
+                    <textarea id="strategyFO" placeholder="Estrategia ofensiva..."></textarea>
+                </div>
+                <div class="strategy-item">
+                    <h4>FA (Maxi-Mini)</h4>
+                    <p class="small text-muted">Usar Fortalezas para evitar Amenazas</p>
+                    <textarea id="strategyFA" placeholder="Estrategia defensiva..."></textarea>
+                </div>
+                <div class="strategy-item">
+                    <h4>DO (Mini-Maxi)</h4>
+                    <p class="small text-muted">Superar Debilidades aprovechando Oportunidades</p>
+                    <textarea id="strategyDO" placeholder="Estrategia de reorientación..."></textarea>
+                </div>
+                <div class="strategy-item">
+                    <h4>DA (Mini-Mini)</h4>
+                    <p class="small text-muted">Minimizar Debilidades y evitar Amenazas</p>
+                    <textarea id="strategyDA" placeholder="Estrategia de supervivencia..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+
+    <script>
+        let currentProjectId = null;
+
+        window.addEventListener('plania:projectChanged', loadProject);
+        window.addEventListener('DOMContentLoaded', () => setTimeout(loadProject, 500));
+
+        async function loadProject() {
+            // Reset to defaults first
+            currentProjectId = null;
+
+            // Clear all FODA lists
+            ['fortalezas', 'debilidades', 'oportunidades', 'amenazas'].forEach(type => {
+                document.getElementById(type).innerHTML = '';
+            });
+
+            // Clear all textareas
+            document.getElementById('strategyFO').value = '';
+            document.getElementById('strategyFA').value = '';
+            document.getElementById('strategyDO').value = '';
+            document.getElementById('strategyDA').value = '';
+            document.getElementById('came-corregir').value = '';
+            document.getElementById('came-afrontar').value = '';
+            document.getElementById('came-mantener').value = '';
+            document.getElementById('came-explotar').value = '';
+
+            const project = PlanIA.getCurrentProject();
+            if (!project) {
+                // Add default empty items
+                ['fortalezas', 'debilidades', 'oportunidades', 'amenazas'].forEach(type => addItem(type));
+                return;
+            }
+
+            currentProjectId = project.id_proyecto;
+
+            try {
+                // Parse FODA JSON
+                let foda = { fortalezas: [], debilidades: [], oportunidades: [], amenazas: [], strategies: {}, came: {} };
+                try {
+                    if (project.h3_marco_legal_json) {
+                        const data = JSON.parse(project.h3_marco_legal_json);
+                        if (data.foda) foda = data.foda;
+                    }
+                } catch (e) { }
+
+                // Populate fields
+                ['fortalezas', 'debilidades', 'oportunidades', 'amenazas'].forEach(type => {
+                    const container = document.getElementById(type);
+                    container.innerHTML = '';
+                    (foda[type] || []).forEach(item => addItem(type, item));
+                    if (!foda[type] || foda[type].length === 0) addItem(type);
+                });
+
+                // Strategies (Cross SWOT)
+                document.getElementById('strategyFO').value = foda.strategies?.fo || '';
+                document.getElementById('strategyFA').value = foda.strategies?.fa || '';
+                document.getElementById('strategyDO').value = foda.strategies?.do || '';
+                document.getElementById('strategyDA').value = foda.strategies?.da || '';
+
+                // CAME
+                document.getElementById('came-corregir').value = foda.came?.corregir || '';
+                document.getElementById('came-afrontar').value = foda.came?.afrontar || '';
+                document.getElementById('came-mantener').value = foda.came?.mantener || '';
+                document.getElementById('came-explotar').value = foda.came?.explotar || '';
+
+            } catch (err) {
+                console.error('Error loading project:', err);
+            }
+        }
+
+        function addItem(type, value = '') {
+            const container = document.getElementById(type);
+            const li = document.createElement('li');
+            li.className = 'foda-item';
+            li.innerHTML = `
+                <input type="text" value="${value}" placeholder="Escribir aquí...">
+                <button class="btn-remove-item" onclick="this.parentElement.remove()">✕</button>
+            `;
+            container.appendChild(li);
+        }
+
+        function collectFodaData() {
+            const foda = {
+                fortalezas: [],
+                debilidades: [],
+                oportunidades: [],
+                amenazas: [],
+                strategies: {
+                    fo: document.getElementById('strategyFO').value,
+                    fa: document.getElementById('strategyFA').value,
+                    do: document.getElementById('strategyDO').value,
+                    da: document.getElementById('strategyDA').value,
+                },
+                came: {
+                    corregir: document.getElementById('came-corregir').value,
+                    afrontar: document.getElementById('came-afrontar').value,
+                    mantener: document.getElementById('came-mantener').value,
+                    explotar: document.getElementById('came-explotar').value,
+                }
+            };
+
+            ['fortalezas', 'debilidades', 'oportunidades', 'amenazas'].forEach(type => {
+                document.querySelectorAll(`#${type} input`).forEach(input => {
+                    if (input.value.trim()) foda[type].push(input.value.trim());
+                });
+            });
+
+            return foda;
+        }
+
+        async function saveFoda() {
+            if (!currentProjectId) {
+                alert('Selecciona un proyecto primero');
+                return;
+            }
+
+            const foda = collectFodaData();
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: currentProjectId,
+                        h3_marco_legal_json: JSON.stringify({ foda })
+                    })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('FODA guardado exitosamente');
+                } else {
+                    alert('Error: ' + (result.error || 'No se pudo guardar'));
+                }
+            } catch (err) {
+                alert('Error de conexión');
+            }
+        }
+
+        function generateFODAAI() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : 'Tu Negocio';
+
+            if (!confirm(`¿Deseas que la IA analice "${name}" y complete el FODA + CAME + Estrategias?\n\nEsto reemplazará el contenido actual.`)) return;
+
+            // Loading state
+            const btn = document.querySelector('button[onclick="generateFODAAI()"]');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Analizando...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                // Mock AI Generation
+                const mockData = {
+                    fortalezas: ["Equipo con experiencia técnica", "Ubicación estratégica", "Bajos costos operativos"],
+                    debilidades: ["Falta de reconocimiento de marca", "Presupuesto de marketing limitado", "Personal reducido"],
+                    oportunidades: ["Creciente demanda de servicios digitales", "Nuevos canales de venta online", "Alianzas con proveedores locales"],
+                    amenazas: ["Competencia agresiva en precios", "Cambios regulatorios", "Inflación de costos"],
+                    strategies: {
+                        fo: "Lanzar campaña digital aprovechando la experiencia técnica para captar la nueva demanda.",
+                        fa: "Optimizar costos operativos para mantener precios competitivos ante la competencia.",
+                        do: "Utilizar canales online gratuitos para mitigar la falta de presupuesto de marketing.",
+                        da: "Capacitar al personal reducido para ser multifuncional y resistir la inflación."
+                    },
+                    came: {
+                        corregir: "Implementar plan de marketing orgánico en redes sociales.",
+                        afrontar: "Diversificar proveedores para evitar impacto de inflación.",
+                        mantener: "Documentar procesos técnicos para asegurar calidad continua.",
+                        explotar: "Crear tienda en línea integrada con WhatsApp para ventas rápidas."
+                    }
+                };
+
+                // Clear lists
+                ['fortalezas', 'debilidades', 'oportunidades', 'amenazas'].forEach(type => {
+                    document.getElementById(type).innerHTML = '';
+                    mockData[type].forEach(item => addItem(type, item));
+                });
+
+                // Fill Textareas
+                document.getElementById('strategyFO').value = mockData.strategies.fo;
+                document.getElementById('strategyFA').value = mockData.strategies.fa;
+                document.getElementById('strategyDO').value = mockData.strategies.do;
+                document.getElementById('strategyDA').value = mockData.strategies.da;
+
+                document.getElementById('came-corregir').value = mockData.came.corregir;
+                document.getElementById('came-afrontar').value = mockData.came.afrontar;
+                document.getElementById('came-mantener').value = mockData.came.mantener;
+                document.getElementById('came-explotar').value = mockData.came.explotar;
+
+                btn.innerText = originalText;
+                btn.disabled = false;
+                alert("✨ Análisis IA completado con éxito.");
+
+            }, 2500);
+        }
+    </script>
+    <script src="js/moltbot_widget.js"></script>
+</body>
+
+</html>

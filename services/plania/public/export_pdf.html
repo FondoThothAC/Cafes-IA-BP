@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Exportar Plan de Negocios</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Screen styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .export-options {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .option-card {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid var(--surface-light);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-card.active {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .option-card:hover {
+            border-color: var(--primary);
+        }
+
+        .preview-container {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            overflow: auto;
+            max-height: 80vh;
+        }
+
+        .document-preview {
+            background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform-origin: top center;
+        }
+
+        .section-checklist {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .section-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg);
+            border-radius: 6px;
+        }
+
+        .section-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* ============ PRINT / PDF STYLES (A4) ============ */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #printable-document,
+            #printable-document * {
+                visibility: visible;
+            }
+
+            #printable-document {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* A4 Document Styles */
+        .a4-document {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            background: white;
+            color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+        }
+
+        .a4-document h1 {
+            font-size: 26pt;
+            color: #1e3a5f;
+            margin-bottom: 0.5rem;
+            border-bottom: 4px solid #2563eb;
+            padding-bottom: 1rem;
+            background: linear-gradient(to right, rgba(37, 99, 235, 0.1), transparent);
+            padding-left: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .a4-document h2 {
+            font-size: 18pt;
+            color: white;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+            padding: 0.5rem 1rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            page-break-after: avoid;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .a4-document h3 {
+            font-size: 12pt;
+            color: #1e3a5f;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .a4-document p {
+            margin-bottom: 0.5rem;
+            text-align: justify;
+        }
+
+        .a4-document table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 10pt;
+        }
+
+        .a4-document th,
+        .a4-document td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .a4-document th {
+            background: #f0f4f8;
+            font-weight: 600;
+            color: #1e3a5f;
+        }
+
+        .a4-document tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .cover-page {
+            text-align: center;
+            padding-top: 60mm;
+            page-break-after: always;
+        }
+
+        .cover-logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 2rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #60a5fa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .cover-title {
+            font-size: 32pt;
+            color: #1e3a5f;
+            margin-bottom: 0.5rem;
+        }
+
+        .cover-subtitle {
+            font-size: 14pt;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .cover-meta {
+            font-size: 11pt;
+            color: #888;
+            margin-top: 4rem;
+        }
+
+        .section-page {
+            page-break-before: always;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .kpi-box {
+            background: #f0f4f8;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #2563eb;
+        }
+
+        .kpi-value {
+            font-size: 18pt;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .kpi-label {
+            font-size: 9pt;
+            color: #666;
+        }
+
+        .foda-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .foda-box {
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .foda-box.fortalezas {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+        }
+
+        .foda-box.debilidades {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+        }
+
+        .foda-box.oportunidades {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .foda-box.amenazas {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid #f59e0b;
+        }
+
+        .foda-box h4 {
+            margin-bottom: 0.5rem;
+            font-size: 11pt;
+        }
+
+        .foda-box ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            font-size: 10pt;
+        }
+
+        .canvas-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(3, auto);
+            gap: 0.5rem;
+            margin: 1rem 0;
+            font-size: 9pt;
+        }
+
+        .canvas-block {
+            background: #f0f4f8;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border-top: 3px solid #2563eb;
+        }
+
+        .canvas-block h5 {
+            font-size: 9pt;
+            margin-bottom: 0.5rem;
+            color: #1e3a5f;
+        }
+
+        .canvas-block ul {
+            margin: 0;
+            padding-left: 1rem;
+            font-size: 8pt;
+        }
+
+        /* Canvas layout */
+        .canvas-partners {
+            grid-column: 1;
+            grid-row: 1 / 3;
+        }
+
+        .canvas-activities {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .canvas-resources {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .canvas-value {
+            grid-column: 3;
+            grid-row: 1 / 3;
+        }
+
+        .canvas-relationships {
+            grid-column: 4;
+            grid-row: 1;
+        }
+
+        .canvas-channels {
+            grid-column: 4;
+            grid-row: 2;
+        }
+
+        .canvas-segments {
+            grid-column: 5;
+            grid-row: 1 / 3;
+        }
+
+        .canvas-costs {
+            grid-column: 1 / 3;
+            grid-row: 3;
+        }
+
+        .canvas-revenue {
+            grid-column: 3 / 6;
+            grid-row: 3;
+        }
+
+        .org-tree {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .org-level {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .org-node {
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid #2563eb;
+            font-size: 10pt;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 1rem 0;
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container no-print">
+        <div class="page-header">
+            <h1>📄 Exportar Plan de Negocios</h1>
+            <p class="subtitle">Genera tu documento profesional en formato A4</p>
+        </div>
+
+        <!-- Export Options -->
+        <div class="export-options">
+            <h3>⚙️ Opciones de Exportación</h3>
+            <div class="option-grid">
+                <div class="option-card active" onclick="setFormat('a4')">
+                    <strong>📄 A4 (210x297mm)</strong>
+                    <p class="text-muted" style="font-size: 0.85rem;">Estándar internacional</p>
+                </div>
+                <div class="option-card" onclick="setFormat('letter')">
+                    <strong>📃 Carta (8.5x11")</strong>
+                    <p class="text-muted" style="font-size: 0.85rem;">Estándar EE.UU.</p>
+                </div>
+            </div>
+
+            <h4 class="mt-2">📋 Secciones a incluir</h4>
+            <div class="section-checklist">
+                <label class="section-check"><input type="checkbox" checked data-section="resumen"> I. Resumen
+                    Ejecutivo</label>
+                <label class="section-check"><input type="checkbox" checked data-section="perfil"> II. Perfil del
+                    Emprendedor</label>
+                <label class="section-check"><input type="checkbox" checked data-section="cliente"> III. Análisis del
+                    Cliente</label>
+                <label class="section-check"><input type="checkbox" checked data-section="mercado"> IV. Estudio de
+                    Mercado</label>
+                <label class="section-check"><input type="checkbox" checked data-section="organizacion"> V. Organización
+                    del Negocio</label>
+                <label class="section-check"><input type="checkbox" checked data-section="marketing"> VI. Marketing y
+                    Ventas</label>
+                <label class="section-check"><input type="checkbox" checked data-section="financiero"> VII. Plan
+                    Financiero</label>
+                <label class="section-check"><input type="checkbox" checked data-section="foda"> FODA + Estrategias
+                    CAME</label>
+                <label class="section-check"><input type="checkbox" checked data-section="canvas"> Business Model
+                    Canvas</label>
+                <label class="section-check"><input type="checkbox" checked data-section="organigrama"> Organigrama y
+                    Nómina</label>
+                <label class="section-check"><input type="checkbox" checked data-section="kpis"> KPIs
+                    Financieros</label>
+            </div>
+
+            <div class="mt-2" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="generatePreview()">👁️ Generar Vista Previa</button>
+                <button class="btn btn-secondary" onclick="printDocument()">🖨️ Imprimir / PDF</button>
+            </div>
+        </div>
+
+        <!-- Preview Container -->
+        <div class="preview-container" id="preview-container" style="display: none;">
+            <!-- Document will be rendered here -->
+        </div>
+    </div>
+
+    <!-- PRINTABLE DOCUMENT (Hidden until print) -->
+    <div id="printable-document" style="display: none;"></div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let project = null;
+        let format = 'a4';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadProject, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProject);
+
+        async function loadProject() {
+            // Reset to defaults first
+            project = null;
+            const previewContainer = document.getElementById('preview-container');
+            previewContainer.style.display = 'none';
+            previewContainer.innerHTML = '';
+
+            // Check URL param first
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            const modules = urlParams.get('modules');
+
+            if (id) {
+                // Ensure PlanIA has projects loaded
+                if (PlanIA.state.projects.length === 0) {
+                    await PlanIA.loadProjects();
+                }
+                PlanIA.setCurrentProject(id);
+            }
+
+            project = PlanIA.getCurrentProject();
+
+            if (project) {
+                // Determine format based on project data or default
+                // Auto-generate preview
+                if (modules) {
+                    const list = modules.split(',');
+                    document.querySelectorAll('.section-check input').forEach(cb => {
+                        cb.checked = list.includes(cb.dataset.section);
+                    });
+                }
+                generatePreview();
+            } else {
+                alert('Selecciona un proyecto primero');
+            }
+        }
+
+        function setFormat(f) {
+            format = f;
+            document.querySelectorAll('.option-card').forEach(c => c.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function getCheckedSections() {
+            const sections = {};
+            document.querySelectorAll('.section-check input').forEach(cb => {
+                sections[cb.dataset.section] = cb.checked;
+            });
+            return sections;
+        }
+
+        function formatMoney(num) {
+            return '$' + (parseFloat(num) || 0).toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function parseJSON(str, defaultVal = {}) {
+            try { return JSON.parse(str) || defaultVal; }
+            catch (e) { return defaultVal; }
+        }
+
+        function buildOrgChart(roles) {
+            if (!roles || roles.length === 0) {
+                return '<p style="color: #64748b; text-align: center;">Sin estructura organizacional definida</p>';
+            }
+
+            const topLevel = roles.filter(r => !r.reportsTo || r.reportsTo === '-' || r.reportsTo === '');
+            const getSubordinates = (name) => roles.filter(r => r.reportsTo === name);
+
+            let html = '';
+
+            // Top level
+            if (topLevel.length > 0) {
+                html += '<div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">';
+                topLevel.forEach(role => {
+                    const isDirector = (role.name || '').toLowerCase().includes('director') ||
+                        (role.name || '').toLowerCase().includes('gerente') ||
+                        (role.name || '').toLowerCase().includes('ceo') ||
+                        topLevel.length === 1;
+                    html += '<div style="text-align: center;">';
+                    html += '<div style="background: ' + (isDirector ? 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)' : '#3b82f6') + '; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 12px rgba(37,99,235,0.3); min-width: 120px;">';
+                    html += (role.name || 'Puesto');
+                    html += '<div style="font-size: 0.7rem; opacity: 0.8; margin-top: 0.25rem;">' + formatMoney(role.salary) + ' x ' + (role.count || 1) + '</div>';
+                    html += '</div></div>';
+                });
+                html += '</div>';
+
+                // Second level
+                let secondLevel = [];
+                topLevel.forEach(t => { secondLevel = secondLevel.concat(getSubordinates(t.name)); });
+
+                if (secondLevel.length > 0) {
+                    html += '<div style="width: 2px; height: 20px; background: #94a3b8;"></div>';
+                    html += '<div style="width: 60%; height: 2px; background: #94a3b8;"></div>';
+                    html += '<div style="display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.5rem;">';
+                    secondLevel.forEach(role => {
+                        html += '<div style="text-align: center;">';
+                        html += '<div style="width: 2px; height: 15px; background: #94a3b8; margin: 0 auto;"></div>';
+                        html += '<div style="background: white; border: 2px solid #3b82f6; color: #1e3a5f; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-width: 100px;">';
+                        html += (role.name || 'Puesto');
+                        html += '<div style="font-size: 0.65rem; color: #64748b; margin-top: 0.2rem;">' + formatMoney(role.salary) + ' x ' + (role.count || 1) + '</div>';
+                        html += '</div></div>';
+                    });
+                    html += '</div>';
+
+                    // Third level
+                    let thirdLevel = [];
+                    secondLevel.forEach(s => { thirdLevel = thirdLevel.concat(getSubordinates(s.name)); });
+
+                    if (thirdLevel.length > 0) {
+                        html += '<div style="width: 40%; height: 2px; background: #cbd5e1; margin-top: 0.5rem;"></div>';
+                        html += '<div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">';
+                        thirdLevel.forEach(role => {
+                            html += '<div style="text-align: center;">';
+                            html += '<div style="width: 2px; height: 10px; background: #cbd5e1; margin: 0 auto;"></div>';
+                            html += '<div style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem;">';
+                            html += (role.name || 'Puesto');
+                            html += '<div style="font-size: 0.6rem; color: #94a3b8;">x' + (role.count || 1) + '</div>';
+                            html += '</div></div>';
+                        });
+                        html += '</div>';
+                    }
+                }
+            }
+
+            return html || '<p style="color: #64748b; text-align: center;">Sin estructura organizacional definida</p>';
+        }
+
+        function generatePreview() {
+            if (!project) {
+                alert('Selecciona un proyecto primero');
+                return;
+            }
+
+            const sections = getCheckedSections();
+            const html = generateDocumentHTML(project, sections);
+
+            const container = document.getElementById('preview-container');
+            container.style.display = 'flex';
+            container.innerHTML = `<div class="document-preview a4-document">${html}</div>`;
+
+            setTimeout(() => renderCharts(project), 100);
+        }
+
+        function printDocument() {
+            if (!project) {
+                alert('Selecciona un proyecto primero');
+                return;
+            }
+
+            const sections = getCheckedSections();
+            const html = generateDocumentHTML(project, sections);
+
+            const printContainer = document.getElementById('printable-document');
+            printContainer.innerHTML = `<div class="a4-document">${html}</div>`;
+            printContainer.style.display = 'block';
+
+            // Render charts in print container
+            setTimeout(() => {
+                renderCharts(project, 'print');
+
+                // Wait for charts to render
+                setTimeout(() => {
+                    window.print();
+                    printContainer.style.display = 'none';
+                }, 800);
+            }, 100);
+        }
+
+        function generateDocumentHTML(p, sections) {
+            let html = '';
+
+            // Cover Page
+            const logoUrl = p.i7_identidad_json ? parseJSON(p.i7_identidad_json).logoUrl : null;
+            html += `
+                <div class="cover-page">
+                    <div class="cover-logo">${logoUrl ? `<img src="${logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : '🚀'}</div>
+                    <div class="cover-title">${p.a1_nombre_negocio || 'Plan de Negocios'}</div>
+                    <div class="cover-subtitle">${p.a2_giro_negocio || ''}</div>
+                    <p style="color:#666;margin-top:2rem;">${p.b1_descripcion_general || ''}</p>
+                    <div class="cover-meta">
+                        <p><strong>Emprendedor:</strong> ${p.c1_emprendedor_nombre || 'N/A'}</p>
+                        <p><strong>Ubicación:</strong> ${p.d5_ciudad || ''}, ${p.d4_estado || ''}</p>
+                        <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                </div>
+            `;
+
+            // I. Resumen Ejecutivo
+            if (sections.resumen) {
+                html += `
+                    <div class="section-page">
+                        <h2>I. Resumen Ejecutivo</h2>
+                        <h3>Descripción del Negocio</h3>
+                        <p>${p.b1_descripcion_general || 'No especificado'}</p>
+                        
+                        <h3>Oportunidad Detectada</h3>
+                        <p>${p.b2_oportunidad_detectada || 'No especificado'}</p>
+                        
+                        <h3>Propuesta de Valor</h3>
+                        <p>${p.b3_propuesta_valor || 'No especificado'}</p>
+                        
+                        <h3>Cliente Meta</h3>
+                        <p>${p.d1_segmento_cliente || 'No especificado'}</p>
+                        
+                        <div class="kpi-grid">
+                            <div class="kpi-box">
+                                <div class="kpi-value">${formatMoney(p.g1_inversion_total)}</div>
+                                <div class="kpi-label">Inversión Total</div>
+                            </div>
+                            <div class="kpi-box">
+                                <div class="kpi-value">${formatMoney(p.g4_ingresos_mensuales)}</div>
+                                <div class="kpi-label">Ingresos Mensuales Est.</div>
+                            </div>
+                            <div class="kpi-box">
+                                <div class="kpi-value">${p.g10_rentabilidad_roi || 'N/A'}%</div>
+                                <div class="kpi-label">ROI</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // II. Perfil del Emprendedor
+            if (sections.perfil) {
+                html += `
+                    <div class="section-page">
+                        <h2>II. Perfil del Emprendedor</h2>
+                        <table>
+                            <tr><th style="width:30%;">Nombre</th><td>${p.c1_emprendedor_nombre || 'N/A'}</td></tr>
+                            <tr><th>Teléfono</th><td>${p.c2_telefono || 'N/A'}</td></tr>
+                            <tr><th>Email</th><td>${p.c3_email || 'N/A'}</td></tr>
+                            <tr><th>Ubicación</th><td>${p.d5_ciudad || ''}, ${p.d4_estado || ''}</td></tr>
+                        </table>
+                        
+                        <h3>Experiencia Previa</h3>
+                        <p>${p.c5_experiencia_previa || 'No especificado'}</p>
+                        
+                        <h3>Motivación para Emprender</h3>
+                        <p>${p.c6_motivacion || 'No especificado'}</p>
+                    </div>
+                `;
+            }
+
+            // III. Análisis del Cliente (NUEVO)
+            if (sections.cliente) {
+                const segmento = parseJSON(p.d2_segmento_json, { personas: [] });
+
+                html += `
+                    <div class="section-page">
+                        <h2>III. Análisis del Cliente</h2>
+                        
+                        <!-- Buyer Persona Section -->
+                        <h3>👤 Cliente Ideal (Buyer Persona)</h3>
+                        ${segmento.personas && segmento.personas.length > 0 ? `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                                ${segmento.personas.map((per, idx) => `
+                                    <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 12px; padding: 1rem; border: 1px solid #e2e8f0; page-break-inside: avoid;">
+                                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                            <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #1e3a5f 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: bold;">
+                                                ${(per.nombre || 'P' + (idx + 1)).charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <h4 style="margin: 0; color: #1e3a5f; font-size: 1.1rem;">${per.nombre || 'Persona ' + (idx + 1)}</h4>
+                                                <p style="margin: 0; color: #64748b; font-size: 0.85rem;">${per.ocupacion || per.genero || 'Cliente ideal'}</p>
+                                            </div>
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+                                            <div style="background: white; padding: 0.5rem; border-radius: 6px; text-align: center;">
+                                                <div style="font-size: 0.7rem; color: #64748b;">Edad</div>
+                                                <div style="font-weight: 600; color: #1e3a5f;">${per.edad || 'N/A'}</div>
+                                            </div>
+                                            <div style="background: white; padding: 0.5rem; border-radius: 6px; text-align: center;">
+                                                <div style="font-size: 0.7rem; color: #64748b;">Ingreso</div>
+                                                <div style="font-weight: 600; color: #1e3a5f;">${per.ingreso || 'N/A'}</div>
+                                            </div>
+                                        </div>
+                                        ${per.necesidades ? `
+                                            <div style="background: white; padding: 0.5rem; border-radius: 6px; margin-bottom: 0.5rem;">
+                                                <div style="font-size: 0.7rem; color: #22c55e; font-weight: 600;">💡 Necesidades</div>
+                                                <div style="font-size: 0.85rem; color: #475569;">${per.necesidades}</div>
+                                            </div>
+                                        ` : ''}
+                                        ${per.painPoints || per.frustraciones ? `
+                                            <div style="background: white; padding: 0.5rem; border-radius: 6px;">
+                                                <div style="font-size: 0.7rem; color: #ef4444; font-weight: 600;">😤 Pain Points</div>
+                                                <div style="font-size: 0.85rem; color: #475569;">${per.painPoints || per.frustraciones}</div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 12px; padding: 1.5rem; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #1e3a5f 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
+                                        👤
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0 0 0.5rem; color: #1e3a5f;">Cliente Objetivo</h4>
+                                        <p style="margin: 0; color: #475569; font-size: 0.95rem;">${p.d1_segmento_cliente || p.b4_cliente_objetivo_resumen || 'No especificado'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `}
+
+                        <!-- Necesidad, Deseo, Demanda con Embudo -->
+                        <h3>📊 Análisis N-D-D (Necesidad, Deseo, Demanda)</h3>
+                        
+                        <!-- Las 3 Tarjetas N-D-D -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%); border-radius: 12px; padding: 1.25rem; text-align: center; page-break-inside: avoid;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">💭</div>
+                                <h4 style="margin: 0 0 0.5rem; color: #92400e;">NECESIDAD</h4>
+                                <p style="font-size: 0.8rem; color: #78350f; margin: 0 0 0.5rem; font-style: italic;">"Estado de carencia"</p>
+                                <p style="font-size: 0.85rem; color: #78350f; margin: 0;">
+                                    ${p.i_necesidad || 'Problema o carencia que tu producto resuelve'}
+                                </p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #dbeafe 0%, #60a5fa 100%); border-radius: 12px; padding: 1.25rem; text-align: center; page-break-inside: avoid;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">❤️</div>
+                                <h4 style="margin: 0 0 0.5rem; color: #1e40af;">DESEO</h4>
+                                <p style="font-size: 0.8rem; color: #1e3a8a; margin: 0 0 0.5rem; font-style: italic;">"Forma específica de satisfacer"</p>
+                                <p style="font-size: 0.85rem; color: #1e3a8a; margin: 0;">
+                                    ${p.i_deseo || 'Cómo el cliente QUIERE resolver su necesidad'}
+                                </p>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #dcfce7 0%, #4ade80 100%); border-radius: 12px; padding: 1.25rem; text-align: center; page-break-inside: avoid;">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">💰</div>
+                                <h4 style="margin: 0 0 0.5rem; color: #166534;">DEMANDA</h4>
+                                <p style="font-size: 0.8rem; color: #14532d; margin: 0 0 0.5rem; font-style: italic;">"Deseo + Poder de compra"</p>
+                                <p style="font-size: 0.85rem; color: #14532d; margin: 0;">
+                                    ${p.i_demanda || 'Capacidad y disposición de pago'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Embudo de Ventas Visual -->
+                        <h3>🎯 Embudo de Ventas (Conexión N-D-D)</h3>
+                        <div style="background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); border-radius: 16px; padding: 1.5rem; color: white;">
+                            ${(() => {
+                        const mercado = parseFloat(p.i_mercado_objetivo) || 10000;
+                        const alcance = parseFloat(p.i_alcance_pct) || 30;
+                        const conversion = parseFloat(p.i_conversion_pct) || 10;
+                        const ticket = parseFloat(p.g5_precio_promedio) || 250;
+
+                        const conNecesidad = mercado;
+                        const conDeseo = Math.round(mercado * (alcance / 100));
+                        const conDemanda = Math.round(conDeseo * (conversion / 100));
+                        const ventasMes = conDemanda * ticket;
+                        const ventasAnio = ventasMes * 12;
+
+                        return `
+                                    <!-- Embudo Visual -->
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-bottom: 1.5rem;">
+                                        <div style="width: 100%; background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%); padding: 0.75rem; border-radius: 8px 8px 0 0; text-align: center;">
+                                            <div style="font-size: 0.7rem; opacity: 0.8;">NECESIDAD - Mercado Potencial</div>
+                                            <div style="font-size: 1.25rem; font-weight: 700;">${mercado.toLocaleString()} personas</div>
+                                        </div>
+                                        <div style="width: 80%; background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); padding: 0.75rem; text-align: center;">
+                                            <div style="font-size: 0.7rem; opacity: 0.8;">DESEO - Alcance ${alcance}%</div>
+                                            <div style="font-size: 1.1rem; font-weight: 700;">${conDeseo.toLocaleString()} interesados</div>
+                                        </div>
+                                        <div style="width: 60%; background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); padding: 0.75rem; border-radius: 0 0 8px 8px; text-align: center;">
+                                            <div style="font-size: 0.7rem; opacity: 0.8;">DEMANDA - Conversión ${conversion}%</div>
+                                            <div style="font-size: 1.1rem; font-weight: 700;">${conDemanda.toLocaleString()} clientes</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Resultados -->
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                                        <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem; text-align: center; border: 2px solid rgba(34,197,94,0.5);">
+                                            <div style="font-size: 0.75rem; color: #a7f3d0;">Ventas Mensuales</div>
+                                            <div style="font-size: 1.5rem; font-weight: 700; color: #4ade80;">$${ventasMes.toLocaleString()}</div>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem; text-align: center; border: 2px solid rgba(59,130,246,0.5);">
+                                            <div style="font-size: 0.75rem; color: #93c5fd;">Ventas Anuales</div>
+                                            <div style="font-size: 1.5rem; font-weight: 700; color: #60a5fa;">$${ventasAnio.toLocaleString()}</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Fórmula -->
+                                    <div style="margin-top: 1rem; text-align: center; font-size: 0.75rem; color: #94a3b8;">
+                                        📐 <strong>Fórmula:</strong> ${mercado.toLocaleString()} × ${alcance}% × ${conversion}% × $${ticket} = <span style="color: #4ade80; font-weight: 600;">$${ventasMes.toLocaleString()}/mes</span>
+                                    </div>
+                                `;
+                    })()}
+                        </div>
+
+                        <!-- Customer Journey simplificado -->
+                        <h3>🛤️ Viaje del Cliente</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                            <div style="text-align: center; flex: 1;">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-size: 1.5rem;">1</div>
+                                <div style="font-weight: 600; color: #1e3a5f; font-size: 0.85rem;">Descubrimiento</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Conoce tu marca</div>
+                            </div>
+                            <div style="color: #cbd5e1; font-size: 1.5rem;">→</div>
+                            <div style="text-align: center; flex: 1;">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #8b5cf6; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-size: 1.5rem;">2</div>
+                                <div style="font-weight: 600; color: #1e3a5f; font-size: 0.85rem;">Consideración</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Evalúa opciones</div>
+                            </div>
+                            <div style="color: #cbd5e1; font-size: 1.5rem;">→</div>
+                            <div style="text-align: center; flex: 1;">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #22c55e; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-size: 1.5rem;">3</div>
+                                <div style="font-weight: 600; color: #1e3a5f; font-size: 0.85rem;">Compra</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Decide comprar</div>
+                            </div>
+                            <div style="color: #cbd5e1; font-size: 1.5rem;">→</div>
+                            <div style="text-align: center; flex: 1;">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #f59e0b; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-size: 1.5rem;">4</div>
+                                <div style="font-weight: 600; color: #1e3a5f; font-size: 0.85rem;">Lealtad</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">Repite y recomienda</div>
+                            </div>
+                        </div>
+
+                        <h3>🎯 Segmento de Mercado</h3>
+                        <p>${p.d1_segmento_cliente || 'No especificado'}</p>
+                    </div>
+                `;
+            }
+
+            // IV. Estudio de Mercado (antes III)
+            if (sections.mercado) {
+                const competidores = parseJSON(p.d3_competidores_json, []);
+
+                html += `
+                    <div class="section-page">
+                        <h2>IV. Estudio de Mercado</h2>
+                        
+                        <h3>🏪 Competidores Identificados</h3>
+                        ${competidores.length > 0 ? `
+                            <p style="margin-bottom: 1rem; color: #64748b;">Se identificaron <strong>${competidores.length}</strong> competidores en la zona de influencia.</p>
+                            <table>
+                                <tr><th>Nombre</th><th>Ubicación</th><th>Empleados</th></tr>
+                                ${competidores.slice(0, 10).map(c => `
+                                    <tr><td>${c.nombre}</td><td>${c.colonia || 'N/A'}</td><td>${c.empleados || 'N/A'}</td></tr>
+                                `).join('')}
+                            </table>
+                            ${competidores.length > 10 ? `<p style="color: #64748b; font-size: 0.85rem;">... y ${competidores.length - 10} competidores más</p>` : ''}
+                        ` : '<p>No se han identificado competidores en la zona.</p>'}
+
+                        ${p.d6_analisis_mercado_json ? (() => {
+                        const analisis = parseJSON(p.d6_analisis_mercado_json, null);
+                        if (!analisis) return '';
+
+                        return `
+                                <div style="margin-top: 2rem; page-break-inside: avoid;">
+                                    <h3>📍 Análisis de Ubicación Estratégica</h3>
+                                    <div style="border: 2px solid #ddd; padding: 1rem; border-radius: 8px; background: #fafafa;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                            <div>
+                                                <h4 style="margin:0; font-size: 1.2rem; color: #1e3a5f;">Potencial de Mercado: <span style="color: ${parseInt(analisis.score) >= 50 ? '#22c55e' : '#ef4444'};">${analisis.score}/100</span></h4>
+                                                <p style="margin:0; color:#666; font-size: 0.9rem;">${analisis.label}</p>
+                                            </div>
+                                            <div style="text-align: right; font-size: 0.8rem;">
+                                                <div>👥 Pob: <strong>${analisis.breakdown?.pop?.val || 'N/A'}</strong></div>
+                                                <div>🏪 Comp: <strong>${analisis.breakdown?.comp?.val || 'N/A'}</strong></div>
+                                                <div>🎯 Afinidad: <strong>${analisis.breakdown?.affinity?.val || 'N/A'}</strong></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Maps Grid -->
+                                        <div style="display: grid; grid-template-columns: repeat(${analisis.mapLocation && analisis.mapDenue && analisis.mapBehavior ? 3 : (analisis.mapImage ? 1 : 0)}, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                                            ${analisis.mapLocation ? `
+                                                <div style="text-align: center;">
+                                                    <p style="margin: 0 0 0.5rem; font-weight: 600; color: #1e3a5f; font-size: 0.85rem;">📌 Ubicación</p>
+                                                    <img src="${analisis.mapLocation}" style="width: 100%; border-radius: 4px; border: 1px solid #ddd;">
+                                                </div>
+                                            ` : ''}
+                                            ${analisis.mapDenue ? `
+                                                <div style="text-align: center;">
+                                                    <p style="margin: 0 0 0.5rem; font-weight: 600; color: #ef4444; font-size: 0.85rem;">🏪 Competidores (${analisis.competitorCount || 0})</p>
+                                                    <img src="${analisis.mapDenue}" style="width: 100%; border-radius: 4px; border: 1px solid #ddd;">
+                                                </div>
+                                            ` : ''}
+                                            ${analisis.mapBehavior ? `
+                                                <div style="text-align: center;">
+                                                    <p style="margin: 0 0 0.5rem; font-weight: 600; color: #22c55e; font-size: 0.85rem;">📊 Potencial de Mercado</p>
+                                                    <img src="${analisis.mapBehavior}" style="width: 100%; border-radius: 4px; border: 1px solid #ddd;">
+                                                </div>
+                                            ` : ''}
+                                            ${!analisis.mapLocation && !analisis.mapDenue && analisis.mapImage ? `
+                                                <img src="${analisis.mapImage}" style="width: 100%; border-radius: 4px; border: 1px solid #ddd;">
+                                            ` : ''}
+                                        </div>
+
+                                        <h5 style="margin-bottom: 0.5rem;">💡 Recomendaciones Generadas:</h5>
+                                        <div style="font-size: 0.9rem; background: white; padding: 0.5rem; border-radius: 4px; border: 1px solid #eee;">
+                                            ${analisis.recommendations || 'Sin recomendaciones'}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                    })() : ''}
+                    </div>
+                `;
+            }
+
+            // V. Organización del Negocio
+            if (sections.organizacion) {
+                const org = parseJSON(p.c4_organigrama_json, { roles: [] });
+                const bom = parseJSON(p.e3_productos_bom_json, []);
+
+                html += `
+                    <div class="section-page">
+                        <h2>V. Organización del Negocio</h2>
+                        
+                        <h3>📦 Productos/Servicios</h3>
+                        <p>${p.e1_producto_servicio || 'No especificado'}</p>
+                        
+                        ${bom && bom.length > 0 ? `
+                            <h3>📋 Catálogo de Productos (BOM)</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                                ${bom.map((prod, idx) => {
+                    const margen = prod.precio_venta && prod.costo ?
+                        Math.round(((prod.precio_venta - prod.costo) / prod.precio_venta) * 100) : 0;
+                    return `
+                                        <div style="background: white; border-radius: 10px; padding: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                                <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, #3b82f6 0%, #1e3a5f 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                                    ${idx + 1}
+                                                </div>
+                                                <h4 style="margin: 0; color: #1e3a5f; font-size: 0.95rem;">${prod.producto || 'Producto ' + (idx + 1)}</h4>
+                                            </div>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                                <div style="background: #f0fdf4; padding: 0.5rem; border-radius: 6px; text-align: center;">
+                                                    <div style="font-size: 0.65rem; color: #22c55e;">💰 Precio</div>
+                                                    <div style="font-weight: 600; color: #15803d;">${formatMoney(prod.precio_venta)}</div>
+                                                </div>
+                                                <div style="background: #fef2f2; padding: 0.5rem; border-radius: 6px; text-align: center;">
+                                                    <div style="font-size: 0.65rem; color: #ef4444;">📉 Costo</div>
+                                                    <div style="font-weight: 600; color: #dc2626;">${formatMoney(prod.costo)}</div>
+                                                </div>
+                                            </div>
+                                            <div style="margin-top: 0.5rem; background: ${margen >= 30 ? '#f0fdf4' : margen >= 15 ? '#fefce8' : '#fef2f2'}; padding: 0.4rem; border-radius: 6px; text-align: center;">
+                                                <span style="font-size: 0.75rem; color: ${margen >= 30 ? '#22c55e' : margen >= 15 ? '#ca8a04' : '#ef4444'}; font-weight: 600;">
+                                                    📊 Margen: ${margen}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `;
+                }).join('')}
+                            </div>
+                            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <div style="display: flex; justify-content: space-around; text-align: center;">
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">Total Productos</div>
+                                        <div style="font-size: 1.25rem; font-weight: 700; color: #1e3a5f;">${bom.length}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">Precio Promedio</div>
+                                        <div style="font-size: 1.25rem; font-weight: 700; color: #22c55e;">${formatMoney(bom.reduce((sum, p) => sum + (p.precio_venta || 0), 0) / bom.length)}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: #64748b;">Margen Promedio</div>
+                                        <div style="font-size: 1.25rem; font-weight: 700; color: #3b82f6;">${Math.round(bom.reduce((sum, p) => {
+                    const m = p.precio_venta && p.costo ? ((p.precio_venta - p.costo) / p.precio_venta) * 100 : 0;
+                    return sum + m;
+                }, 0) / bom.length)}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <h3>⚙️ Proceso de Producción</h3>
+                        <p>${p.e2_proceso_produccion || 'No especificado'}</p>
+                        
+                        ${org.roles && org.roles.length > 0 ? `
+                            <h3>👥 Estructura Organizacional</h3>
+                            <table>
+                                <tr><th>Puesto</th><th>Reporta A</th><th>Empleados</th><th>Sueldo</th><th>Responsabilidades</th></tr>
+                                ${org.roles.map(r => `
+                                    <tr>
+                                        <td>${r.name || 'N/A'}</td>
+                                        <td>${r.reportsTo || '-'}</td>
+                                        <td>${r.count || 1}</td>
+                                        <td>${formatMoney(r.salary)}</td>
+                                        <td>${r.responsibilities || 'N/A'}</td>
+                                    </tr>
+                                `).join('')}
+                            </table>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // VI. Marketing y Ventas
+            if (sections.marketing) {
+                const identidad = parseJSON(p.i7_identidad_json, {});
+
+                html += `
+                    <div class="section-page">
+                        <h2>VI. Marketing y Ventas</h2>
+                        
+                        <h3>Identidad de Marca</h3>
+                        <table>
+                            <tr><th>Nombre Comercial</th><td>${p.a1_nombre_negocio || 'N/A'}</td></tr>
+                            <tr><th>Slogan</th><td>${identidad.slogan || 'N/A'}</td></tr>
+                            <tr><th>Colores</th><td>${Array.isArray(identidad.colors) ? identidad.colors.join(', ') : (identidad.colors || 'N/A')}</td></tr>
+                        </table>
+                        
+                        <h3>Estrategia de Precios</h3>
+                        <p>Precio promedio: ${formatMoney(p.g5_precio_promedio)}</p>
+                        
+                        <h3>Canales de Venta</h3>
+                        <p>${p.f3_canales_venta || 'No especificado'}</p>
+                        
+                        <h3>Estrategia de Promoción</h3>
+                        <p>${p.f2_estrategia_marketing || 'No especificado'}</p>
+                    </div>
+                `;
+            }
+
+            // VII. Plan Financiero
+            if (sections.financiero) {
+                const flujo = parseJSON(p.g9_flujo_efectivo_json, {});
+                const costos = parseJSON(p.g11_proyeccion_costos_json, {});
+                const ingresos = parseJSON(p.g12_proyeccion_ingresos_json, {});
+                const inversion = parseJSON(p.g10_presupuesto_inversion_json, []);
+
+                html += `
+                    <div class="section-page">
+                        <h2>VII. Plan Financiero</h2>
+                        
+                        <div class="kpi-grid">
+                            <div class="kpi-box">
+                                <div class="kpi-value">${formatMoney(p.g1_inversion_total)}</div>
+                                <div class="kpi-label">Inversión Total</div>
+                            </div>
+                            <div class="kpi-box">
+                                <div class="kpi-value">${formatMoney(p.g2_costos_fijos)}</div>
+                                <div class="kpi-label">Costos Fijos Mensuales</div>
+                            </div>
+                            <div class="kpi-box">
+                                <div class="kpi-value">${formatMoney(p.g3_costos_variables)}</div>
+                                <div class="kpi-label">Costos Variables</div>
+                            </div>
+                        </div>
+                        
+                        <div class="kpi-grid">
+                            <div class="kpi-box">
+                                <div class="kpi-value">${formatMoney(p.g4_ingresos_mensuales)}</div>
+                                <div class="kpi-label">Ingresos Mensuales Est.</div>
+                            </div>
+                            <div class="kpi-box">
+                                <div class="kpi-value">${p.g7_punto_equilibrio || 'N/A'}</div>
+                                <div class="kpi-label">Punto de Equilibrio</div>
+                            </div>
+                            <div class="kpi-box">
+                                <div class="kpi-value">${p.g8_tiempo_recuperacion || 'N/A'}</div>
+                                <div class="kpi-label">Tiempo Recuperación</div>
+                            </div>
+                        </div>
+                        
+                        ${inversion.length > 0 ? `
+                            <h3>Presupuesto de Inversión</h3>
+                            <table>
+                                <tr><th>Concepto</th><th>Tipo</th><th>Cantidad</th><th>Costo Unitario</th><th>Total</th></tr>
+                                ${inversion.map(i => `
+                                    <tr>
+                                        <td>${i.concepto || 'N/A'}</td>
+                                        <td>${i.tipo || 'N/A'}</td>
+                                        <td>${i.cantidad || 1}</td>
+                                        <td>${formatMoney(i.costoUnitario)}</td>
+                                        <td>${formatMoney((i.cantidad || 1) * (i.costoUnitario || 0))}</td>
+                                    </tr>
+                                `).join('')}
+                            </table>
+                        ` : ''}
+
+                        <div style="page-break-inside: avoid;">
+                            <h3>📈 Proyección de Flujo de Efectivo (1er Año)</h3>
+                            <div class="chart-container">
+                                <canvas id="chart-cashflow"></canvas>
+                            </div>
+                        </div>
+
+                        <div style="page-break-inside: avoid;">
+                            <h3>📊 Punto de Equilibrio - Recuperación de Inversión</h3>
+                            <div class="chart-container">
+                                <canvas id="chart-breakeven"></canvas>
+                            </div>
+                            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-top: 1rem; display: flex; justify-content: space-around; text-align: center;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">Inversión Inicial</div>
+                                    <div style="font-size: 1.1rem; font-weight: 700; color: #ef4444;">${formatMoney(p.g1_inversion_total)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">Utilidad Mensual Est.</div>
+                                    <div style="font-size: 1.1rem; font-weight: 700; color: #22c55e;">${formatMoney((p.g4_ingresos_mensuales || 0) - (p.g2_costos_fijos || 0) - (p.g3_costos_variables || 0))}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: #64748b;">⏱️ Tiempo Recuperación</div>
+                                    <div style="font-size: 1.1rem; font-weight: 700; color: #3b82f6;">${p.g8_tiempo_recuperacion || 'Calcular'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <div style="page-break-inside: avoid;">
+                            <h3>🥧 Distribución de Inversión</h3>
+                            <div class="chart-container" style="height: 250px; width: 60%; margin: 0 auto;">
+                                <canvas id="chart-investment"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // FODA
+            if (sections.foda) {
+                const marco = parseJSON(p.h3_marco_legal_json, { foda: {} });
+                const foda = marco.foda || {};
+
+                html += `
+                    <div class="section-page">
+                        <h2>Análisis FODA</h2>
+                        <div class="foda-grid">
+                            <div class="foda-box fortalezas">
+                                <h4>💪 Fortalezas</h4>
+                                <ul>${(foda.fortalezas || []).map(f => `<li>${f}</li>`).join('') || '<li>No especificado</li>'}</ul>
+                            </div>
+                            <div class="foda-box oportunidades">
+                                <h4>🚀 Oportunidades</h4>
+                                <ul>${(foda.oportunidades || []).map(o => `<li>${o}</li>`).join('') || '<li>No especificado</li>'}</ul>
+                            </div>
+                            <div class="foda-box debilidades">
+                                <h4>⚠️ Debilidades</h4>
+                                <ul>${(foda.debilidades || []).map(d => `<li>${d}</li>`).join('') || '<li>No especificado</li>'}</ul>
+                            </div>
+                            <div class="foda-box amenazas">
+                                <h4>🔥 Amenazas</h4>
+                                <ul>${(foda.amenazas || []).map(a => `<li>${a}</li>`).join('') || '<li>No especificado</li>'}</ul>
+                            </div>
+                        </div>
+                        ${foda.strategies ? `
+                            <h3>Estrategias CAME</h3>
+                            <table>
+                                <tr><th>Tipo</th><th>Estrategia</th></tr>
+                                <tr><td><strong>FO</strong> (Fortalezas + Oportunidades)</td><td>${foda.strategies.fo || 'N/A'}</td></tr>
+                                <tr><td><strong>FA</strong> (Fortalezas + Amenazas)</td><td>${foda.strategies.fa || 'N/A'}</td></tr>
+                                <tr><td><strong>DO</strong> (Debilidades + Oportunidades)</td><td>${foda.strategies.do || 'N/A'}</td></tr>
+                                <tr><td><strong>DA</strong> (Debilidades + Amenazas)</td><td>${foda.strategies.da || 'N/A'}</td></tr>
+                            </table>
+                        ` : ''
+                    }
+                    </div>
+            `;
+            }
+
+            // Canvas
+            if (sections.canvas) {
+                const org = parseJSON(p.c4_organigrama_json, { canvas: {} });
+                const canvas = org.canvas || {};
+
+                const canvasLabels = {
+                    partners: 'Socios Clave',
+                    activities: 'Actividades Clave',
+                    resources: 'Recursos Clave',
+                    value: 'Propuesta de Valor',
+                    relationships: 'Relación con Clientes',
+                    channels: 'Canales',
+                    segments: 'Segmentos de Clientes',
+                    costs: 'Estructura de Costos',
+                    revenue: 'Fuentes de Ingresos'
+                };
+
+                html += `
+                    <div class="section-page">
+                        <h2>Business Model Canvas</h2>
+                        <div class="canvas-grid">
+                            ${Object.entries(canvasLabels).map(([key, label]) => `
+                                <div class="canvas-block canvas-${key}">
+                                    <h5>${label}</h5>
+                                    <ul>
+                                        ${(canvas[key] || []).map(item => `<li>${item}</li>`).join('') || '<li>-</li>'}
+                                    </ul>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+            `;
+            }
+
+            // Organigrama
+            if (sections.organigrama) {
+                const org = parseJSON(p.c4_organigrama_json, { roles: [] });
+                const roles = org.roles || [];
+
+                if (roles.length > 0) {
+                    // Calculate totals
+                    let totalSalary = 0, totalEmployees = 0;
+                    roles.forEach(r => {
+                        totalSalary += (r.salary || 0) * (r.count || 1);
+                        totalEmployees += r.count || 1;
+                    });
+
+                    html += `
+                    <div class="section-page">
+                            <h2>👥 Organigrama y Nómina</h2>
+                            
+                            <div class="kpi-grid">
+                                <div class="kpi-box">
+                                    <div class="kpi-value">${totalEmployees}</div>
+                                    <div class="kpi-label">Total Empleados</div>
+                                </div>
+                                <div class="kpi-box">
+                                    <div class="kpi-value">${formatMoney(totalSalary)}</div>
+                                    <div class="kpi-label">Nómina Mensual</div>
+                                </div>
+                                <div class="kpi-box">
+                                    <div class="kpi-value">${formatMoney(totalSalary * 12)}</div>
+                                    <div class="kpi-label">Nómina Anual</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Visual Org Chart -->
+                            <div style="margin: 2rem 0; page-break-inside: avoid;">
+                                <h3>📊 Diagrama Organizacional</h3>
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 1.5rem; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 12px; border: 1px solid #e2e8f0;">
+                                    ${buildOrgChart(roles)}
+                                </div>
+                            </div>
+                            
+                            <h3>💰 Detalle de Nómina</h3>
+                            <table>
+                                <tr><th>Puesto</th><th>Reporta A</th><th>Perfil</th><th># Emp</th><th>Sueldo</th></tr>
+                                ${roles.map(r => '<tr><td>' + (r.name || 'N/A') + '</td><td>' + (r.reportsTo || '-') + '</td><td>' + (r.profile || 'N/A') + '</td><td>' + (r.count || 1) + '</td><td>' + formatMoney(r.salary) + '</td></tr>').join('')}
+                            </table>
+                        </div>
+            `;
+                }
+            }
+
+            // KPIs Financieros
+            if (sections.kpis) {
+                html += `
+                    <div class="section-page">
+                        <h2>Indicadores Financieros (KPIs)</h2>
+                        
+                        <table>
+                            <tr><th>Indicador</th><th>Valor</th><th>Descripción</th></tr>
+                            <tr><td><strong>VAN</strong></td><td>${formatMoney(p.g6_van)}</td><td>Valor Actual Neto</td></tr>
+                            <tr><td><strong>TIR</strong></td><td>${p.g6_tir || 'N/A'}%</td><td>Tasa Interna de Retorno</td></tr>
+                            <tr><td><strong>ROI</strong></td><td>${p.g10_rentabilidad_roi || 'N/A'}%</td><td>Retorno sobre Inversión</td></tr>
+                            <tr><td><strong>B/C</strong></td><td>${p.g6_bc || 'N/A'}</td><td>Relación Beneficio/Costo</td></tr>
+                            <tr><td><strong>Punto de Equilibrio</strong></td><td>${p.g7_punto_equilibrio || 'N/A'}</td><td>Unidades o monto mínimo</td></tr>
+                            <tr><td><strong>Tiempo de Recuperación</strong></td><td>${p.g8_tiempo_recuperacion || 'N/A'}</td><td>Payback Period</td></tr>
+                        </table>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+        function renderCharts(p, context = 'preview') {
+            const prefix = context === 'print' ? '#printable-document ' : '#preview-container ';
+
+            // 1. Cash Flow Chart
+            const ctxCF = document.querySelector(prefix + '#chart-cashflow');
+            if (ctxCF) {
+                const flujo = parseJSON(p.g9_flujo_efectivo_json, {});
+                const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                const income = flujo.monthlyIncome || Array(12).fill(0);
+                const expenses = flujo.monthlyExpenses || Array(12).fill(0);
+                const net = flujo.monthlyNet || Array(12).fill(0);
+
+                new Chart(ctxCF, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            { label: 'Ingresos', data: income, backgroundColor: '#22c55e' },
+                            { label: 'Egresos', data: expenses, backgroundColor: '#ef4444' },
+                            { label: 'Neto', data: net, type: 'line', borderColor: '#3b82f6', tension: 0.1, borderWidth: 2 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+
+            // 2. Investment Chart
+            const ctxInv = document.querySelector(prefix + '#chart-investment');
+            if (ctxInv) {
+                const inversion = parseJSON(p.g10_presupuesto_inversion_json, []);
+                // Group by type
+                const groups = {};
+                inversion.forEach(i => {
+                    const type = i.tipo || 'Otros';
+                    const total = (i.cantidad || 1) * (i.costoUnitario || 0);
+                    groups[type] = (groups[type] || 0) + total;
+                });
+
+                new Chart(ctxInv, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(groups),
+                        datasets: [{
+                            data: Object.values(groups),
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        plugins: { legend: { position: 'right' } }
+                    }
+                });
+            }
+
+            // 3. Break-Even / Payback Chart
+            const ctxBE = document.querySelector(prefix + '#chart-breakeven');
+            if (ctxBE) {
+                const invTotal = parseFloat(p.g1_inversion_total) || 0;
+                const ingresosMes = parseFloat(p.g4_ingresos_mensuales) || 0;
+                const costosFijos = parseFloat(p.g2_costos_fijos) || 0;
+                const costosVar = parseFloat(p.g3_costos_variables) || 0;
+                const utilidadMes = ingresosMes - costosFijos - costosVar;
+
+                // Generate 24 months of data
+                const months = [];
+                const inversionAcum = [];
+                const ingresosAcum = [];
+                const utilidadAcum = [];
+                let breakEvenMonth = -1;
+
+                for (let i = 0; i <= 24; i++) {
+                    months.push(i === 0 ? 'Inicio' : 'M' + i);
+                    inversionAcum.push(-invTotal); // Investment is negative
+
+                    const acum = utilidadMes * i - invTotal;
+                    utilidadAcum.push(acum);
+                    ingresosAcum.push(ingresosMes * i);
+
+                    if (breakEvenMonth === -1 && acum >= 0) {
+                        breakEvenMonth = i;
+                    }
+                }
+
+                new Chart(ctxBE, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: 'Inversión Inicial',
+                                data: inversionAcum,
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239,68,68,0.1)',
+                                fill: true,
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0
+                            },
+                            {
+                                label: 'Utilidad Acumulada',
+                                data: utilidadAcum,
+                                borderColor: '#22c55e',
+                                backgroundColor: 'rgba(34,197,94,0.1)',
+                                fill: true,
+                                borderWidth: 3,
+                                pointRadius: utilidadAcum.map((v, i) => i === breakEvenMonth ? 8 : 0),
+                                pointBackgroundColor: '#3b82f6',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        interaction: { intersect: false, mode: 'index' },
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            annotation: breakEvenMonth > 0 ? {
+                                annotations: {
+                                    line1: {
+                                        type: 'line',
+                                        yMin: 0,
+                                        yMax: 0,
+                                        borderColor: '#3b82f6',
+                                        borderWidth: 2,
+                                        borderDash: [10, 5],
+                                        label: {
+                                            display: true,
+                                            content: '← Punto de Equilibrio (Mes ' + breakEvenMonth + ')',
+                                            position: 'end'
+                                        }
+                                    }
+                                }
+                            } : {}
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function (value) {
+                                        return '$' + (value / 1000).toFixed(0) + 'k';
+                                    }
+                                },
+                                grid: {
+                                    color: function (context) {
+                                        if (context.tick.value === 0) {
+                                            return '#3b82f6';
+                                        }
+                                        return '#e5e7eb';
+                                    },
+                                    lineWidth: function (context) {
+                                        if (context.tick.value === 0) {
+                                            return 2;
+                                        }
+                                        return 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,656 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA - Definición del Problema
+ARCHIVO: public/problem_definition.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Módulo Lean Canvas para definir el problema que resuelve el negocio,
+             alternativas existentes, y segmentos de cliente más afectados.
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Definición del Problema - PlanIA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/plania-core.css">
+    <style>
+        .problem-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .problem-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .problem-card {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .problem-card.full-width {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 900px) {
+            .problem-card.full-width {
+                grid-column: span 1;
+            }
+        }
+
+        .problem-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 0 1rem;
+            font-size: 1.1rem;
+        }
+
+        .problem-item {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .problem-item.p1 {
+            border-left-color: #ef4444;
+        }
+
+        .problem-item.p2 {
+            border-left-color: #f59e0b;
+        }
+
+        .problem-item.p3 {
+            border-left-color: #10b981;
+        }
+
+        .problem-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+        }
+
+        .problem-item.p1 .problem-number {
+            background: #ef4444;
+        }
+
+        .problem-item.p2 .problem-number {
+            background: #f59e0b;
+        }
+
+        .problem-item.p3 .problem-number {
+            background: #10b981;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .alternative-item {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            align-items: center;
+        }
+
+        .alternative-icon {
+            font-size: 1.5rem;
+        }
+
+        .alternative-content {
+            flex: 1;
+        }
+
+        .alternative-content input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+        }
+
+        .segment-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .segment-chip {
+            padding: 0.5rem 1rem;
+            background: var(--bg);
+            border: 2px solid var(--surface-light);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .segment-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .segment-chip:hover {
+            border-color: var(--primary);
+        }
+
+        .solution-preview {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .solution-preview h4 {
+            margin: 0 0 1rem;
+            color: var(--primary);
+        }
+
+        .validation-checklist {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .validation-checklist li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .validation-checklist li:last-child {
+            border-bottom: none;
+        }
+
+        .check-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .check-icon.yes {
+            background: #10b981;
+            color: white;
+        }
+
+        .check-icon.no {
+            background: #ef4444;
+            color: white;
+        }
+
+        .check-icon.maybe {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .severity-meter {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .severity-bar {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--surface-light);
+            cursor: pointer;
+        }
+
+        .severity-bar.active {
+            background: var(--primary);
+        }
+
+        .severity-bar.s1.active {
+            background: #10b981;
+        }
+
+        .severity-bar.s2.active {
+            background: #84cc16;
+        }
+
+        .severity-bar.s3.active {
+            background: #facc15;
+        }
+
+        .severity-bar.s4.active {
+            background: #f59e0b;
+        }
+
+        .severity-bar.s5.active {
+            background: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <h1 style="padding: 1.5rem 1.5rem 0;">🎯 Definición del Problema</h1>
+        <p style="padding: 0 1.5rem; color: var(--text-muted);">
+            Basado en Lean Canvas de Ash Maurya. Define claramente el problema que resuelve tu negocio.
+        </p>
+
+        <div class="problem-container">
+            <!-- Top 3 Problemas -->
+            <div class="problem-card">
+                <h3>🔥 Top 3 Problemas que Resuelves</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Ordénalos del más crítico al menos crítico. Si no puedes identificar 3, quizás necesitas investigar
+                    más.
+                </p>
+
+                <div class="problem-item p1">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="problem-number">1</span>
+                        <span style="font-weight: 600;">Problema Principal</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <textarea id="problema_1" data-field="lc_problema_1"
+                            placeholder="Describe el problema más importante que resuelves..."></textarea>
+                    </div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted);">Severidad:</label>
+                    <div class="severity-meter" data-severity="lc_severidad_1">
+                        <div class="severity-bar s1" data-val="1" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s2" data-val="2" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s3" data-val="3" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s4" data-val="4" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s5 active" data-val="5" onclick="setSeverity(this)"></div>
+                    </div>
+                </div>
+
+                <div class="problem-item p2">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="problem-number">2</span>
+                        <span style="font-weight: 600;">Problema Secundario</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <textarea id="problema_2" data-field="lc_problema_2"
+                            placeholder="Otro problema importante..."></textarea>
+                    </div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted);">Severidad:</label>
+                    <div class="severity-meter" data-severity="lc_severidad_2">
+                        <div class="severity-bar s1" data-val="1" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s2" data-val="2" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s3" data-val="3" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s4 active" data-val="4" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s5" data-val="5" onclick="setSeverity(this)"></div>
+                    </div>
+                </div>
+
+                <div class="problem-item p3">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="problem-number">3</span>
+                        <span style="font-weight: 600;">Problema Terciario</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <textarea id="problema_3" data-field="lc_problema_3"
+                            placeholder="Un problema adicional..."></textarea>
+                    </div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted);">Severidad:</label>
+                    <div class="severity-meter" data-severity="lc_severidad_3">
+                        <div class="severity-bar s1" data-val="1" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s2" data-val="2" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s3 active" data-val="3" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s4" data-val="4" onclick="setSeverity(this)"></div>
+                        <div class="severity-bar s5" data-val="5" onclick="setSeverity(this)"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alternativas Existentes -->
+            <div class="problem-card">
+                <h3>🔄 Alternativas Existentes</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    ¿Cómo resuelven este problema los clientes actualmente? Si no hay alternativas, quizás no es un
+                    problema real.
+                </p>
+
+                <div class="alternative-item">
+                    <span class="alternative-icon">🏢</span>
+                    <div class="alternative-content">
+                        <input type="text" id="alt_competidor" data-field="lc_alt_competidor"
+                            placeholder="Competidor directo (nombre o tipo)">
+                    </div>
+                </div>
+
+                <div class="alternative-item">
+                    <span class="alternative-icon">🛠️</span>
+                    <div class="alternative-content">
+                        <input type="text" id="alt_manual" data-field="lc_alt_manual"
+                            placeholder="Solución manual/casera que usan">
+                    </div>
+                </div>
+
+                <div class="alternative-item">
+                    <span class="alternative-icon">🚫</span>
+                    <div class="alternative-content">
+                        <input type="text" id="alt_nada" data-field="lc_alt_nada"
+                            placeholder="'No hacer nada' - consecuencias">
+                    </div>
+                </div>
+
+                <div class="alternative-item">
+                    <span class="alternative-icon">💡</span>
+                    <div class="alternative-content">
+                        <input type="text" id="alt_sustituto" data-field="lc_alt_sustituto"
+                            placeholder="Producto/servicio sustituto">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>¿Por qué tu solución es mejor?</label>
+                    <textarea id="ventaja_sobre_alternativas" data-field="lc_ventaja_alternativas"
+                        placeholder="Explica tu ventaja sobre las alternativas..."></textarea>
+                </div>
+            </div>
+
+            <!-- Segmentos Afectados -->
+            <div class="problem-card full-width">
+                <h3>👥 Segmentos de Cliente más Afectados</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Selecciona qué tipo de clientes sufren MÁS este problema (Early Adopters).
+                </p>
+
+                <div class="segment-chips" id="segments">
+                    <span class="segment-chip" data-segment="jovenes" onclick="toggleSegment(this)">👶 Jóvenes
+                        (18-25)</span>
+                    <span class="segment-chip" data-segment="adultos" onclick="toggleSegment(this)">👨 Adultos
+                        (26-45)</span>
+                    <span class="segment-chip" data-segment="mayores" onclick="toggleSegment(this)">👴 Mayores
+                        (46+)</span>
+                    <span class="segment-chip" data-segment="mujeres" onclick="toggleSegment(this)">👩 Mujeres</span>
+                    <span class="segment-chip" data-segment="hombres" onclick="toggleSegment(this)">👨 Hombres</span>
+                    <span class="segment-chip" data-segment="familias" onclick="toggleSegment(this)">👨‍👩‍👧
+                        Familias</span>
+                    <span class="segment-chip" data-segment="estudiantes" onclick="toggleSegment(this)">🎓
+                        Estudiantes</span>
+                    <span class="segment-chip" data-segment="profesionales" onclick="toggleSegment(this)">💼
+                        Profesionales</span>
+                    <span class="segment-chip" data-segment="emprendedores" onclick="toggleSegment(this)">🚀
+                        Emprendedores</span>
+                    <span class="segment-chip" data-segment="pymes" onclick="toggleSegment(this)">🏢 PyMEs</span>
+                    <span class="segment-chip" data-segment="corporativos" onclick="toggleSegment(this)">🏛️
+                        Corporativos</span>
+                    <span class="segment-chip" data-segment="bajo_ingreso" onclick="toggleSegment(this)">💵 Bajo
+                        ingreso</span>
+                    <span class="segment-chip" data-segment="medio_ingreso" onclick="toggleSegment(this)">💰 Ingreso
+                        medio</span>
+                    <span class="segment-chip" data-segment="alto_ingreso" onclick="toggleSegment(this)">💎 Alto
+                        ingreso</span>
+                </div>
+                <input type="hidden" id="segmentos_afectados" data-field="lc_segmentos_afectados">
+
+                <div class="form-group">
+                    <label>Describe a tu Early Adopter ideal (el primero en comprar)</label>
+                    <textarea id="early_adopter" data-field="lc_early_adopter"
+                        placeholder="Perfil específico: edad, ocupación, ubicación, comportamiento..."></textarea>
+                </div>
+            </div>
+
+            <!-- Validación del Problema -->
+            <div class="problem-card full-width">
+                <h3>✅ Validación del Problema</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Responde estas preguntas para validar que el problema es real.
+                </p>
+
+                <ul class="validation-checklist">
+                    <li>
+                        <span class="check-icon" id="check-1" onclick="toggleCheck(this)">?</span>
+                        <span>¿Has hablado con al menos 10 personas que tienen este problema?</span>
+                    </li>
+                    <li>
+                        <span class="check-icon" id="check-2" onclick="toggleCheck(this)">?</span>
+                        <span>¿Los clientes ya gastan dinero tratando de resolver este problema?</span>
+                    </li>
+                    <li>
+                        <span class="check-icon" id="check-3" onclick="toggleCheck(this)">?</span>
+                        <span>¿El problema es urgente o recurrente (no ocasional)?</span>
+                    </li>
+                    <li>
+                        <span class="check-icon" id="check-4" onclick="toggleCheck(this)">?</span>
+                        <span>¿Puedes explicar el problema en una oración simple?</span>
+                    </li>
+                    <li>
+                        <span class="check-icon" id="check-5" onclick="toggleCheck(this)">?</span>
+                        <span>¿Tienes evidencia (encuestas, entrevistas, datos) que lo respalda?</span>
+                    </li>
+                </ul>
+                <input type="hidden" id="validacion_checks" data-field="lc_validacion_checks">
+
+                <div class="solution-preview">
+                    <h4>💡 Resumen de tu Propuesta</h4>
+                    <p id="problem-summary" style="font-size: 1rem; line-height: 1.6;">
+                        Completa los campos anteriores para generar un resumen...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let projectData = null;
+        let selectedSegments = [];
+        let validationState = [0, 0, 0, 0, 0]; // 0=?, 1=yes, 2=no
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(() => {
+                projectData = PlanIA.getCurrentProject();
+                if (projectData) loadData();
+                setupListeners();
+            }, 500);
+        });
+
+        function loadData() {
+            document.querySelectorAll('[data-field]').forEach(el => {
+                const field = el.dataset.field;
+                if (projectData[field]) {
+                    el.value = projectData[field];
+                }
+            });
+
+            // Load segments
+            if (projectData.lc_segmentos_afectados) {
+                selectedSegments = projectData.lc_segmentos_afectados.split(',');
+                document.querySelectorAll('.segment-chip').forEach(chip => {
+                    if (selectedSegments.includes(chip.dataset.segment)) {
+                        chip.classList.add('active');
+                    }
+                });
+            }
+
+            // Load severities
+            ['lc_severidad_1', 'lc_severidad_2', 'lc_severidad_3'].forEach(field => {
+                if (projectData[field]) {
+                    const meter = document.querySelector(`[data-severity="${field}"]`);
+                    if (meter) {
+                        meter.querySelectorAll('.severity-bar').forEach(bar => {
+                            bar.classList.remove('active');
+                            if (parseInt(bar.dataset.val) <= parseInt(projectData[field])) {
+                                bar.classList.add('active');
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Load validation checks
+            if (projectData.lc_validacion_checks) {
+                validationState = projectData.lc_validacion_checks.split(',').map(Number);
+                updateCheckIcons();
+            }
+
+            updateSummary();
+        }
+
+        function setupListeners() {
+            document.querySelectorAll('[data-field]').forEach(el => {
+                el.addEventListener('change', saveData);
+                el.addEventListener('input', debounce(() => {
+                    saveData();
+                    updateSummary();
+                }, 1000));
+            });
+            window.addEventListener('plania:save', saveData);
+        }
+
+        function setSeverity(el) {
+            const meter = el.parentElement;
+            const val = parseInt(el.dataset.val);
+
+            meter.querySelectorAll('.severity-bar').forEach(bar => {
+                bar.classList.remove('active');
+                if (parseInt(bar.dataset.val) <= val) {
+                    bar.classList.add('active');
+                }
+            });
+
+            saveData();
+        }
+
+        function toggleSegment(chip) {
+            chip.classList.toggle('active');
+            const segment = chip.dataset.segment;
+
+            if (chip.classList.contains('active')) {
+                if (!selectedSegments.includes(segment)) selectedSegments.push(segment);
+            } else {
+                selectedSegments = selectedSegments.filter(s => s !== segment);
+            }
+
+            document.getElementById('segmentos_afectados').value = selectedSegments.join(',');
+            saveData();
+        }
+
+        function toggleCheck(el) {
+            const index = parseInt(el.id.split('-')[1]) - 1;
+            validationState[index] = (validationState[index] + 1) % 3;
+            updateCheckIcons();
+            document.getElementById('validacion_checks').value = validationState.join(',');
+            saveData();
+        }
+
+        function updateCheckIcons() {
+            const icons = ['?', '✓', '✗'];
+            const classes = ['maybe', 'yes', 'no'];
+
+            validationState.forEach((state, i) => {
+                const el = document.getElementById(`check-${i + 1}`);
+                if (el) {
+                    el.textContent = icons[state];
+                    el.className = `check-icon ${classes[state]}`;
+                }
+            });
+        }
+
+        function updateSummary() {
+            const problema = document.getElementById('problema_1')?.value || '';
+            const earlyAdopter = document.getElementById('early_adopter')?.value || '';
+
+            let summary = '';
+            if (problema && earlyAdopter) {
+                summary = `Ayudamos a <strong>${earlyAdopter || '[Early Adopter]'}</strong> a resolver el problema de <strong>${problema || '[Problema]'}</strong>.`;
+            } else {
+                summary = 'Completa los campos anteriores para generar un resumen...';
+            }
+
+            document.getElementById('problem-summary').innerHTML = summary;
+        }
+
+        async function saveData() {
+            if (!projectData) return;
+
+            const data = { id_proyecto: projectData.id_proyecto };
+
+            document.querySelectorAll('[data-field]').forEach(el => {
+                data[el.dataset.field] = el.value;
+            });
+
+            // Save severities
+            document.querySelectorAll('[data-severity]').forEach(meter => {
+                const field = meter.dataset.severity;
+                const activeBars = meter.querySelectorAll('.severity-bar.active').length;
+                data[field] = activeBars;
+            });
+
+            try {
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', ...data })
+                });
+                const result = await res.json();
+                if (result.success) PlanIA.notifySaved();
+            } catch (err) {
+                console.error('Save error:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+    </script>
+</body>
+
+</html>

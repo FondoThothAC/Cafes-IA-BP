@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Plan de Negocios</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            /* Default color */
+            --secondary: #ecf0f1;
+            --text: #333;
+            --bg: #fff;
+        }
+
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+            max-width: 210mm;
+            /* A4 width */
+            margin: 0 auto;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: var(--primary);
+        }
+
+        /* Portada */
+        .cover {
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-bottom: 10px solid var(--primary);
+        }
+
+        .logo-placeholder {
+            width: 150px;
+            height: 150px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 40px;
+            font-size: 40px;
+            color: var(--primary);
+            border: 4px solid var(--primary);
+        }
+
+        .business-name {
+            font-size: 48px;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 24px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+
+        /* Contenido */
+        .page-break {
+            page-break-before: always;
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        p {
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 400px;
+            background: #eee;
+            margin: 20px 0;
+            overflow: hidden;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .map-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 100px;
+            text-align: center;
+            font-size: 12px;
+            color: #95a5a6;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        /* Badge Theme */
+        .theme-badge {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- PORTADA -->
+    <div class="cover">
+        <div class="logo-placeholder">🏢</div>
+        <h1 class="business-name" id="bName">Negocio Demo</h1>
+        <p class="subtitle">Plan Estratégico de Negocios 2026</p>
+        <p>Generado por PlanIA</p>
+    </div>
+
+    <!-- PÁGINA 1: RESUMEN Y MERCADO -->
+    <div class="page-break"></div>
+
+    <section>
+        <h2>1. Análisis de Mercado y Ubicación</h2>
+        <p>
+            A continuación se presenta el análisis geoval de la zona seleccionada.
+            El mapa de calor identifica puntos de alta afluencia y competencia directa.
+        </p>
+
+        <div class="map-container">
+            <!-- La imagen se inyecta vía JS o params -->
+            <img id="mapImage" src="https://via.placeholder.com/800x400?text=Mapa+de+Calor+Generado"
+                alt="Mapa de Calor">
+        </div>
+
+        <h3>Insights de Ubicación</h3>
+        <p id="locationText">
+            La ubicación estratégica muestra una alta densidad comercial. Se recomienda aprovechar el flujo peatonal
+            detectado en las avenidas principales mostradas en el mapa superior.
+        </p>
+    </section>
+
+    <section>
+        <h2>2. Identidad Corporativa</h2>
+        <p>
+            La identidad visual de la marca se ha configurado para reflejar los valores de la empresa.
+            Color Primario seleccionado: <span id="colorName">Default</span> <span class="theme-badge"
+                id="colorBadge"></span>
+        </p>
+    </section>
+
+    <footer>
+        Documento confidencial generado automáticamente por Inteligencia Artificial.
+    </footer>
+
+    <script>
+        // Cargar parámetros de la URL
+        const params = new URLSearchParams(window.location.search);
+
+        const name = params.get('name') || 'Mi Empresa Brillante';
+        const color = params.get('color') || '#2c3e50';
+        const mapUrl = params.get('map');
+
+        // Aplicar datos
+        document.getElementById('bName').textContent = name;
+        document.documentElement.style.setProperty('--primary', color);
+        document.getElementById('colorName').textContent = color;
+        document.getElementById('colorBadge').style.backgroundColor = color;
+
+        if (mapUrl) {
+            document.getElementById('mapImage').src = mapUrl;
+        }
+
+        // Estrategia Avanzada
+        const pestel = params.get('pestel');
+        const tows = params.get('tows');
+        const risks = params.get('risks');
+        const blue = params.get('blue');
+
+        function addSection(title, content) {
+            if (!content) return;
+            const section = document.createElement('section');
+            section.innerHTML = `<h2>${title}</h2><p style="white-space: pre-wrap;">${content}</p>`;
+            document.querySelector('footer').before(section);
+        }
+
+        if (pestel || tows || risks || blue) {
+            const div = document.createElement('div');
+            div.className = 'page-break';
+            document.querySelector('footer').before(div);
+
+            const header = document.createElement('h1');
+            header.textContent = '3. Estrategia Avanzada (MBA)';
+            header.style.color = 'var(--primary)';
+            document.querySelector('footer').before(header);
+
+            addSection('🏁 Análisis PESTEL (Macroentorno)', pestel);
+            addSection('⚔️ Matriz TOWS (Estrategia Cruzada)', tows);
+            addSection('🌊 Océano Azul (Innovación)', blue);
+            addSection('🛡️ Gestión de Riesgos', risks);
+        }
+    </script>
+</body>
+
+</html>

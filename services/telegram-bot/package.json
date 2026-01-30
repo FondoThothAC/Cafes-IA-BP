@@ -1,0 +1,13 @@
+{
+    "name": "telegram-bot",
+    "version": "1.0.0",
+    "description": "Bob - Telegram Bot for PlanIA with role-based access",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "node-telegram-bot-api": "^0.64.0",
+        "node-fetch": "^2.7.0"
+    }
+}

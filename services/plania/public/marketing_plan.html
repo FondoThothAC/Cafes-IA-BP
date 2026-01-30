@@ -1,0 +1,554 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA - Plan de Marketing
+ARCHIVO: public/marketing_plan.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Plan de marketing completo: estrategia de precio, canales,
+             promoción, funnel de ventas, y presupuesto. Basado en Harvard/MIT.
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan de Marketing - PlanIA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/plania-core.css">
+    <style>
+        .marketing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .marketing-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .marketing-card {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .marketing-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 0 1rem;
+            font-size: 1.1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .funnel-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+        }
+
+        .funnel-stage {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .funnel-stage:hover {
+            transform: scale(1.02);
+        }
+
+        .funnel-1 {
+            width: 100%;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        }
+
+        .funnel-2 {
+            width: 85%;
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        }
+
+        .funnel-3 {
+            width: 70%;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        }
+
+        .funnel-4 {
+            width: 55%;
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
+
+        .channel-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.35rem 0.75rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin: 0.25rem;
+            cursor: pointer;
+        }
+
+        .channel-tag.inactive {
+            opacity: 0.4;
+            background: var(--surface-light);
+            color: var(--text-muted);
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .metric-box {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-box .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .metric-box .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <h1 style="padding: 1.5rem 1.5rem 0;">📣 Plan de Marketing</h1>
+        <p style="padding: 0 1.5rem; color: var(--text-muted);">
+            Estrategia para llegar a tus clientes y convertirlos en compradores. Basado en Harvard/MIT.
+        </p>
+
+        <div class="marketing-grid">
+            <!-- Estrategia de Precio -->
+            <div class="marketing-card">
+                <h3>💵 Estrategia de Precio</h3>
+                <div class="form-group">
+                    <label>Tipo de estrategia</label>
+                    <select id="estrategia_precio" data-field="h1_estrategia_precio">
+                        <option value="">Seleccionar...</option>
+                        <option value="costo_margen">Costo + Margen fijo</option>
+                        <option value="valor_percibido">Valor percibido (premium)</option>
+                        <option value="competencia">Basado en competencia</option>
+                        <option value="penetracion">Penetración (precio bajo inicial)</option>
+                        <option value="descremado">Descremado (precio alto inicial)</option>
+                        <option value="freemium">Freemium</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Precio promedio ($)</label>
+                        <input type="number" id="precio_promedio" data-field="h2_precio_promedio" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Margen objetivo (%)</label>
+                        <input type="number" id="margen_objetivo" data-field="h3_margen_objetivo" placeholder="30">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Justificación del precio</label>
+                    <textarea id="justificacion_precio" data-field="h4_justificacion_precio"
+                        placeholder="Explica por qué el cliente pagará este precio..."></textarea>
+                </div>
+            </div>
+
+            <!-- Canales de Distribución -->
+            <div class="marketing-card">
+                <h3>🚚 Canales de Distribución</h3>
+                <div class="form-group">
+                    <label>Canales principales (clic para activar)</label>
+                    <div id="channels-container">
+                        <span class="channel-tag" data-channel="tienda_fisica" onclick="toggleChannel(this)">🏪 Tienda
+                            Física</span>
+                        <span class="channel-tag" data-channel="ecommerce" onclick="toggleChannel(this)">🛒
+                            E-commerce</span>
+                        <span class="channel-tag" data-channel="marketplace" onclick="toggleChannel(this)">📦
+                            Marketplace</span>
+                        <span class="channel-tag" data-channel="whatsapp" onclick="toggleChannel(this)">📱
+                            WhatsApp</span>
+                        <span class="channel-tag" data-channel="redes_sociales" onclick="toggleChannel(this)">📲 Redes
+                            Sociales</span>
+                        <span class="channel-tag" data-channel="distribuidores" onclick="toggleChannel(this)">🤝
+                            Distribuidores</span>
+                        <span class="channel-tag" data-channel="venta_directa" onclick="toggleChannel(this)">🎯 Venta
+                            Directa</span>
+                        <span class="channel-tag" data-channel="delivery" onclick="toggleChannel(this)">🛵
+                            Delivery</span>
+                    </div>
+                    <input type="hidden" id="canales_distribucion" data-field="h5_canales_distribucion">
+                </div>
+                <div class="form-group">
+                    <label>Canal principal</label>
+                    <select id="canal_principal" data-field="h6_canal_principal">
+                        <option value="">Seleccionar...</option>
+                        <option value="tienda_fisica">Tienda Física</option>
+                        <option value="ecommerce">E-commerce propio</option>
+                        <option value="marketplace">Marketplace (Amazon, ML)</option>
+                        <option value="whatsapp">WhatsApp Business</option>
+                        <option value="redes_sociales">Redes Sociales</option>
+                        <option value="distribuidores">Distribuidores/Mayoristas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Estrategia de Promoción -->
+            <div class="marketing-card">
+                <h3>📢 Estrategia de Promoción</h3>
+                <div class="form-group">
+                    <label>Tácticas de promoción (clic para activar)</label>
+                    <div id="promo-container">
+                        <span class="channel-tag" data-promo="facebook_ads" onclick="togglePromo(this)">📘 Facebook
+                            Ads</span>
+                        <span class="channel-tag" data-promo="google_ads" onclick="togglePromo(this)">🔍 Google
+                            Ads</span>
+                        <span class="channel-tag" data-promo="instagram" onclick="togglePromo(this)">📸 Instagram</span>
+                        <span class="channel-tag" data-promo="tiktok" onclick="togglePromo(this)">🎵 TikTok</span>
+                        <span class="channel-tag" data-promo="email" onclick="togglePromo(this)">📧 Email
+                            Marketing</span>
+                        <span class="channel-tag" data-promo="influencers" onclick="togglePromo(this)">⭐
+                            Influencers</span>
+                        <span class="channel-tag" data-promo="eventos" onclick="togglePromo(this)">🎪
+                            Eventos/Ferias</span>
+                        <span class="channel-tag" data-promo="referidos" onclick="togglePromo(this)">💬 Programa
+                            Referidos</span>
+                        <span class="channel-tag" data-promo="seo" onclick="togglePromo(this)">📈 SEO</span>
+                        <span class="channel-tag" data-promo="radio_tv" onclick="togglePromo(this)">📻 Radio/TV
+                            Local</span>
+                    </div>
+                    <input type="hidden" id="tacticas_promocion" data-field="h7_tacticas_promocion">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Presupuesto mensual ($)</label>
+                        <input type="number" id="presupuesto_marketing" data-field="h8_presupuesto_marketing"
+                            placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>% de ingresos destinado</label>
+                        <input type="number" id="pct_marketing" data-field="h9_pct_marketing" placeholder="10">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Funnel de Ventas -->
+            <div class="marketing-card">
+                <h3>🎯 Funnel de Ventas</h3>
+                <div class="funnel-visual">
+                    <div class="funnel-stage funnel-1">
+                        <span>👀 Awareness</span>
+                        <input type="number" id="funnel_awareness" data-field="h10_funnel_awareness"
+                            style="width: 80px; text-align: center;" placeholder="1000">
+                    </div>
+                    <div class="funnel-stage funnel-2">
+                        <span>🤔 Consideración</span>
+                        <input type="number" id="funnel_consideracion" data-field="h11_funnel_consideracion"
+                            style="width: 80px; text-align: center;" placeholder="300">
+                    </div>
+                    <div class="funnel-stage funnel-3">
+                        <span>🛒 Intención</span>
+                        <input type="number" id="funnel_intencion" data-field="h12_funnel_intencion"
+                            style="width: 80px; text-align: center;" placeholder="100">
+                    </div>
+                    <div class="funnel-stage funnel-4">
+                        <span>✅ Compra</span>
+                        <input type="number" id="funnel_compra" data-field="h13_funnel_compra"
+                            style="width: 80px; text-align: center;" placeholder="30">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Tasa de conversión calculada</label>
+                    <div id="conversion-rate" style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">--%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas Objetivo -->
+            <div class="marketing-card" style="grid-column: span 2;">
+                <h3>📊 Métricas Objetivo</h3>
+                <div class="metrics-row">
+                    <div class="metric-box">
+                        <div class="form-group" style="margin: 0;">
+                            <label>CAC (Costo por cliente)</label>
+                            <input type="number" id="cac_objetivo" data-field="h14_cac_objetivo" placeholder="$0">
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="form-group" style="margin: 0;">
+                            <label>CLV (Valor del cliente)</label>
+                            <input type="number" id="clv_objetivo" data-field="h15_clv_objetivo" placeholder="$0">
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="form-group" style="margin: 0;">
+                            <label>CLV:CAC Ratio</label>
+                            <div id="clv-cac-ratio" class="value">--</div>
+                        </div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="form-group" style="margin: 0;">
+                            <label>ROAS objetivo</label>
+                            <input type="number" id="roas_objetivo" data-field="h16_roas_objetivo" placeholder="3.0"
+                                step="0.1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let projectData = null;
+        let selectedChannels = [];
+        let selectedPromos = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Wait for PlanIA to initialize
+            setTimeout(() => {
+                projectData = PlanIA.getCurrentProject();
+                loadData();
+                setupListeners();
+            }, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', () => {
+            projectData = PlanIA.getCurrentProject();
+            loadData();
+        });
+
+        function loadData() {
+            // Reset to defaults first
+            document.querySelectorAll('[data-field]').forEach(el => {
+                if (el.type === 'number') el.value = '';
+                else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                else if (el.tagName === 'TEXTAREA') el.value = '';
+                else el.value = '';
+            });
+
+            // Reset channels and promos
+            selectedChannels = [];
+            selectedPromos = [];
+            document.querySelectorAll('[data-channel]').forEach(el => el.classList.add('inactive'));
+            document.querySelectorAll('[data-promo]').forEach(el => el.classList.add('inactive'));
+            document.getElementById('conversion-rate').textContent = '--%';
+            document.getElementById('clv-cac-ratio').textContent = '--';
+
+            if (!projectData) return;
+
+            // Load all fields
+            document.querySelectorAll('[data-field]').forEach(el => {
+                const field = el.dataset.field;
+                if (projectData[field]) {
+                    el.value = projectData[field];
+                }
+            });
+
+            // Load channels
+            if (projectData.h5_canales_distribucion) {
+                selectedChannels = projectData.h5_canales_distribucion.split(',');
+                updateChannelVisuals();
+            }
+
+            // Load promos
+            if (projectData.h7_tacticas_promocion) {
+                selectedPromos = projectData.h7_tacticas_promocion.split(',');
+                updatePromoVisuals();
+            }
+
+            calculateMetrics();
+        }
+
+        function setupListeners() {
+            // Auto-save on change
+            document.querySelectorAll('[data-field]').forEach(el => {
+                el.addEventListener('change', saveData);
+                el.addEventListener('input', debounce(saveData, 1000));
+            });
+
+            // Funnel calculations
+            ['funnel_awareness', 'funnel_consideracion', 'funnel_intencion', 'funnel_compra'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', calculateMetrics);
+            });
+
+            // CLV/CAC calculations
+            ['cac_objetivo', 'clv_objetivo'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', calculateMetrics);
+            });
+
+            // Listen for save event
+            window.addEventListener('plania:save', saveData);
+        }
+
+        function toggleChannel(el) {
+            const channel = el.dataset.channel;
+            el.classList.toggle('inactive');
+
+            if (el.classList.contains('inactive')) {
+                selectedChannels = selectedChannels.filter(c => c !== channel);
+            } else {
+                if (!selectedChannels.includes(channel)) selectedChannels.push(channel);
+            }
+
+            document.getElementById('canales_distribucion').value = selectedChannels.join(',');
+            saveData();
+        }
+
+        function updateChannelVisuals() {
+            document.querySelectorAll('[data-channel]').forEach(el => {
+                if (selectedChannels.includes(el.dataset.channel)) {
+                    el.classList.remove('inactive');
+                } else {
+                    el.classList.add('inactive');
+                }
+            });
+        }
+
+        function togglePromo(el) {
+            const promo = el.dataset.promo;
+            el.classList.toggle('inactive');
+
+            if (el.classList.contains('inactive')) {
+                selectedPromos = selectedPromos.filter(p => p !== promo);
+            } else {
+                if (!selectedPromos.includes(promo)) selectedPromos.push(promo);
+            }
+
+            document.getElementById('tacticas_promocion').value = selectedPromos.join(',');
+            saveData();
+        }
+
+        function updatePromoVisuals() {
+            document.querySelectorAll('[data-promo]').forEach(el => {
+                if (selectedPromos.includes(el.dataset.promo)) {
+                    el.classList.remove('inactive');
+                } else {
+                    el.classList.add('inactive');
+                }
+            });
+        }
+
+        function calculateMetrics() {
+            // Conversion rate
+            const awareness = parseFloat(document.getElementById('funnel_awareness')?.value) || 0;
+            const compra = parseFloat(document.getElementById('funnel_compra')?.value) || 0;
+
+            if (awareness > 0) {
+                const rate = ((compra / awareness) * 100).toFixed(1);
+                document.getElementById('conversion-rate').textContent = rate + '%';
+            }
+
+            // CLV:CAC ratio
+            const cac = parseFloat(document.getElementById('cac_objetivo')?.value) || 0;
+            const clv = parseFloat(document.getElementById('clv_objetivo')?.value) || 0;
+
+            if (cac > 0) {
+                const ratio = (clv / cac).toFixed(1);
+                document.getElementById('clv-cac-ratio').textContent = ratio + 'x';
+
+                // Color based on ratio health
+                const ratioEl = document.getElementById('clv-cac-ratio');
+                if (parseFloat(ratio) >= 3) {
+                    ratioEl.style.color = 'var(--success)';
+                } else if (parseFloat(ratio) >= 1) {
+                    ratioEl.style.color = 'var(--warning)';
+                } else {
+                    ratioEl.style.color = 'var(--error)';
+                }
+            }
+        }
+
+        async function saveData() {
+            if (!projectData) return;
+
+            const data = { id_proyecto: projectData.id_proyecto };
+
+            document.querySelectorAll('[data-field]').forEach(el => {
+                data[el.dataset.field] = el.value;
+            });
+
+            try {
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', ...data })
+                });
+                const result = await res.json();
+                if (result.success) PlanIA.notifySaved();
+            } catch (err) {
+                console.error('Save error:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+    </script>
+</body>
+
+</html>

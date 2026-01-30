@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>AI Interaction Logs - Audit Dashboard</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f172a;
+            color: #cbd5e1;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #38bdf8;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .refresh-btn:hover {
+            background: #0ea5e9;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .log-table th {
+            background: #1e293b;
+            color: #94a3b8;
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .log-table td {
+            padding: 12px;
+            border-bottom: 1px solid #1e293b;
+            vertical-align: top;
+        }
+
+        .log-table tr:hover {
+            background: #1e293b;
+        }
+
+        .tag {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .tag-web {
+            background: #059669;
+            color: #fff;
+        }
+
+        .tag-telegram {
+            background: #0284c7;
+            color: #fff;
+        }
+
+        .tag-whatsapp {
+            background: #16a34a;
+            color: #fff;
+        }
+
+        .tag-unknown {
+            background: #64748b;
+            color: #fff;
+        }
+
+        .prompt-col {
+            width: 35%;
+            color: #e2e8f0;
+        }
+
+        .response-col {
+            width: 35%;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .meta-col {
+            width: 10%;
+            color: #64748b;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>
+        <span>🛡️ AI Interaction Logs</span>
+        <button class="refresh-btn" onclick="loadLogs()">🔄 Refresh</button>
+    </h1>
+
+    <div id="status">Loading logs...</div>
+
+    <table class="log-table">
+        <thead>
+            <tr>
+                <th width="10%">Time</th>
+                <th width="10%">Source / User</th>
+                <th class="prompt-col">Prompt</th>
+                <th class="response-col">Response</th>
+                <th class="meta-col">Metadata</th>
+            </tr>
+        </thead>
+        <tbody id="logs-body">
+        </tbody>
+    </table>
+
+    <script>
+        // We'll fetch logs from PlanIA's log reader endpoint if tracking exists, 
+        // OR we can read from the DB directly if we had a backend.
+        // But since api-gateway is nodejs, we can add a GET /api/logs endpoint to server.js 
+        // that fetches from PlanIA's DB endpoint?
+        // Or better: Let's assume PlanIA exposes a read endpoint.
+        // Let's create `log_reader.php` in PlanIA too!
+
+        const LOG_READ_URL = 'http://localhost:8080/api/log_reader.php';
+
+        async function loadLogs() {
+            const tbody = document.getElementById('logs-body');
+            document.getElementById('status').innerText = 'Fetching...';
+
+            try {
+                // Determine URL based on environment (local user browser)
+                const res = await fetch(LOG_READ_URL);
+                if (!res.ok) throw new Error('API Error');
+
+                const data = await res.json(); // Expected { logs: [] }
+
+                tbody.innerHTML = '';
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        const date = new Date(log.timestamp).toLocaleString();
+                        const sourceClass = `tag-${log.source.toLowerCase()}` || 'tag-unknown';
+
+                        const row = `
+                            <tr>
+                                <td>${date}</td>
+                                <td>
+                                    <span class="tag ${sourceClass}">${log.source}</span><br>
+                                    <small>${log.user_id}</small>
+                                </td>
+                                <td class="prompt-col">${escapeHtml(log.input_prompt)}</td>
+                                <td class="response-col">${escapeHtml(log.output_response).substring(0, 200)}...</td>
+                                <td class="meta-col">
+                                    ${log.model_used}<br>
+                                    ID: ${log.id}
+                                </td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                    document.getElementById('status').innerText = `Loaded ${data.logs.length} records`;
+                } else {
+                    document.getElementById('status').innerText = 'No logs found.';
+                }
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('status').innerHTML = '<span style="color:red">Error loading logs. Ensure PlanIA is running on port 8080.</span>';
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // Auto load
+        loadLogs();
+        setInterval(loadLogs, 30000); // 30s polling
+    </script>
+</body>
+
+</html>

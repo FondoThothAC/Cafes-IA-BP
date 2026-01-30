@@ -1,0 +1,2411 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend - Wizard)
+ARCHIVO: public/wizard.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT (Interfaz de usuario).
+DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Editor de Proyecto</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <script src="js/autofill-mapper.js"></script>
+    <script src="js/business-prompts.js"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        .wizard-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Progress */
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .progress-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--surface-light);
+            transform: translateY(-50%);
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            z-index: 1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active {
+            background: var(--primary);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        }
+
+        .progress-step.completed {
+            background: var(--success);
+        }
+
+        /* Steps */
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+        }
+
+        .step-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+        }
+
+        /* Form Fields with Icons */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .field-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .field-label label {
+            font-weight: 500;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .field-icons {
+            display: flex;
+            gap: 0.25rem;
+            margin-left: auto;
+        }
+
+        .icon-btn {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .icon-btn.info:hover {
+            color: var(--info);
+        }
+
+        .icon-btn.ai:hover {
+            color: #a855f7;
+        }
+
+        .icon-btn.future {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Custom Scrollbar for specific containers */
+        #ai-result-text::-webkit-scrollbar,
+        #kbFileList::-webkit-scrollbar,
+        #aiContextList::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #ai-result-text::-webkit-scrollbar-track,
+        #kbFileList::-webkit-scrollbar-track,
+        #aiContextList::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        #ai-result-text::-webkit-scrollbar-thumb,
+        #kbFileList::-webkit-scrollbar-thumb,
+        #aiContextList::-webkit-scrollbar-thumb {
+            background: #4ade80;
+            /* var(--primary) aprox */
+            border-radius: 4px;
+        }
+
+        /* Tooltip (Continued) */
+        .tooltip {
+            position: fixed;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            padding: 1rem;
+            border-radius: 8px;
+            max-width: 350px;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .tooltip.show {
+            display: block;
+        }
+
+        .tooltip-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .tooltip-content {
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .ai-prompt {
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            color: #a855f7;
+        }
+
+        .btn-copy {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        /* Grid */
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* BOM */
+        .bom-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .bom-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .btn-remove {
+            background: var(--error);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .btn-add {
+            width: 100%;
+            padding: 1rem;
+            background: transparent;
+            border: 2px dashed var(--surface-light);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .btn-add:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Nav buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        .save-indicator {
+            text-align: center;
+            padding: 0.5rem;
+            color: var(--success);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container wizard-container">
+        <div class="page-header" style="text-align: center;">
+            <h1 id="wizard-title">✏️ Nuevo Proyecto</h1>
+            <p class="subtitle">Completa tu plan de negocios paso a paso</p>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-container">
+            <div class="progress-step active" data-step="1" onclick="goToStep(1)">1</div>
+            <div class="progress-step" data-step="2" onclick="goToStep(2)">2</div>
+            <div class="progress-step" data-step="3" onclick="goToStep(3)">3</div>
+            <div class="progress-step" data-step="4" onclick="goToStep(4)">4</div>
+            <div class="progress-step" data-step="5" onclick="goToStep(5)">5</div>
+            <div class="progress-step" data-step="6" onclick="goToStep(6)">6</div>
+            <div class="progress-step" data-step="7" onclick="goToStep(7)">7</div>
+            <div class="progress-step" data-step="8" onclick="goToStep(8)">8</div>
+            <div class="progress-step" data-step="9" onclick="goToStep(9)">9</div>
+        </div>
+
+        <form id="wizardForm">
+            <!-- Admin Panel (Only visible to Admin) -->
+            <div id="admin-panel"
+                style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px dashed var(--error); padding: 1rem; border-radius: 12px; margin-bottom: 2rem;">
+                <h3 style="color: var(--error); font-size: 1rem; margin-top: 0; margin-bottom: 1rem;">🔐 Panel de
+                    Asignación (Solo Admin)</h3>
+                <div class="row">
+                    <div class="form-group">
+                        <label style="font-size: 0.85rem; color: var(--text-muted);">Asignar Propietario
+                            (Emprendedor)</label>
+                        <input type="text" id="uuid_usuario" name="uuid_usuario"
+                            placeholder="ID Usuario (ej: ana.emprendedora)">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 0.85rem; color: var(--text-muted);">Asignar Consultor</label>
+                        <input type="text" id="uuid_consultor" name="uuid_consultor"
+                            placeholder="ID Consultor (ej: carlos.consultor)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 1: Portada -->
+            <div class="step active" data-step="1">
+                <div class="step-card">
+                    <h2 class="step-title">📋 Unidad I - Portada y Datos Generales</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="a1_nombre_negocio">Nombre del Negocio *</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="nombre_negocio">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="nombre_negocio">🤖</button>
+                                <button type="button" class="icon-btn future" title="Próximamente">⚡</button>
+                            </div>
+                        </div>
+                        <input type="text" id="a1_nombre_negocio" name="a1_nombre_negocio" required
+                            placeholder="Ej: Florería La Rosa">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="a2_nombre_emprendedor">Nombre del Emprendedor *</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="nombre_emprendedor">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="nombre_emprendedor">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <input type="text" id="a2_nombre_emprendedor" name="a2_nombre_emprendedor" required
+                            placeholder="Nombre completo">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="a4_carta_presentacion">Carta de Presentación</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="carta_presentacion">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="carta_presentacion">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="a4_carta_presentacion" name="a4_carta_presentacion" rows="4"
+                            placeholder="Breve descripción de quién eres, tu experiencia y por qué emprendes..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Resumen Ejecutivo -->
+            <div class="step" data-step="2">
+                <div class="step-card">
+                    <h2 class="step-title">💡 Unidad II - Resumen Ejecutivo</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="b1_descripcion_negocio">Descripción del Negocio *</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="descripcion_negocio">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="descripcion_negocio">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="b1_descripcion_negocio" name="b1_descripcion_negocio" required rows="4"
+                            placeholder="¿Qué es tu negocio y qué ofrece?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="b2_problema_oportunidad">Problema u Oportunidad</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="problema_oportunidad">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="problema_oportunidad">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="b2_problema_oportunidad" name="b2_problema_oportunidad" rows="3"
+                            placeholder="¿Qué problema resuelve o qué oportunidad aprovecha?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="b3_propuesta_valor">Propuesta de Valor</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="propuesta_valor">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="propuesta_valor">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="b3_propuesta_valor" name="b3_propuesta_valor" rows="3"
+                            placeholder="¿Qué te hace diferente de la competencia?"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="b4_cliente_objetivo_resumen">Cliente Objetivo</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="cliente_objetivo">ℹ️</button>
+                                    <button type="button" class="icon-btn ai" data-ai="cliente_objetivo">🤖</button>
+                                    <button type="button" class="icon-btn future">⚡</button>
+                                </div>
+                            </div>
+                            <input type="text" id="b4_cliente_objetivo_resumen" name="b4_cliente_objetivo_resumen"
+                                placeholder="Ej: Familias de clase media">
+                        </div>
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="b5_monto_solicitado">Monto Solicitado ($)</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="monto_solicitado">ℹ️</button>
+                                </div>
+                            </div>
+                            <input type="number" id="b5_monto_solicitado" name="b5_monto_solicitado" min="0" step="100"
+                                placeholder="50000">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Perfil del Emprendedor -->
+            <div class="step" data-step="3">
+                <div class="step-card">
+                    <h2 class="step-title">👤 Unidad III - Perfil del Emprendedor</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="c1_experiencia_habilidades">Experiencia y Habilidades</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="experiencia">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="experiencia">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="c1_experiencia_habilidades" name="c1_experiencia_habilidades" rows="3"
+                            placeholder="¿Qué experiencia y habilidades tienes?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="c2_motivacion">Motivación para Emprender</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="motivacion">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="motivacion">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="c2_motivacion" name="c2_motivacion" rows="3"
+                            placeholder="¿Por qué quieres emprender este negocio?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="c3_compromiso_tiempo">Disponibilidad de Tiempo</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="tiempo">ℹ️</button>
+                            </div>
+                        </div>
+                        <input type="text" id="c3_compromiso_tiempo" name="c3_compromiso_tiempo"
+                            placeholder="Ej: 40 horas semanales">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Estudio de Mercado -->
+            <div class="step" data-step="4">
+                <div class="step-card">
+                    <h2 class="step-title">📊 Unidad IV - Estudio de Mercado</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="d1_segmento_cliente">Segmento de Cliente</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="segmento_cliente">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="segmento_cliente">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="d1_segmento_cliente" name="d1_segmento_cliente" rows="3"
+                            placeholder="Describe tu cliente ideal (edad, género, ubicación, hábitos de compra)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="d5_ventaja_competitiva">Ventaja Competitiva</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="ventaja_competitiva">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="ventaja_competitiva">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="d5_ventaja_competitiva" name="d5_ventaja_competitiva" rows="3"
+                            placeholder="¿Por qué los clientes te elegirán a ti sobre la competencia?"></textarea>
+                    </div>
+
+                    <!-- Análisis N-D-D -->
+                    <div
+                        style="background: var(--surface); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--surface-light);">
+                        <h3 style="color: var(--primary); margin: 0 0 1rem; font-size: 1rem;">📊 Análisis
+                            Necesidad-Deseo-Demanda</h3>
+
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="i_necesidad">💭 NECESIDAD - ¿Qué carencia resuelves?</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="necesidad">ℹ️</button>
+                                </div>
+                            </div>
+                            <textarea id="i_necesidad" name="i_necesidad" rows="2"
+                                placeholder="Ej: Las familias necesitan alimentación saludable pero no tienen tiempo para cocinar"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="i_deseo">❤️ DESEO - ¿Cómo quieren satisfacerla?</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="deseo">ℹ️</button>
+                                </div>
+                            </div>
+                            <textarea id="i_deseo" name="i_deseo" rows="2"
+                                placeholder="Ej: Quieren comida casera lista para calentar, no comida rápida procesada"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="i_demanda">💰 DEMANDA - ¿Pueden y quieren pagar?</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="demanda">ℹ️</button>
+                                </div>
+                            </div>
+                            <textarea id="i_demanda" name="i_demanda" rows="2"
+                                placeholder="Ej: Sí, familias de clase media gastan $200-300 diarios en comida"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Embudo de Ventas -->
+                    <div
+                        style="background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; color: white;">
+                        <h3 style="color: #60a5fa; margin: 0 0 1rem; font-size: 1rem;">🎯 Embudo de Ventas</h3>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label for="i_mercado_objetivo" style="color: #fcd34d; font-size: 0.9rem;">Mercado
+                                    Potencial (personas)</label>
+                                <input type="number" id="i_mercado_objetivo" name="i_mercado_objetivo" min="0"
+                                    step="100" placeholder="10000"
+                                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
+                            </div>
+                            <div class="form-group">
+                                <label for="i_alcance_pct" style="color: #60a5fa; font-size: 0.9rem;">Alcance % (ven tu
+                                    marca)</label>
+                                <input type="number" id="i_alcance_pct" name="i_alcance_pct" min="0" max="100" step="1"
+                                    placeholder="30"
+                                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label for="i_conversion_pct" style="color: #4ade80; font-size: 0.9rem;">Conversión %
+                                    (compran)</label>
+                                <input type="number" id="i_conversion_pct" name="i_conversion_pct" min="0" max="100"
+                                    step="1" placeholder="10"
+                                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
+                            </div>
+                            <div class="form-group">
+                                <label for="g5_precio_promedio" style="color: white; font-size: 0.9rem;">Ticket Promedio
+                                    ($)</label>
+                                <input type="number" id="g5_precio_promedio" name="g5_precio_promedio" min="0" step="10"
+                                    placeholder="250"
+                                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
+                            </div>
+                        </div>
+                        <div id="funnel-result"
+                            style="text-align: center; margin-top: 0.5rem; padding: 0.75rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <span style="font-size: 0.8rem; color: #94a3b8;">Ventas estimadas: </span>
+                            <span id="funnel-sales"
+                                style="font-size: 1.1rem; font-weight: 700; color: #4ade80;">$0/mes</span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="d6_latitud">Latitud</label>
+                                <div class="field-icons"><button type="button" class="icon-btn info"
+                                        data-info="coordenadas">ℹ️</button></div>
+                            </div>
+                            <input type="number" id="d6_latitud" name="d6_latitud" step="0.00000001"
+                                placeholder="29.0729">
+                        </div>
+                        <div class="form-group">
+                            <div class="field-label"><label for="d7_longitud">Longitud</label></div>
+                            <input type="number" id="d7_longitud" name="d7_longitud" step="0.00000001"
+                                placeholder="-110.9559">
+                        </div>
+                    </div>
+
+                    <!-- Map Container -->
+                    <div class="form-group">
+                        <label>Selecciona la ubicación en el mapa</label>
+                        <div id="map-container" style="height: 300px; width: 100%; border-radius: 8px; z-index: 0;">
+                        </div>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-top: 5px;">Haga clic en el mapa para
+                            fijar la ubicación.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="d8_direccion_formateada">Dirección del Negocio</label>
+                            <div class="field-icons"><button type="button" class="icon-btn info"
+                                    data-info="direccion">ℹ️</button></div>
+                        </div>
+                        <input type="text" id="d8_direccion_formateada" name="d8_direccion_formateada"
+                            placeholder="Calle, Número, Colonia, Ciudad">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Organización -->
+            <div class="step" data-step="5">
+                <div class="step-card">
+                    <h2 class="step-title">🏭 Unidad V - Organización del Negocio</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="e1_proceso_produccion">Proceso de Producción/Servicio</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="proceso_produccion">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="proceso_produccion">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="e1_proceso_produccion" name="e1_proceso_produccion" rows="4"
+                            placeholder="Describe paso a paso cómo produces tu producto/servicio"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="e2_capacidad_produccion">Capacidad de Producción</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="capacidad">ℹ️</button>
+                            </div>
+                        </div>
+                        <input type="text" id="e2_capacidad_produccion" name="e2_capacidad_produccion"
+                            placeholder="Ej: 50 unidades por semana">
+                    </div>
+
+                    <!-- BOM Builder -->
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label>Productos/Servicios (Lista de Materiales)</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="bom">ℹ️</button>
+                            </div>
+                        </div>
+                        <div id="bomContainer"></div>
+                        <button type="button" class="btn-add" onclick="addBomItem()">+ Agregar Producto</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Marketing -->
+            <div class="step" data-step="6">
+                <div class="step-card">
+                    <h2 class="step-title">📣 Unidad VI - Plan de Marketing</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="f1_nombre_marca">Nombre e Identidad de Marca</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="marca">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="marca">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <input type="text" id="f1_nombre_marca" name="f1_nombre_marca"
+                            placeholder="Nombre de tu marca y concepto">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="f2_estrategia_precios">Estrategia de Precios</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="estrategia_precios">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="estrategia_precios">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="f2_estrategia_precios" name="f2_estrategia_precios" rows="3"
+                            placeholder="¿Cómo defines tus precios? ¿Por encima o debajo de la competencia?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="f3_canales_venta">Canales de Venta</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="canales_venta">ℹ️</button>
+                            </div>
+                        </div>
+                        <input type="text" id="f3_canales_venta" name="f3_canales_venta"
+                            placeholder="Ej: WhatsApp, Redes Sociales, Local físico, Ferias">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="f4_estrategia_promocion">Estrategia de Promoción</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="promocion">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="promocion">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="f4_estrategia_promocion" name="f4_estrategia_promocion" rows="3"
+                            placeholder="¿Cómo darás a conocer tu negocio? (promociones, redes, referidos, etc.)"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 7: Finanzas -->
+            <div class="step" data-step="7">
+                <div class="step-card">
+                    <h2 class="step-title">💰 Unidad VII - Plan Financiero</h2>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="g5_costos_fijos_mensuales">Costos Fijos Mensuales ($)</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="costos_fijos">ℹ️</button>
+                                </div>
+                            </div>
+                            <input type="number" id="g5_costos_fijos_mensuales" name="g5_costos_fijos_mensuales" min="0"
+                                step="100" placeholder="5000">
+                        </div>
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="g8_inversion_inicial">Inversión Inicial ($)</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info"
+                                        data-info="inversion_inicial">ℹ️</button>
+                                </div>
+                            </div>
+                            <input type="number" id="g8_inversion_inicial" name="g8_inversion_inicial" min="0"
+                                step="100" placeholder="50000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="g9_uso_capital">Plan de Uso del Capital Semilla</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="uso_capital">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="uso_capital">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="g9_uso_capital" name="g9_uso_capital" rows="3"
+                            placeholder="Detalla en qué se gastará el capital solicitado"></textarea>
+                    </div>
+
+                    <p class="text-muted" style="text-align: center; margin-top: 1rem;">
+                        📊 Para análisis financiero detallado usa el módulo <a href="financial_planner.html"
+                            style="color: var(--primary);">Plan Financiero</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 8: Impacto -->
+            <div class="step" data-step="8">
+                <div class="step-card">
+                    <h2 class="step-title">🌟 Unidad VIII - Impacto y Compromisos</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="h1_impacto_social">Impacto Social</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="impacto_social">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="impacto_social">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="h1_impacto_social" name="h1_impacto_social" rows="3"
+                            placeholder="¿Cómo beneficia tu negocio a la comunidad?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="h2_impacto_economico">Impacto Económico Familiar</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="impacto_economico">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="impacto_economico">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="h2_impacto_economico" name="h2_impacto_economico" rows="3"
+                            placeholder="¿Cuánto ingreso adicional esperas generar para tu familia?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="h4_compromiso">Compromiso del Emprendedor</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="compromiso">ℹ️</button>
+                            </div>
+                        </div>
+                        <textarea id="h4_compromiso" name="h4_compromiso" rows="3"
+                            placeholder="Tu compromiso con la continuidad del negocio"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 9: Estrategia Avanzada -->
+            <div class="step" data-step="9">
+                <div class="step-card">
+                    <h2 class="step-title">♟️ Unidad IX - Estrategia Avanzada (MBA)</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="i1_pestel_analisis">Análisis PESTEL (Macroentorno)</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="pestel_analisis">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="pestel_analisis">🤖</button>
+                            </div>
+                        </div>
+                        <textarea id="i1_pestel_analisis" name="i1_pestel_analisis" rows="4"
+                            placeholder="Político, Económico, Social, Tecnológico, Ecológico, Legal"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="i2_tows_matrix">Matriz TOWS (FODA Cruzado)</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="tows_matrix">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="tows_matrix">🤖</button>
+                            </div>
+                        </div>
+                        <textarea id="i2_tows_matrix" name="i2_tows_matrix" rows="4"
+                            placeholder="Estrategias FO (Max-Max), DO (Min-Max), FA (Max-Min), DA (Min-Min)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="i3_blue_ocean">Estrategia Océano Azul</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="blue_ocean">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="blue_ocean">🤖</button>
+                            </div>
+                        </div>
+                        <textarea id="i3_blue_ocean" name="i3_blue_ocean" rows="3"
+                            placeholder="Matriz ERIC: Eliminar, Reducir, Incrementar, Crear"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="i4_gestion_riesgos">Gestión de Riesgos (PMI)</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="gestion_riesgos">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="gestion_riesgos">🤖</button>
+                            </div>
+                        </div>
+                        <textarea id="i4_gestion_riesgos" name="i4_gestion_riesgos" rows="3"
+                            placeholder="Identificación de Riesgos y Planes de Respuesta"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-secondary" onclick="prevStep()" id="btnPrev"
+                    style="visibility: hidden;">← Anterior</button>
+                <button type="button" class="btn btn-primary" onclick="nextStep()" id="btnNext">Siguiente →</button>
+                <button type="button" class="btn btn-success" onclick="submitForm()" id="btnSubmit"
+                    style="display: none;">💾 Guardar Proyecto</button>
+
+                <!-- BOTÓN REPORTE VISUAL -->
+                <button type="button" class="btn btn-primary" onclick="generateVisualReport()" id="btnReport"
+                    style="display: none; background: #8e44ad; border-color: #8e44ad; margin-left:10px;">
+                    📸 Generar Reporte Final
+                </button>
+
+                <!-- BOTÓN KNOWLEDGE BASE -->
+                <button type="button" class="btn btn-secondary" onclick="openKbModal()" id="btnKB"
+                    style="margin-left:10px; background: #2c3e50; border-color: #34495e;">
+                    📚 Fuentes
+                </button>
+            </div>
+
+            <div class="save-indicator" id="saveIndicator"></div>
+        </form>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip">
+        <div class="tooltip-title" id="tooltip-title"></div>
+        <div class="tooltip-content" id="tooltip-content"></div>
+    </div>
+
+    <!-- AI Research Agent Modal -->
+    <div class="modal fade" id="aiAgentModal" tabindex="-1" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title">🤖 Agente de Investigación de Mercado (IA Local)</h5>
+                    <button type="button" class="btn-close btn-close-white" onclick="closeAiModal()"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Web Search Toggle -->
+                    <div class="form-check mb-3"
+                        style="border: 1px solid var(--primary); padding: 0.75rem; border-radius: 8px; background: rgba(16, 185, 129, 0.1);">
+                        <input class="form-check-input" type="checkbox" id="enableWebSearch" checked>
+                        <label class="form-check-label" for="enableWebSearch">
+                            🌐 <strong>Buscar en Internet</strong> (Activado por defecto)
+                        </label>
+                        <small class="d-block text-muted mt-1">Busca información real (DOF, Inegi, Noticias) antes de
+                            generar.</small>
+                        <div class="form-check mb-3"
+                            style="border: 1px solid var(--primary); padding: 0.75rem; border-radius: 8px; background: rgba(16, 185, 129, 0.1);">
+                            <input class="form-check-input" type="checkbox" id="enableWebSearch" checked>
+                            <label class="form-check-label" for="enableWebSearch">
+                                🌐 <strong>Buscar en Internet</strong> (Activado por defecto)
+                            </label>
+                            <small class="d-block text-muted mt-1">Busca información real (DOF, Inegi, Noticias) antes
+                                de
+                                generar.</small>
+                        </div>
+
+                        <!-- RAG Context Selector -->
+                        <div id="aiContextArea" class="mb-3"
+                            style="display:none; border: 1px solid #34495e; padding: 0.75rem; border-radius: 8px;">
+                            <label class="form-check-label mb-2">📚 <strong>Usar Conocimiento del
+                                    Proyecto:</strong></label>
+                            <div id="aiContextList" style="max-height: 100px; overflow-y: auto;"></div>
+                        </div>
+
+                        <div id="ai-agent-status" class="text-center mb-4">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            </div>
+                            <p class="mt-2 text-info">Analizando con IA local...</p>
+                        </div>
+
+                        <!-- RAG Context Selector -->
+                        <div id="aiContextArea" class="mb-3"
+                            style="display:none; border: 1px solid #34495e; padding: 0.75rem; border-radius: 8px;">
+                            <label class="form-check-label mb-2">📚 <strong>Base de Conocimiento (RAG):</strong></label>
+                            <div id="aiContextList" style="max-height: 100px; overflow-y: auto;"></div>
+                        </div>
+
+                        <div id="ai-agent-results" style="display: none; max-height: 70vh; overflow-y: auto;">
+                            <h6 class="text-warning">💡 Hallazgo Estratégico:</h6>
+                            <div class="p-3 rounded mb-3"
+                                style="background: rgba(255,255,255,0.05); font-style: italic; max-height: 50vh; overflow-y: auto; white-space: pre-wrap;"
+                                id="ai-result-text"></div>
+
+                            <div class="d-flex justify-content-end gap-2"
+                                style="position: sticky; bottom: 0; background: var(--surface); padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                <button class="btn btn-outline-warning" onclick="regenerateAi()">🔄 Re-pensar</button>
+                                <button class="btn btn-outline-secondary" onclick="closeAiModal()">Cancelar</button>
+                                <button class="btn btn-success" onclick="applyAiResult()">✅ Aplicar al Proyecto</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KNOWLEDGE BASE MODAL -->
+        <div class="modal fade" id="kbModal" tabindex="-1" style="display: none; background: rgba(0,0,0,0.8);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content" style="background: var(--surface); color: var(--text);">
+                    <div class="modal-header">
+                        <h5 class="modal-title">📚 Base de Conocimiento (RAG)</h5>
+                        <button type="button" class="btn-close btn-close-white" onclick="closeKbModal()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3 p-3" style="border: 2px dashed var(--primary); border-radius: 8px;">
+                            <label class="form-label">📤 Subir Documento (PDF, TXT, MD):</label>
+                            <input type="file" id="kbFileInput" class="form-control" onchange="uploadKbFile()">
+                            <small class="text-muted d-block mt-2">La IA leerá y memorizará este contenido para usarlo
+                                en
+                                tus respuestas.</small>
+                        </div>
+
+                        <div class="mb-3 p-3"
+                            style="border: 1px solid var(--surface-light); border-radius: 8px; background: rgba(255,255,255,0.02);">
+                            <label class="form-label">🔗 Ó agregar URL de sitio web:</label>
+                            <div class="input-group">
+                                <input type="url" id="kbUrlInput" class="form-control"
+                                    placeholder="https://ejemplo.com/ley-o-articulo">
+                                <button class="btn btn-outline-info" type="button" onclick="scrapeUrlToKb()">🔍
+                                    Extraer</button>
+                            </div>
+                            <small class="text-muted d-block mt-1">Ideal para consultar leyes específicas o noticias en
+                                tiempo real.</small>
+                        </div>
+
+                        <h6>📂 Documentos Disponibles:</h6>
+                        <div id="kbFileList" class="list-group" style="max-height: 300px; overflow-y: auto;">
+                            <div class="text-center text-muted p-3">Cargando archivos...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show" id="aiModalBackdrop" style="display: none;"></div>
+
+        <style>
+            .modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1050;
+                overflow: hidden;
+                outline: 0;
+            }
+
+            .modal-dialog {
+                position: relative;
+                width: auto;
+                margin: 0.5rem;
+                pointer-events: none;
+                max-width: 800px;
+                margin: 1.75rem auto;
+            }
+
+            .modal-content {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                pointer-events: auto;
+                background-color: #fff;
+                background-clip: padding-box;
+                border: 1px solid rgba(0, 0, 0, .2);
+                border-radius: .3rem;
+                outline: 0;
+            }
+
+            .modal-body {
+                position: relative;
+                flex: 1 1 auto;
+                padding: 1rem;
+            }
+
+            .modal.show .modal-dialog {
+                transform: none;
+            }
+        </style>
+
+        <script src="js/plania-core.js"></script>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+        <script>
+            // Field info and AI prompts
+            const fieldInfo = {
+                nombre_negocio: { title: 'Nombre del Negocio', desc: 'El nombre comercial de tu empresa. Debe ser memorable, fácil de pronunciar y representar lo que ofreces.' },
+                nombre_emprendedor: { title: 'Emprendedor', desc: 'Tu nombre completo como responsable del proyecto.' },
+                carta_presentacion: { title: 'Carta de Presentación', desc: 'Breve historia personal: quién eres, tu experiencia relevante, y por qué emprendiste este negocio.' },
+                descripcion_negocio: { title: 'Descripción', desc: 'Resumen claro de qué ofrece tu negocio: productos/servicios principales, ubicación y propósito.' },
+                problema_oportunidad: { title: 'Problema/Oportunidad', desc: 'El problema que resuelves o la necesidad del mercado que detectaste como oportunidad.' },
+                propuesta_valor: { title: 'Propuesta de Valor', desc: 'Lo que te hace único y diferente de la competencia: ¿por qué elegirte a ti?' },
+                cliente_objetivo: { title: 'Cliente Objetivo', desc: 'A quién le vendes: demografía, hábitos, capacidad de pago.' },
+                monto_solicitado: { title: 'Monto Solicitado', desc: 'Capital semilla necesario para iniciar o crecer el negocio.' },
+                experiencia: { title: 'Experiencia', desc: 'Habilidades y experiencia previa relacionada con el negocio.' },
+                motivacion: { title: 'Motivación', desc: 'Razones personales por las que emprendes este proyecto.' },
+                tiempo: { title: 'Disponibilidad', desc: 'Horas semanales que dedicarás al negocio.' },
+                segmento_cliente: { title: 'Segmento', desc: 'Descripción detallada de tu cliente ideal: edad, género, ubicación, nivel socioeconómico, comportamiento.' },
+                ventaja_competitiva: { title: 'Ventaja Competitiva', desc: 'Tu diferenciador único: precio, calidad, servicio, ubicación, etc.' },
+                coordenadas: { title: 'Ubicación GPS', desc: 'Latitud y longitud de tu negocio (puedes obtenerlas de Google Maps).' },
+                direccion: { title: 'Dirección', desc: 'Ubicación física completa del negocio.' },
+                proceso_produccion: { title: 'Proceso', desc: 'Pasos para producir tu producto o prestar tu servicio.' },
+                capacidad: { title: 'Capacidad', desc: 'Cuánto puedes producir/atender por día/semana/mes.' },
+                bom: { title: 'Lista de Productos', desc: 'Catálogo de productos/servicios con precio de venta y costo estimado.' },
+                marca: { title: 'Marca', desc: 'Nombre comercial e identidad visual de tu negocio.' },
+                estrategia_precios: { title: 'Estrategia de Precios', desc: 'Cómo defines tus precios: por costo más margen, por competencia, por valor percibido.' },
+                canales_venta: { title: 'Canales', desc: 'Dónde y cómo venderás: local, online, WhatsApp, ferias, etc.' },
+                promocion: { title: 'Promoción', desc: 'Estrategias de bajo costo para dar a conocer tu negocio.' },
+                costos_fijos: { title: 'Costos Fijos', desc: 'Gastos mensuales que no cambian: renta, servicios, sueldos.' },
+                inversion_inicial: { title: 'Inversión Inicial', desc: 'Dinero necesario para comenzar: equipo, inventario, adecuaciones.' },
+                uso_capital: { title: 'Uso del Capital', desc: 'Detalle de cómo usarás el dinero solicitado.' },
+                impacto_social: { title: 'Impacto Social', desc: 'Beneficios para la comunidad: empleos, servicios, mejora de calidad de vida.' },
+                impacto_economico: { title: 'Impacto Económico', desc: 'Ingreso adicional esperado para tu familia.' },
+                compromiso: { title: 'Compromiso', desc: 'Tu promesa de dedicación y continuidad del negocio.' },
+                necesidad: { title: 'NECESIDAD', desc: 'Estado de carencia del cliente. ¿Qué problema o falta tiene tu cliente que tu producto/servicio resuelve? Piensa en necesidades básicas o funcionales.' },
+                deseo: { title: 'DESEO', desc: 'Forma específica de satisfacer la necesidad. ¿Cómo QUIERE el cliente resolver su problema? El deseo es más específico y emocional que la necesidad.' },
+                demanda: { title: 'DEMANDA', desc: 'Deseo respaldado por poder de compra. ¿El cliente tiene capacidad económica Y está dispuesto a pagar por tu solución?' },
+            };
+
+            const aiPrompts = {
+                nombre_negocio: 'Sugiere 5 nombres creativos para un negocio de [GIRO] en [CIUDAD], que sean memorables y fáciles de pronunciar.',
+                carta_presentacion: 'Redacta una carta de presentación de 150 palabras para un emprendedor de [GIRO] que tiene [X años] de experiencia en [ÁREA].',
+                descripcion_negocio: 'Describe en 100 palabras un negocio de [GIRO] ubicado en [CIUDAD] que ofrece [PRODUCTOS/SERVICIOS].',
+                problema_oportunidad: 'Identifica 3 problemas que resuelve un negocio de [GIRO] y 3 oportunidades de mercado en [REGIÓN].',
+                propuesta_valor: 'Crea una propuesta de valor diferenciadora para un negocio de [GIRO] que compite contra [COMPETIDORES].',
+                cliente_objetivo: 'Define el cliente ideal para un negocio de [GIRO] en [CIUDAD] incluyendo demografía, hábitos y poder adquisitivo.',
+                experiencia: 'Redacta un párrafo describiendo la experiencia relevante de alguien con background en [ÁREA] para emprender en [GIRO].',
+                motivacion: 'Explica 3 motivaciones personales para emprender un negocio de [GIRO] como sustento familiar.',
+                segmento_cliente: 'Segmenta el mercado para un negocio de [GIRO] en [CIUDAD] usando variables demográficas y psicográficas.',
+                ventaja_competitiva: 'Lista 5 ventajas competitivas que puede tener un negocio de [GIRO] pequeño frente a cadenas grandes.',
+                proceso_produccion: 'Describe el proceso paso a paso para producir [PRODUCTO] o prestar [SERVICIO].',
+                marca: 'Sugiere un nombre de marca y eslogan para un negocio de [GIRO] que transmita [VALORES].',
+                estrategia_precios: 'Define una estrategia de precios para un negocio de [GIRO] considerando costos de [X] y precios de competencia de [Y].',
+                promocion: 'Lista 10 estrategias de promoción de bajo costo para un negocio de [GIRO] en [CIUDAD].',
+                uso_capital: 'Detalla el uso de $[MONTO] de capital semilla para iniciar un negocio de [GIRO].',
+                impacto_social: 'Describe el impacto social de un negocio de [GIRO] en una comunidad de [TIPO].',
+                impacto_economico: 'Calcula el impacto económico familiar de un negocio de [GIRO] que genera $[VENTAS] mensuales.',
+            };
+
+            let currentStep = 1;
+            const totalSteps = 9;
+            let isEditMode = false;
+            let editProjectId = null;
+            let bomItems = [];
+            let map = null;
+            let marker = null;
+            let currentAiTargetField = null;
+
+            // Init
+            document.addEventListener('DOMContentLoaded', () => {
+                const params = new URLSearchParams(window.location.search);
+                const editId = params.get('edit');
+                if (editId) {
+                    isEditMode = true;
+                    editProjectId = editId;
+                    document.getElementById('wizard-title').textContent = '✏️ Editar Proyecto';
+                    setTimeout(() => loadProjectData(editProjectId), 500);
+                }
+
+                // Check Admin Role
+                const role = localStorage.getItem('user_role');
+                if (role === 'admin') {
+                    const adminPanel = document.getElementById('admin-panel');
+                    if (adminPanel) adminPanel.style.display = 'block';
+                }
+
+                setupTooltips();
+                setupFunnelCalc();
+            });
+
+            // AI Agent Logic - IA TOOLS GATEWAY (Hub Central)
+            const AI_CONFIG = {
+                url: 'http://localhost:3002/api/generate',  // Gateway
+                chatUrl: 'http://localhost:3002/api/chat',
+                osintUrl: 'http://localhost:3002/api/osint',
+                model: 'gemma3:1b',
+                useOpenAIFormat: false
+            };
+
+            async function openAIResearchModal(fieldId) {
+                currentAiTargetField = fieldId;
+                const modal = document.getElementById('aiAgentModal');
+                const backdrop = document.getElementById('aiModalBackdrop');
+                const status = document.getElementById('ai-agent-status');
+                const results = document.getElementById('ai-agent-results');
+
+                modal.style.display = 'block';
+                modal.classList.add('show');
+                backdrop.style.display = 'block';
+
+                status.style.display = 'block';
+                results.style.display = 'none';
+
+                // Check if Ollama is available
+                try {
+                    const checkResponse = await fetch('http://localhost:11434/api/tags', {
+                        method: 'GET',
+                        signal: AbortSignal.timeout(2000)
+                    });
+
+                    if (!checkResponse.ok) {
+                        throw new Error('Ollama not responding');
+                    }
+                } catch (e) {
+                    status.querySelector('p').innerText = '⚠️ Ollama no está corriendo. Inicia Ollama con gemma3:1b';
+                    document.getElementById('ai-result-text').innerText = 'Error: No se pudo conectar con el modelo de IA local. Ejecuta "ollama run gemma3:1b" en terminal.';
+                    status.style.display = 'none';
+                    results.style.display = 'block';
+                    return;
+                }
+
+                // Real AI processing with status updates
+                status.querySelector('p').innerText = '🤖 Conectando con Gemma 3...';
+
+                try {
+                    await callRealAI(fieldId, status);
+                } catch (error) {
+                    console.error('[AI Agent] Error:', error);
+                    document.getElementById('ai-result-text').innerText = 'Error al procesar: ' + error.message;
+                    status.style.display = 'none';
+                    results.style.display = 'block';
+                }
+            }
+
+            async function callRealAI(fieldId, statusEl) {
+                // Use BusinessPrompts for framework-based prompts
+                let prompt = '';
+                let webContext = '';
+
+                // Try to get web research if scraper is running
+                const useWebSearch = document.getElementById('enableWebSearch')?.checked;
+
+                if (useWebSearch) {
+                    statusEl.querySelector('p').innerText = '🌐 Buscando información en internet...';
+                    webContext = await getWebResearch(fieldId);
+                }
+
+                // Get prompt from BusinessPrompts
+                if (window.BusinessPrompts) {
+                    prompt = BusinessPrompts.getPrompt(fieldId);
+                } else {
+                    // Fallback simple prompt
+                    const businessName = document.getElementById('a1_nombre_negocio')?.value || 'el negocio';
+                    prompt = `Genera sugerencia para "${fieldId}" del negocio "${businessName}". Sé conciso.`;
+                }
+
+                // If we have web context, prepend it to the prompt
+                if (webContext) {
+                    prompt = `INFORMACIÓN DE INTERNET (usar como referencia):
+${webContext}
+
+---
+TAREA:
+${prompt}`;
+                }
+
+                // IMPORTANTE: Agregar instrucción de brevedad al final
+                prompt += `
+
+⚠️ IMPORTANTE: Responde en MÁXIMO 3-4 oraciones o 5 bullets cortos. Sé directo y conciso. Solo el contenido esencial, sin introducciones ni conclusiones.`;
+
+                statusEl.querySelector('p').innerText = '🧠 Analizando con IA local (MLX)...';
+
+                // Use OpenAI-compatible format for MLX server
+                const requestBody = AI_CONFIG.useOpenAIFormat ? {
+                    model: AI_CONFIG.model,
+                    messages: [
+                        { role: 'system', content: 'Eres un experto en planes de negocio. Responde en español, de forma concisa y directa.' },
+                        { role: 'user', content: prompt }
+                    ],
+                    max_tokens: 500,
+                    temperature: 0.7
+                } : {
+                    model: AI_CONFIG.model,
+                    prompt: prompt,
+                    stream: false,
+                    options: { temperature: 0.7, num_predict: 1200 }
+                };
+
+                const apiUrl = AI_CONFIG.useOpenAIFormat ? AI_CONFIG.chatUrl : AI_CONFIG.url;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                // Handle both OpenAI and Ollama response formats
+                let aiResult = AI_CONFIG.useOpenAIFormat
+                    ? (data.choices?.[0]?.message?.content || data.choices?.[0]?.text || 'No se obtuvo respuesta.')
+                    : (data.response || 'No se obtuvo respuesta del modelo.');
+
+                // Limpiar resultado: quitar introducciones genéricas
+                aiResult = aiResult
+                    .replace(/^(¡Excelente!|¡Claro!|¡Por supuesto!|Aquí te presento|Me complace|Con gusto).*?[\n\.:]/gi, '')
+                    .replace(/\n{3,}/g, '\n\n')
+                    .trim();
+
+                console.log('[AI Agent] Response for', fieldId, ':', aiResult.substring(0, 100) + '...');
+
+                document.getElementById('ai-result-text').innerText = aiResult;
+                statusEl.style.display = 'none';
+                document.getElementById('ai-agent-results').style.display = 'block';
+
+                // AUDITORIA IA: Registrar interacción
+                try {
+                    fetch('http://localhost:3001/audit/ai', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user: window.currentUser || 'usuario_web',
+                            fieldId: fieldId,
+                            prompt: prompt,
+                            response: aiResult
+                        })
+                    });
+                } catch (e) { console.warn('No se pudo auditar IA', e); }
+            }
+
+            /**
+             * Obtiene investigación web del scraper service
+             * Usa APIs gratuitas: INEGI, Banxico, MercadoLibre, Google Maps
+             */
+            async function getWebResearch(fieldId) {
+                const WEB_SCRAPER_URL = 'http://localhost:3001';
+
+                try {
+                    const businessName = document.getElementById('a1_nombre_negocio')?.value || '';
+                    const description = document.getElementById('b1_descripcion_negocio')?.value || '';
+                    const location = document.getElementById('d8_direccion_formateada')?.value || '';
+
+                    if (!businessName) return '';
+
+                    let webContext = '';
+
+                    // Campos que usan indicadores económicos (INEGI/Banxico)
+                    const economicFields = ['impacto_economico', 'uso_capital', 'estrategia_precios'];
+
+                    // Campos que buscan competidores (Google Maps)
+                    const competitorFields = ['ventaja_competitiva', 'segmento_cliente'];
+
+                    // Campos que buscan precios (MercadoLibre/Profeco)
+                    const priceFields = ['estrategia_precios'];
+
+                    // 1. Obtener indicadores económicos si aplica
+                    if (economicFields.includes(fieldId)) {
+                        try {
+                            const indicatorsRes = await fetch(`${WEB_SCRAPER_URL}/indicators`, {
+                                signal: AbortSignal.timeout(8000)
+                            });
+                            if (indicatorsRes.ok) {
+                                const indicators = await indicatorsRes.json();
+                                if (indicators.success) {
+                                    webContext += '📊 INDICADORES ECONÓMICOS ACTUALES:\n';
+                                    if (indicators.indicators.banxico) {
+                                        webContext += `• ${indicators.indicators.banxico.title}: ${indicators.indicators.banxico.value} (${indicators.indicators.banxico.date})\n`;
+                                    }
+                                    if (indicators.indicators.inegi) {
+                                        webContext += `• ${indicators.indicators.inegi.indicator}: ${indicators.indicators.inegi.value}\n`;
+                                    }
+                                    webContext += '\n';
+                                }
+                            }
+                        } catch (e) { /* silently continue */ }
+                    }
+
+                    // 2. Buscar precios de referencia si aplica
+                    if (priceFields.includes(fieldId) && description) {
+                        try {
+                            const pricesRes = await fetch(`${WEB_SCRAPER_URL}/prices`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    product: description,
+                                    user: window.currentUser || 'usuario_web'
+                                }),
+                                signal: AbortSignal.timeout(12000)
+                            });
+                            if (pricesRes.ok) {
+                                const prices = await pricesRes.json();
+                                if (prices.success && prices.data.mercadoLibre.averagePrice) {
+                                    webContext += '💰 PRECIOS DE REFERENCIA:\n';
+                                    webContext += `• Precio promedio MercadoLibre: $${prices.data.mercadoLibre.averagePrice.toLocaleString()} (${prices.data.mercadoLibre.sampleSize} productos)\n`;
+                                    if (prices.data.profeco && prices.data.profeco.length > 0) {
+                                        webContext += `• Profeco: ${prices.data.profeco[0].precio} en ${prices.data.profeco[0].tienda}\n`;
+                                    }
+                                    webContext += '\n';
+                                }
+                            }
+                        } catch (e) { /* silently continue */ }
+                    }
+
+                    // 3. Buscar competidores si aplica
+                    if (competitorFields.includes(fieldId)) {
+                        try {
+                            const competitorsRes = await fetch(`${WEB_SCRAPER_URL}/search`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    query: description || businessName,
+                                    type: 'competitors',
+                                    location: location,
+                                    user: window.currentUser || 'usuario_web'
+                                }),
+                                signal: AbortSignal.timeout(15000)
+                            });
+                            if (competitorsRes.ok) {
+                                const competitors = await competitorsRes.json();
+                                if (competitors.success && competitors.results.length > 0) {
+                                    webContext += '🏢 COMPETIDORES EN LA ZONA:\n';
+                                    competitors.results.slice(0, 5).forEach(c => {
+                                        webContext += `• ${c.name || c.title}\n`;
+                                    });
+                                    webContext += '\n';
+                                }
+                            }
+                        } catch (e) { /* silently continue */ }
+                    }
+
+                    // 4. Búsqueda general para otros campos
+                    if (!webContext) {
+                        const searchQueries = {
+                            'propuesta_valor': `${description} propuesta valor ejemplos`,
+                            'cliente_objetivo': `perfil cliente ${description} México demográfico`,
+                            'proceso_produccion': `proceso producción ${description} guía`,
+                            'marca': `branding ${description} tendencias`,
+                            'promocion': `marketing digital ${description} México estrategias`,
+                            'impacto_social': `impacto social empresas ${description} México`,
+                            'default': `${businessName} ${description} México tendencias`
+                        };
+
+                        const query = searchQueries[fieldId] || searchQueries['default'];
+
+                        const response = await fetch(`${WEB_SCRAPER_URL}/search`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                query: query,
+                                type: 'general',
+                                maxResults: 3,
+                                user: window.currentUser || 'usuario_web'
+                            }),
+                            signal: AbortSignal.timeout(15000)
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.results && data.results.length > 0) {
+                                webContext = '🔍 INFORMACIÓN WEB:\n';
+                                data.results.forEach(r => {
+                                    webContext += `• ${r.title}: ${r.snippet || ''}\n`;
+                                });
+                            }
+                        }
+                    }
+
+                    return webContext;
+                } catch (e) {
+                    console.log('[Web Research] Scraper not available:', e.message);
+                    return '';
+                }
+            }
+
+            function closeAiModal() {
+                const modal = document.getElementById('aiAgentModal');
+                const backdrop = document.getElementById('aiModalBackdrop');
+                modal.style.display = 'none';
+                modal.classList.remove('show');
+                backdrop.style.display = 'none';
+            }
+
+            function applyAiResult() {
+                if (currentAiTargetField) {
+                    let target = document.getElementById(currentAiTargetField);
+
+                    // Fallback finder
+                    if (!target || target.tagName === 'DIV') {
+                        const inputs = Array.from(document.querySelectorAll('input, textarea, select'));
+                        target = inputs.find(i => i.id.includes(currentAiTargetField)) || target;
+                    }
+
+                    if (target) {
+                        target.value = document.getElementById('ai-result-text').innerText;
+                        target.dispatchEvent(new Event('input')); // Trigger autosave listeners if any
+                        closeAiModal();
+
+                        // Visual feedback
+                        target.style.backgroundColor = '#e8f5e9';
+                        setTimeout(() => target.style.backgroundColor = '', 1000);
+                    } else {
+                        alert("No se encontró el campo destino.");
+                    }
+                }
+            }
+
+            function regenerateAi() {
+                // Reiniciar estado visual
+                document.getElementById('ai-agent-results').style.display = 'none';
+                const statusEl = document.getElementById('ai-agent-status');
+                statusEl.style.display = 'block';
+                statusEl.querySelector('p').innerText = '🔄 Re-pensando y buscando información actualizada...';
+
+                // Re-ejecutar análisis
+                if (currentAiTargetField) {
+                    openAIResearchModal(currentAiTargetField);
+                }
+            }
+
+
+
+            // ==========================================
+            // KNOWLEDGE BASE LOGIC (RAG)
+            // ==========================================
+            async function openKbModal() {
+                const m = document.getElementById('kbModal');
+                m.style.display = 'block';
+                m.classList.add('show');
+                loadKbFiles();
+            }
+
+            function closeKbModal() {
+                const m = document.getElementById('kbModal');
+                m.style.display = 'none';
+                m.classList.remove('show');
+            }
+
+            async function uploadKbFile() {
+                const input = document.getElementById('kbFileInput');
+                if (!input.files[0]) return;
+
+                const formData = new FormData();
+                formData.append('file', input.files[0]);
+
+                // Show loading
+                input.disabled = true;
+
+                try {
+                    const res = await fetch('http://localhost:3001/knowledge/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert('✅ Archivo procesado y memorizado');
+                        loadKbFiles();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (e) {
+                    alert('Error de conexión');
+                } finally {
+                    input.value = '';
+                    input.disabled = false;
+                }
+            }
+
+            async function scrapeUrlToKb() {
+                const input = document.getElementById('kbUrlInput');
+                const url = input.value.trim();
+                if (!url) return alert('Ingresa una URL válida');
+
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = '⌛...';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch('http://localhost:3001/knowledge/scrape', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert('✅ Sitio web analizado y memorizado en tu Base de Conocimiento');
+                        input.value = '';
+                        loadKbFiles();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (e) {
+                    alert('Error al conectar con el servidor de scraping');
+                } finally {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            }
+
+            async function loadKbFiles() {
+                const listEl = document.getElementById('kbFileList');
+                try {
+                    const res = await fetch('http://localhost:3001/knowledge/list');
+                    const data = await res.json();
+
+                    if (data.success && data.documents.length > 0) {
+                        listEl.innerHTML = data.documents.map(doc => `
+                        <div class="list-group-item d-flex justify-content-between align-items-center" style="background: var(--bg); color: var(--text); border-bottom: 1px solid #eee;">
+                            <div>
+                                <strong>${doc.originalName}</strong>
+                                <br><small class="text-muted">${(doc.size / 1024).toFixed(1)} KB • ${new Date(doc.uploadDate).toLocaleDateString()}</small>
+                            </div>
+                            <span class="badge bg-success">Memorizado</span>
+                        </div>
+                    `).join('');
+                    } else {
+                        listEl.innerHTML = '<div class="p-3 text-muted text-center">No hay documentos aún. Sube uno para empezar.</div>';
+                    }
+                } catch (e) {
+                    listEl.innerHTML = '<div class="text-danger">Error cargando lista</div>';
+                }
+            }
+
+            async function loadContextForAi() {
+                const listEl = document.getElementById('aiContextList');
+                const container = document.getElementById('aiContextArea');
+                try {
+                    const res = await fetch('http://localhost:3001/knowledge/list');
+                    const data = await res.json();
+
+                    if (data.success && data.documents.length > 0) {
+                        container.style.display = 'block';
+                        listEl.innerHTML = data.documents.map(doc => `
+                        <div class="form-check">
+                            <input class="form-check-input kb-doc-check" type="checkbox" value="${doc.id}" id="doc_${doc.id}" checked>
+                            <label class="form-check-label" for="doc_${doc.id}">
+                                ${doc.originalName}
+                            </label>
+                        </div>
+                    `).join('');
+                    } else {
+                        container.style.display = 'none';
+                    }
+                } catch (e) { container.style.display = 'none'; }
+            }
+
+            // Hook openAIResearchModal to load context
+            const _originalOpenAI = openAIResearchModal;
+            openAIResearchModal = async function (fieldId) {
+                await loadContextForAi();
+                _originalOpenAI(fieldId);
+            }
+
+            // Hook openAIResearchModal to load context and inject Prompt
+            // We override the function to:
+            // 1. Load context options into UI
+            // 2. Wrap the API call to inject RAG context into the prompt
+            // Since we cannot easily wrap the 'prompt construction' inside openAIResearchModal without rewriting it,
+            // we will use a trick: We hijack BusinessPrompts.getPrompt (temporarily) or we modify the prompt sent to backend?
+            // Actually, openAIResearchModal sends { prompt: ... } to backend.
+
+            // Better approach: We modify openAIResearchModal to use a Global variable for RAG context
+            // But openAIResearchModal is defined above.
+            // Let's just redefine openAIResearchModal entirely? No, too risky.
+
+            // Strategy: We inject a "Pre-analysis" step.
+            // When user key presses, we show modal. OpenAIResearchModal is called.
+            // It fetches prompt immediately.
+
+            // Let's overwrite getPrompt to inject context IF checkboxes are checked.
+            const _trueGetPrompt = BusinessPrompts.getPrompt.bind(BusinessPrompts);
+            BusinessPrompts.getPrompt = function (fieldId) {
+                let p = _trueGetPrompt(fieldId);
+                const selectedDocs = Array.from(document.querySelectorAll('.kb-doc-check:checked')).map(c => c.value);
+                // This is synchronous, so we can't await fetch here.
+                // Problem: We need the context TEXT here, but we only have IDs.
+                // Solution: We should have loaded the text already? No, too heavy.
+
+                // ALTERNATIVE: Use the 'options' field in API call?
+                // "options": { "rag_context": "..." }
+                // But Ollama doesn't support that directly unless we handle it in backend.
+
+                // FINAL STRATEGY: 
+                // We invoke 'loadContextForAi()' when modal opens.
+                // When user clicks "Aplicar" or "Regenerar", we assume validation is done.
+                // Wait, the prompt is sent immediately when modal opens!
+                // So we need to PAUSE execution until context is loaded?
+
+                return p;
+            };
+
+            // We will modify 'askAgent' flow.
+            // Since we cannot change openAIResearchModal easily, we will accept that the FIRST run (on open) 
+            // might not have RAG context unless we delay it.
+
+            // Override openAIResearchModal
+            const _pkcOpenAi = openAIResearchModal;
+            openAIResearchModal = async function (fieldId) {
+                // 1. Load available docs into UI (async)
+                await loadContextForAi();
+
+                // 2. Check if there are selected docs (default checked)
+                const checks = document.querySelectorAll('.kb-doc-check:checked');
+                if (checks.length > 0) {
+                    // 3. Fetch context text (async)
+                    const docIds = Array.from(checks).map(c => c.value);
+                    try {
+                        document.getElementById('ai-agent-status').querySelector('p').innerText = '📚 Leyendo fuentes...';
+                        const ctxRes = await fetch('http://localhost:3001/knowledge/context', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ docIds })
+                        });
+                        const ctxData = await ctxRes.json();
+                        if (ctxData.context) {
+                            // 4. Inject into Global prompt override
+                            window.ragContextBuffer = ctxData.context;
+                        }
+                    } catch (e) { console.error('RAG Error', e); }
+                }
+
+                _pkcOpenAi(fieldId);
+            }
+
+            // We patch BusinessPrompts again to use the buffer
+            BusinessPrompts.getPrompt = function (fieldId) {
+                let p = _trueGetPrompt(fieldId);
+                if (window.ragContextBuffer) {
+                    p += `\n\nCONTEXTO DE BASE DE CONOCIMIENTO (RAG):\n${window.ragContextBuffer}\nFIN CONTEXTO RAG.\n`;
+                    window.ragContextBuffer = null; // Reset
+                }
+                return p;
+            }
+            function setupFunnelCalc() {
+                const fields = ['i_mercado_objetivo', 'i_alcance_pct', 'i_conversion_pct', 'g5_precio_promedio'];
+                fields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.addEventListener('input', calcFunnel);
+                });
+            }
+
+            function calcFunnel() {
+                const mercado = parseFloat(document.getElementById('i_mercado_objetivo')?.value) || 0;
+                const alcance = parseFloat(document.getElementById('i_alcance_pct')?.value) || 0;
+                const conversion = parseFloat(document.getElementById('i_conversion_pct')?.value) || 0;
+                const ticket = parseFloat(document.getElementById('g5_precio_promedio')?.value) || 0;
+
+                const clientes = Math.round(mercado * (alcance / 100) * (conversion / 100));
+                const ventasMes = clientes * ticket;
+
+                const resultEl = document.getElementById('funnel-sales');
+                if (resultEl) resultEl.textContent = '$' + ventasMes.toLocaleString() + '/mes';
+            }
+
+            // Map Logic
+            function initMap() {
+                if (map) return;
+                const mapContainer = document.getElementById('map-container');
+                if (!mapContainer) return;
+
+                let lat = parseFloat(document.getElementById('d6_latitud').value) || 29.0729;
+                let lon = parseFloat(document.getElementById('d7_longitud').value) || -110.9559;
+
+                map = L.map('map-container').setView([lat, lon], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                if (document.getElementById('d6_latitud').value) {
+                    marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+                    marker.on('dragend', function (event) {
+                        const position = marker.getLatLng();
+                        updateCoords(position.lat, position.lng);
+                    });
+                }
+
+                map.on('click', function (e) {
+                    if (marker) marker.setLatLng(e.latlng);
+                    else {
+                        marker = L.marker(e.latlng, { draggable: true }).addTo(map);
+                        marker.on('dragend', function (event) {
+                            const position = marker.getLatLng();
+                            updateCoords(position.lat, position.lng);
+                        });
+                    }
+                    updateCoords(e.latlng.lat, e.latlng.lng);
+                });
+                setTimeout(() => { map.invalidateSize(); }, 100);
+            }
+
+            function updateCoords(lat, lng) {
+                document.getElementById('d6_latitud').value = lat.toFixed(6);
+                document.getElementById('d7_longitud').value = lng.toFixed(6);
+
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
+                    headers: { 'User-Agent': 'PlanIA_App/1.0' }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            document.getElementById('d8_direccion_formateada').value = data.display_name;
+                        }
+                    })
+                    .catch(err => console.error('Geocoding error:', err));
+            }
+
+            /**
+             * Generar Reporte Visual (PDF Ready)
+             */
+            async function generateVisualReport() {
+                const btn = document.getElementById('btnReport');
+                const originalText = btn.innerHTML;
+
+                // Datos básicos
+                const name = document.getElementById('a1_nombre_negocio')?.value || 'Mi Nuevo Proyecto';
+                // Intentar obtener ubicación: dirección formateada o lat/long
+                let location = document.getElementById('d8_direccion_formateada')?.value;
+                if (!location) {
+                    // Fallback: Giro + Default
+                    const giro = document.getElementById('a3_giro')?.value || 'Negocio';
+                    location = `${giro} en Ciudad de México`;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '📸 Capturando Mapa...';
+
+                try {
+                    // 1. Capturar Mapa (Llamada al servicio web-scraper :3001)
+                    const res = await fetch('http://localhost:3001/capture-map', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            query: location,
+                            user: window.currentUser || 'usuario_wizard'
+                        })
+                    });
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                        btn.innerHTML = '✨ Abriendo PDF...';
+
+                        // 2. Construir URL del Reporte
+                        // Color aleatorio para "Identidad" si no hay (podríamos agregar un campo de color luego)
+                        const colors = ['#2c3e50', '#e74c3c', '#27ae60', '#8e44ad', '#f39c12'];
+                        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+                        // Estrategia Avanzada (MBA)
+                        const pestel = document.getElementById('i1_pestel_analisis')?.value || '';
+                        const tows = document.getElementById('i2_tows_matrix')?.value || '';
+                        const risks = document.getElementById('i4_gestion_riesgos')?.value || '';
+                        const blue = document.getElementById('i3_blue_ocean')?.value || '';
+
+                        const reportUrl = `http://localhost:3001/report.html?name=${encodeURIComponent(name)}&color=${encodeURIComponent(randomColor)}&map=${encodeURIComponent(data.url)}&pestel=${encodeURIComponent(pestel)}&tows=${encodeURIComponent(tows)}&risks=${encodeURIComponent(risks)}&blue=${encodeURIComponent(blue)}`;
+
+                        window.open(reportUrl, '_blank');
+
+                    } else {
+                        alert('Error capturando mapa: ' + (data.error || 'Desconocido'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('No se pudo conectar con el servicio de reportes (Puerto 3001). Asegúrate de que npm start esté corriendo en services/web-scraper.');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+
+
+            // Tooltips (UPDATED)
+            function setupTooltips() {
+                document.addEventListener('click', (e) => {
+                    const infoBtn = e.target.closest('.icon-btn.info');
+                    const aiBtn = e.target.closest('.icon-btn.ai');
+
+                    if (infoBtn) {
+                        const key = infoBtn.dataset.info;
+                        showTooltip(infoBtn, fieldInfo[key]?.title || '', fieldInfo[key]?.desc || '', null);
+                    } else if (aiBtn) {
+                        const key = aiBtn.dataset.ai;
+                        // Trigger the Agent Modal
+                        openAIResearchModal(key);
+                    } else {
+                        hideTooltip();
+                    }
+                });
+            }
+
+            function showTooltip(btn, title, content, aiPrompt) {
+                const tooltip = document.getElementById('tooltip');
+                const rect = btn.getBoundingClientRect();
+                let html = `<div class="tooltip-title">${title}</div><div class="tooltip-content">${content}</div>`;
+                tooltip.innerHTML = html;
+                tooltip.style.top = (rect.bottom + 10) + 'px';
+                tooltip.style.left = Math.max(10, rect.left - 150) + 'px';
+                tooltip.classList.add('show');
+            }
+
+            function hideTooltip() {
+                document.getElementById('tooltip').classList.remove('show');
+            }
+
+            // Navigation
+            function goToStep(step) {
+                if (step === 4) setTimeout(initMap, 500);
+                if (step < 1 || step > totalSteps) return;
+
+                document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+                document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
+
+                document.querySelectorAll('.progress-step').forEach((s, i) => {
+                    s.classList.remove('active');
+                    if (i + 1 < step) s.classList.add('completed');
+                    else s.classList.remove('completed');
+                    if (i + 1 === step) s.classList.add('active');
+                });
+                currentStep = step;
+                updateNavButtons();
+            }
+
+            function nextStep() { goToStep(currentStep + 1); }
+            function prevStep() { goToStep(currentStep - 1); }
+
+            function updateNavButtons() {
+                document.getElementById('btnPrev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+                document.getElementById('btnNext').style.display = currentStep === totalSteps ? 'none' : 'block';
+                document.getElementById('btnSubmit').style.display = currentStep === totalSteps ? 'block' : 'none';
+                // Mostrar botón de reporte visual
+                const btnReport = document.getElementById('btnReport');
+                if (btnReport) btnReport.style.display = currentStep === totalSteps ? 'block' : 'none';
+            }
+
+            // BOM
+            function addBomItem() {
+                bomItems.push({ producto: '', precio_venta: 0, costo: 0 });
+                renderBom();
+            }
+            function removeBomItem(idx) {
+                bomItems.splice(idx, 1);
+                renderBom();
+            }
+            function renderBom() {
+                const container = document.getElementById('bomContainer');
+                container.innerHTML = bomItems.map((item, i) => `
+                <div class="bom-item">
+                    <div class="bom-header">
+                        <span>Producto ${i + 1}</span>
+                        <button type="button" class="btn-remove" onclick="removeBomItem(${i})">✕</button>
+                    </div>
+                    <div class="row">
+                        <input type="text" placeholder="Nombre" value="${item.producto}" onchange="bomItems[${i}].producto = this.value">
+                        <input type="number" placeholder="Precio $" value="${item.precio_venta || ''}" onchange="bomItems[${i}].precio_venta = parseFloat(this.value) || 0">
+                    </div>
+                </div>
+            `).join('');
+            }
+
+            // Data Loading & Saving
+            async function loadProjectData(id) {
+                try {
+                    const res = await fetch(PlanIA.API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'get', id_proyecto: id })
+                    });
+                    const project = await res.json();
+
+                    if (project && project.id_proyecto) {
+                        Object.keys(project).forEach(key => {
+                            const el = document.getElementById(key);
+                            if (el) el.value = project[key] || '';
+                        });
+                        try {
+                            bomItems = JSON.parse(project.e3_productos_bom_json || '[]');
+                            renderBom();
+                        } catch (e) { }
+                    }
+                } catch (err) { console.error(err); }
+            }
+
+            async function submitForm() {
+                const formData = new FormData(document.getElementById('wizardForm'));
+                const data = Object.fromEntries(formData.entries());
+                data.e3_productos_bom_json = JSON.stringify(bomItems);
+
+                // RBAC Logic: If admin and field is filled, use that. Else use logged in user.
+                const userRole = localStorage.getItem('user_role');
+                if (userRole === 'admin') {
+                    data.uuid_usuario = document.getElementById('uuid_usuario').value || localStorage.getItem('uuid_usuario');
+                    data.uuid_consultor = document.getElementById('uuid_consultor').value;
+                } else {
+                    data.uuid_usuario = localStorage.getItem('uuid_usuario') || 'demo-user';
+                }
+
+                data.action = isEditMode ? 'update' : 'create';
+                if (isEditMode) data.id_proyecto = editProjectId;
+
+                try {
+                    const res = await fetch(PlanIA.API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+                    if (result.success || result.id_proyecto) {
+                        document.getElementById('saveIndicator').textContent = '✅ Proyecto guardado correctamente';
+
+                        // === AUTO-FILL: Propagar datos a otros módulos ===
+                        const projectId = result.id_proyecto || editProjectId;
+                        await triggerAutoFill(projectId, data);
+
+                        setTimeout(() => window.location.href = 'projects_list.html', 2000);
+                    } else alert('Error: ' + (result.error || 'No se pudo guardar'));
+                } catch (err) { alert('Error de conexión'); }
+            }
+
+            /**
+             * Ejecuta el auto-llenado de módulos
+             * Primero intenta sin IA, luego verifica si Ollama está disponible
+             */
+            async function triggerAutoFill(projectId, data) {
+                if (!window.AutoFillMapper) {
+                    console.warn('[Wizard] AutoFillMapper not loaded');
+                    return;
+                }
+
+                document.getElementById('saveIndicator').textContent = '🔄 Propagando datos a módulos...';
+
+                // Preparar datos del proyecto
+                const projectData = { ...data, id_proyecto: projectId };
+
+                // Verificar si Ollama está disponible
+                let useAI = false;
+                try {
+                    const aiCheck = await fetch('http://localhost:11434/api/tags', {
+                        method: 'GET',
+                        signal: AbortSignal.timeout(2000) // 2 second timeout
+                    });
+                    if (aiCheck.ok) {
+                        useAI = true;
+                        console.log('[Wizard] Ollama detected, AI suggestions enabled');
+                        document.getElementById('saveIndicator').textContent = '🤖 Generando sugerencias con IA...';
+                    }
+                } catch (e) {
+                    console.log('[Wizard] Ollama not available, using direct mapping only');
+                }
+
+                try {
+                    // Ejecutar auto-llenado (orden: definición → estrategia → financiero)
+                    const results = await AutoFillMapper.propagateAll(projectData, useAI);
+                    console.log('[Wizard] Auto-fill complete:', results);
+                    document.getElementById('saveIndicator').textContent = '✅ Todos los módulos actualizados';
+                } catch (error) {
+                    console.error('[Wizard] Auto-fill error:', error);
+                    document.getElementById('saveIndicator').textContent = '⚠️ Proyecto guardado (auto-fill parcial)';
+                }
+            }
+        </script>
+
+        <!-- ============================================ -->
+        <!-- FLOATING AI ASSISTANT CHAT -->
+        <!-- ============================================ -->
+        <style>
+            /* Floating Button */
+            #ai-fab {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #a855f7, #6366f1);
+                border: none;
+                cursor: pointer;
+                box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 28px;
+                z-index: 9999;
+                transition: transform 0.3s, box-shadow 0.3s;
+            }
+
+            #ai-fab:hover {
+                transform: scale(1.1);
+                box-shadow: 0 6px 30px rgba(168, 85, 247, 0.6);
+            }
+
+            #ai-fab.active {
+                transform: rotate(45deg);
+            }
+
+            /* Chat Panel */
+            #ai-chat-panel {
+                position: fixed;
+                bottom: 100px;
+                right: 30px;
+                width: 400px;
+                max-height: 600px;
+                background: rgba(18, 18, 26, 0.95);
+                backdrop-filter: blur(20px);
+                border-radius: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                display: none;
+                flex-direction: column;
+                z-index: 9998;
+                overflow: hidden;
+            }
+
+            #ai-chat-panel.open {
+                display: flex;
+                animation: slideUp 0.3s ease;
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* Chat Header */
+            .ai-chat-header {
+                padding: 1rem 1.25rem;
+                background: linear-gradient(135deg, #a855f7, #6366f1);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .ai-chat-header h3 {
+                margin: 0;
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .ai-chat-header .badge {
+                background: rgba(255, 255, 255, 0.2);
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 0.7rem;
+            }
+
+            /* Chat Messages */
+            .ai-chat-messages {
+                flex: 1;
+                overflow-y: auto;
+                padding: 1rem;
+                max-height: 350px;
+            }
+
+            .ai-msg {
+                margin-bottom: 1rem;
+                max-width: 85%;
+            }
+
+            .ai-msg.assistant {
+                margin-right: auto;
+            }
+
+            .ai-msg.user {
+                margin-left: auto;
+            }
+
+            .ai-msg-content {
+                padding: 0.75rem 1rem;
+                border-radius: 16px;
+                font-size: 0.9rem;
+                line-height: 1.5;
+            }
+
+            .ai-msg.assistant .ai-msg-content {
+                background: rgba(168, 85, 247, 0.2);
+                border-bottom-left-radius: 4px;
+            }
+
+            .ai-msg.user .ai-msg-content {
+                background: rgba(99, 102, 241, 0.3);
+                border-bottom-right-radius: 4px;
+            }
+
+            .ai-msg-time {
+                font-size: 0.7rem;
+                color: #888;
+                margin-top: 4px;
+            }
+        </style>
+
+
+
+        <script>
+            // ============================================
+            // FLOATING AI CHAT LOGIC
+            // ============================================
+            const AI_CHAT_API = 'http://localhost:3002/api/generate';
+            const OSINT_API = 'http://localhost:3002/api/osint/user';
+            let chatHistory = [];
+
+            // Ensure chat elements are directly in body for proper visibility
+            document.addEventListener('DOMContentLoaded', () => {
+                const fab = document.getElementById('ai-fab');
+                const panel = document.getElementById('ai-chat-panel');
+                if (fab && fab.parentElement !== document.body) {
+                    document.body.appendChild(fab);
+                }
+                if (panel && panel.parentElement !== document.body) {
+                    document.body.appendChild(panel);
+                }
+            });
+
+            function toggleAiChat() {
+                const panel = document.getElementById('ai-chat-panel');
+                const fab = document.getElementById('ai-fab');
+                panel.classList.toggle('open');
+                fab.classList.toggle('active');
+                fab.innerHTML = panel.classList.contains('open') ? '✕' : '<img src="img/bob-logo.png" alt="Bob" style="width: 40px; height: 40px; border-radius: 50%;">';
+            }
+
+            function addChatMessage(content, role = 'assistant') {
+                const messages = document.getElementById('ai-chat-messages');
+                const time = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                const msg = document.createElement('div');
+                msg.className = `ai-msg ${role}`;
+                msg.innerHTML = `
+            <div class="ai-msg-content">${content}</div>
+            <div class="ai-msg-time">${time}</div>
+        `;
+                messages.appendChild(msg);
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            function showTyping() {
+                const messages = document.getElementById('ai-chat-messages');
+                const typing = document.createElement('div');
+                typing.id = 'ai-typing-indicator';
+                typing.className = 'ai-msg assistant';
+                typing.innerHTML = '<div class="ai-typing"><span></span><span></span><span></span></div>';
+                messages.appendChild(typing);
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            function hideTyping() {
+                const typing = document.getElementById('ai-typing-indicator');
+                if (typing) typing.remove();
+            }
+
+            function getFormContext() {
+                // Obtener contexto actual del formulario
+                const fields = {};
+                document.querySelectorAll('input[id], textarea[id], select[id]').forEach(el => {
+                    if (el.value && el.id) {
+                        fields[el.id] = el.value;
+                    }
+                });
+                return fields;
+            }
+
+            async function sendAiMessage() {
+                const input = document.getElementById('ai-chat-input');
+                const message = input.value.trim();
+                if (!message) return;
+
+                addChatMessage(message, 'user');
+                input.value = '';
+                showTyping();
+
+                const context = getFormContext();
+                const contextStr = Object.keys(context).length > 0
+                    ? `\n\nContexto del proyecto actual:\n${JSON.stringify(context, null, 2)}`
+                    : '';
+
+                const prompt = `Eres Moltbot, el agente experto en planes de negocio de Fondo Thoth para PlanIA. Ayudas a emprendedores mexicanos.
+${contextStr}
+
+Usuario: ${message}
+
+Responde de forma concisa y práctica. Si puedes llenar un campo, indica cuál y con qué valor.`;
+
+                try {
+                    const response = await fetch(AI_CHAT_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt, stream: false })
+                    });
+                    const data = await response.json();
+                    hideTyping();
+
+                    const answer = data.response || data.choices?.[0]?.text || 'No pude procesar tu solicitud.';
+                    addChatMessage(answer.replace(/\n/g, '<br>'));
+
+                    // Detectar si hay campos a llenar
+                    parseAndFillFields(answer);
+                } catch (error) {
+                    hideTyping();
+                    addChatMessage('❌ Error conectando con la IA. Verifica que el servidor esté activo.');
+                }
+            }
+
+            function parseAndFillFields(response) {
+                // Detectar patrones como "nombre_negocio: TechVenture" o "[nombre_negocio] = TechVenture"
+                const patterns = [
+                    /(\w+):\s*"([^"]+)"/g,
+                    /\[(\w+)\]\s*=\s*(.+)/g,
+                    /Campo\s+(\w+):\s*(.+)/gi
+                ];
+
+                patterns.forEach(pattern => {
+                    let match;
+                    while ((match = pattern.exec(response)) !== null) {
+                        const fieldId = match[1];
+                        const value = match[2].trim();
+                        const field = document.getElementById(fieldId);
+                        if (field) {
+                            field.value = value;
+                            field.dispatchEvent(new Event('input', { bubbles: true }));
+                            addChatMessage(`✅ Campo <strong>${fieldId}</strong> llenado con: "${value}"`, 'assistant');
+                        }
+                    }
+                });
+            }
+
+            async function aiQuickAction(action) {
+                const context = getFormContext();
+                let prompt = '';
+
+                switch (action) {
+                    case 'suggest_name':
+                        prompt = `Sugiere 3 nombres creativos y memorables para un negocio. Contexto: ${JSON.stringify(context)}. 
+                Responde solo con los 3 nombres, uno por línea, con una breve descripción.`;
+                        break;
+                    case 'research':
+                        const businessName = context.nombre_negocio || context.nombre || '';
+                        if (businessName) {
+                            addChatMessage(`🔍 Buscando información sobre: ${businessName}`, 'user');
+                            showTyping();
+                            try {
+                                const res = await fetch(OSINT_API, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ username: businessName.replace(/\s+/g, ''), timeout: 15 })
+                                });
+                                const data = await res.json();
+                                hideTyping();
+                                if (data.found > 0) {
+                                    const platforms = data.results.slice(0, 5).map(r => `• ${r.platform}: <a href="${r.url}" target="_blank">${r.url}</a>`).join('<br>');
+                                    addChatMessage(`📊 Encontré ${data.found} perfiles similares:<br>${platforms}`);
+                                } else {
+                                    addChatMessage('✅ No encontré perfiles existentes con ese nombre. ¡El nombre parece disponible!');
+                                }
+                            } catch (e) {
+                                hideTyping();
+                                addChatMessage('❌ Error en la búsqueda OSINT');
+                            }
+                            return;
+                        } else {
+                            prompt = 'Por favor ingresa primero el nombre del negocio para hacer una investigación.';
+                        }
+                        break;
+                    case 'fill_all':
+                        prompt = `Basándote en el contexto del proyecto, sugiere valores para los campos vacíos del formulario.
+                Contexto actual: ${JSON.stringify(context)}
+                Responde en formato: campo: "valor"`;
+                        break;
+                    case 'analyze':
+                        prompt = `Analiza este proyecto de negocio y da 3 recomendaciones estratégicas:
+                ${JSON.stringify(context)}`;
+                        break;
+                }
+
+                addChatMessage(prompt.substring(0, 50) + '...', 'user');
+                showTyping();
+
+                try {
+                    const response = await fetch(AI_CHAT_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            prompt,
+                            stream: false,
+                            source: 'web-wizard',
+                            user_id: document.getElementById('uuid_usuario')?.value || 'anonymous'
+                        })
+                    });
+                    const data = await response.json();
+                    hideTyping();
+                    const answer = data.response || data.choices?.[0]?.text || 'No pude procesar.';
+                    addChatMessage(answer.replace(/\n/g, '<br>'));
+                    parseAndFillFields(answer);
+                } catch (error) {
+                    hideTyping();
+                    addChatMessage('❌ Error conectando con la IA.');
+                }
+            }
+        </script>
+        <script src="js/moltbot_widget.js"></script>
+</body>
+
+</html>
