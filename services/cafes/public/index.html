@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Sistema de Planes de Negocio</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .hero {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .primary-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            margin-bottom: 2.5rem;
+        }
+
+        .primary-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .modules {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .module {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 16px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            text-align: center;
+        }
+
+        .module:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.2);
+        }
+
+        .module-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .module-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .module-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="hero">
+            <h1>🚀 PlanIA</h1>
+            <p class="subtitle">Sistema Integral de Gestión de Planes de Negocio SAETA</p>
+
+            <a href="wizard.html" class="primary-action">+ Crear Nuevo Proyecto</a>
+
+            <div class="stats" id="stats">
+                <div class="stat">
+                    <div class="stat-value" id="stat-projects">-</div>
+                    <div class="stat-label">Proyectos</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="stat-complete">-</div>
+                    <div class="stat-label">Completos</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="stat-draft">-</div>
+                    <div class="stat-label">Borradores</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modules">
+            <a href="projects_list.html" class="module">
+                <div class="module-icon">📋</div>
+                <div class="module-title">Mis Proyectos</div>
+                <div class="module-desc">Ver, editar y gestionar</div>
+            </a>
+
+            <a href="delta_dashboard.html" class="module"
+                style="background: linear-gradient(135deg, #111827 0%, #1f2937 100%); color: white; border: 1px solid #374151;">
+                <div class="module-icon">🤖</div>
+                <div class="module-title">Delta AI & Sync</div>
+                <div class="module-desc">IA + CAFES</div>
+            </a>
+
+            <a href="market_study.html" class="module">
+                <div class="module-icon">📊</div>
+                <div class="module-title">Estudio de Mercado</div>
+                <div class="module-desc">Competencia y clientes</div>
+            </a>
+
+            <a href="canvas.html" class="module">
+                <div class="module-icon">🎯</div>
+                <div class="module-title">Business Canvas</div>
+                <div class="module-desc">Modelo de negocio</div>
+            </a>
+
+            <a href="organization.html" class="module">
+                <div class="module-icon">👥</div>
+                <div class="module-title">Organización</div>
+                <div class="module-desc">Equipo y roles</div>
+            </a>
+
+            <a href="financial_planner.html" class="module">
+                <div class="module-icon">💰</div>
+                <div class="module-title">Plan Financiero</div>
+                <div class="module-desc">Flujo y equilibrio</div>
+            </a>
+
+            <a href="foda.html" class="module">
+                <div class="module-icon">⚡</div>
+                <div class="module-title">Análisis FODA</div>
+                <div class="module-desc">Fortalezas y estrategias</div>
+            </a>
+
+            <a href="kpis.html" class="module">
+                <div class="module-icon">📈</div>
+                <div class="module-title">Dashboard KPIs</div>
+                <div class="module-desc">35 indicadores clave</div>
+            </a>
+
+            <a href="export_pdf.php" class="module" id="export-link">
+                <div class="module-icon">📄</div>
+                <div class="module-title">Exportar PDF</div>
+                <div class="module-desc">Documento completo</div>
+            </a>
+        </div>
+
+        <footer class="footer">
+            © 2026 Fondo Thoth AC | GPLv2 (Backend) / MIT (Frontend)<br>
+            APIs: INEGI DENUE + Banxico SIE
+        </footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        // Update stats when projects load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const projects = PlanIA.state.projects;
+                document.getElementById('stat-projects').textContent = projects.length;
+                document.getElementById('stat-complete').textContent = projects.filter(p => p.estatus_proyecto === 'completo').length;
+                document.getElementById('stat-draft').textContent = projects.filter(p => p.estatus_proyecto === 'borrador').length;
+
+                // Update export link with current project
+                const project = PlanIA.getCurrentProject();
+                if (project) {
+                    document.getElementById('export-link').href = `export_pdf.php?id=${project.id_proyecto}`;
+                }
+            }, 500);
+        });
+    </script>
+</body>
+
+</html>

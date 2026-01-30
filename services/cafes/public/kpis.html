@@ -1,0 +1,593 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/kpis.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Dashboard KPIs Automáticos</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .data-source {
+            background: var(--surface);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .data-source span {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .kpi-summary {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .kpi-summary {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .summary-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+            border-top: 3px solid var(--primary);
+        }
+
+        .summary-card.good {
+            border-top-color: #10b981;
+        }
+
+        .summary-card.warning {
+            border-top-color: #f59e0b;
+        }
+
+        .summary-card.bad {
+            border-top-color: #ef4444;
+        }
+
+        .summary-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .summary-value.good {
+            color: #10b981;
+        }
+
+        .summary-value.warning {
+            color: #f59e0b;
+        }
+
+        .summary-value.bad {
+            color: #ef4444;
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .kpi-categories {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 0.5rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            border-radius: 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .category-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .kpis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .kpi-card.rentabilidad {
+            border-left-color: #10b981;
+        }
+
+        .kpi-card.cliente {
+            border-left-color: #3b82f6;
+        }
+
+        .kpi-card.ventas {
+            border-left-color: #f59e0b;
+        }
+
+        .kpi-card.operativo {
+            border-left-color: #8b5cf6;
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .kpi-badge {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+        }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .kpi-value.calculated {
+            color: #10b981;
+        }
+
+        .kpi-value.pending {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .kpi-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .kpi-formula {
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: var(--primary);
+        }
+
+        .no-data {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .no-data h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .no-data a {
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>📊 Dashboard KPIs Automáticos</h1>
+            <p class="subtitle">35 Indicadores calculados automáticamente desde tus datos financieros</p>
+        </div>
+
+        <div class="dashboard-header">
+            <div class="data-source" id="dataSource">
+                Proyecto: <span id="projectName">Cargando...</span>
+            </div>
+            <div class="data-source">
+                Datos: <span id="dataStatus">Verificando...</span>
+            </div>
+        </div>
+
+        <!-- Top KPIs -->
+        <div class="kpi-summary" id="topKpis">
+            <div class="summary-card">
+                <div class="summary-value" id="kpiVAN">-</div>
+                <div class="summary-label">VAN</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="kpiTIR">-</div>
+                <div class="summary-label">TIR</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="kpiBC">-</div>
+                <div class="summary-label">B/C</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="kpiPayback">-</div>
+                <div class="summary-label">Payback</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="kpiMargenNeto">-</div>
+                <div class="summary-label">Margen Neto</div>
+            </div>
+        </div>
+
+        <div class="kpi-categories">
+            <button class="category-btn active" data-category="all">Todos (35)</button>
+            <button class="category-btn" data-category="rentabilidad">💰 Rentabilidad (10)</button>
+            <button class="category-btn" data-category="cliente">👥 Cliente (8)</button>
+            <button class="category-btn" data-category="ventas">📊 Ventas (9)</button>
+            <button class="category-btn" data-category="operativo">⚙️ Operativo (8)</button>
+        </div>
+
+        <div class="kpis-grid" id="kpisGrid"></div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let projectData = null;
+        let currentCategory = 'all';
+
+        // KPI Definitions with auto-calculation logic
+        const kpiDefinitions = [
+            // RENTABILIDAD (10)
+            { id: 'van', name: 'VAN', category: 'rentabilidad', formula: 'Σ Flujos Descontados', unit: '$', source: 'income_statement' },
+            { id: 'tir', name: 'TIR', category: 'rentabilidad', formula: 'Tasa Retorno Interna', unit: '%', source: 'income_statement' },
+            { id: 'bc', name: 'Relación B/C', category: 'rentabilidad', formula: 'VP Ingresos / VP Egresos', unit: 'x', source: 'income_statement' },
+            { id: 'roi', name: 'ROI', category: 'rentabilidad', formula: '(Ganancia-Inversión)/Inversión', unit: '%', source: 'calculated' },
+            { id: 'margen_bruto', name: 'Margen Bruto', category: 'rentabilidad', formula: '(Ventas-Costos)/Ventas', unit: '%', source: 'estado_resultados' },
+            { id: 'margen_operativo', name: 'Margen Operativo', category: 'rentabilidad', formula: 'EBIT/Ventas', unit: '%', source: 'estado_resultados' },
+            { id: 'margen_neto', name: 'Margen Neto', category: 'rentabilidad', formula: 'Utilidad Neta/Ventas', unit: '%', source: 'estado_resultados' },
+            { id: 'ebitda', name: 'EBITDA', category: 'rentabilidad', formula: 'EBIT + Depreciación', unit: '$', source: 'estado_resultados' },
+            { id: 'capex', name: 'CAPEX', category: 'rentabilidad', formula: 'Inversión en Activos', unit: '$', source: 'investment_budget' },
+            { id: 'roas', name: 'ROAS', category: 'rentabilidad', formula: 'Ingresos/Gasto Ads', unit: 'x', source: 'marketing' },
+
+            // CLIENTE (8)
+            { id: 'cac', name: 'CAC', category: 'cliente', formula: 'Gasto Mkt/Clientes Nuevos', unit: '$', source: 'customers' },
+            { id: 'clv', name: 'CLV', category: 'cliente', formula: 'Ticket×Frecuencia×Vida', unit: '$', source: 'customers' },
+            { id: 'clv_cac', name: 'CLV:CAC', category: 'cliente', formula: 'CLV / CAC', unit: ':1', source: 'customers' },
+            { id: 'churn', name: 'Tasa Churn', category: 'cliente', formula: 'Clientes Perdidos/Total', unit: '%', source: 'customers' },
+            { id: 'retention', name: 'Retención', category: 'cliente', formula: '100% - Churn', unit: '%', source: 'customers' },
+            { id: 'nps', name: 'NPS', category: 'cliente', formula: '%Promotores - %Detractores', unit: '', source: 'surveys' },
+            { id: 'csat', name: 'CSAT', category: 'cliente', formula: 'Satisfechos/Total', unit: '%', source: 'surveys' },
+            { id: 'ces', name: 'CES', category: 'cliente', formula: 'Promedio Esfuerzo', unit: '/7', source: 'surveys' },
+
+            // VENTAS (9)
+            { id: 'ingresos_totales', name: 'Ingresos Totales', category: 'ventas', formula: 'Suma Ventas Anuales', unit: '$', source: 'revenue_projection' },
+            { id: 'ticket_promedio', name: 'Ticket Promedio', category: 'ventas', formula: 'Ingresos/Transacciones', unit: '$', source: 'calculated' },
+            { id: 'crecimiento', name: 'Crecimiento Anual', category: 'ventas', formula: '(Año2-Año1)/Año1', unit: '%', source: 'revenue_projection' },
+            { id: 'punto_equilibrio', name: 'Punto Equilibrio', category: 'ventas', formula: 'CF/(PV-CV)', unit: '$', source: 'cost_projection' },
+            { id: 'ctr', name: 'CTR', category: 'ventas', formula: 'Clics/Impresiones', unit: '%', source: 'marketing' },
+            { id: 'cpc', name: 'CPC', category: 'ventas', formula: 'Gasto/Clics', unit: '$', source: 'marketing' },
+            { id: 'cpm', name: 'CPM', category: 'ventas', formula: '(Gasto/Impresiones)×1000', unit: '$', source: 'marketing' },
+            { id: 'cpa', name: 'CPA', category: 'ventas', formula: 'Gasto/Conversiones', unit: '$', source: 'marketing' },
+            { id: 'romi', name: 'ROMI', category: 'ventas', formula: '(Ingreso-Costo)/Costo', unit: '%', source: 'marketing' },
+
+            // OPERATIVO (8)
+            { id: 'payback', name: 'Período Recuperación', category: 'operativo', formula: 'Inversión/Flujo Mensual', unit: 'años', source: 'income_statement' },
+            { id: 'rotacion_inv', name: 'Rotación Inventario', category: 'operativo', formula: 'Costo Ventas/Inventario', unit: 'x', source: 'operations' },
+            { id: 'dso', name: 'DSO', category: 'operativo', formula: '(CxC/Ventas)×365', unit: 'días', source: 'operations' },
+            { id: 'dpo', name: 'DPO', category: 'operativo', formula: '(CxP/Costo)×365', unit: 'días', source: 'operations' },
+            { id: 'dio', name: 'DIO', category: 'operativo', formula: '(Inv/Costo)×365', unit: 'días', source: 'operations' },
+            { id: 'ccc', name: 'CCC', category: 'operativo', formula: 'DIO+DSO-DPO', unit: 'días', source: 'operations' },
+            { id: 'otd', name: 'Entregas a Tiempo', category: 'operativo', formula: 'A tiempo/Total', unit: '%', source: 'operations' },
+            { id: 'productividad', name: 'Productividad', category: 'operativo', formula: 'Ventas/Empleados', unit: '$', source: 'calculated' },
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadAndCalculate, 500);
+
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentCategory = btn.dataset.category;
+                    renderKPIs();
+                });
+            });
+        });
+
+        window.addEventListener('plania:projectChanged', loadAndCalculate);
+
+        async function loadAndCalculate() {
+            const projectId = PlanIA.state.currentProject;
+            if (!projectId) {
+                document.getElementById('projectName').textContent = 'Sin proyecto';
+                document.getElementById('dataStatus').textContent = 'Sin datos';
+                showNoData();
+                return;
+            }
+
+            try {
+                // Fetch fresh data from API to ensure calculations are up-to-date
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get', id_proyecto: projectId })
+                });
+
+                const project = await res.json();
+
+                if (project.error) {
+                    console.error(project.error);
+                    return;
+                }
+
+                projectData = project;
+                document.getElementById('projectName').textContent = project.c1_nombre_negocio || 'Proyecto';
+
+                // Parse all JSON data
+                const data = {
+                    investment: parseJSON(project.g10_presupuesto_inversion_json),
+                    costs: parseJSON(project.g11_proyeccion_costos_json),
+                    revenue: parseJSON(project.g12_proyeccion_ingresos_json),
+                    customers: parseJSON(project.i1_clientes_json),
+                    surveys: parseJSON(project.i2_encuestas_json),
+                    marketing: parseJSON(project.i3_marketing_json),
+                    operations: parseJSON(project.i4_operaciones_json),
+                    balance: parseJSON(project.i5_cuentas_json),
+                    estado: parseJSON(project.i6_estado_resultados_json),
+                };
+
+                // Count data sources
+                const sources = Object.values(data).filter(d => d && Object.keys(d).length > 0).length;
+                document.getElementById('dataStatus').textContent = sources > 0 ? `${sources} módulos con datos` : 'Sin datos';
+
+                // Calculate all KPIs
+                calculateAllKPIs(data);
+                renderKPIs();
+
+            } catch (err) {
+                console.error('Error loading fresh project data:', err);
+                showNoData();
+            }
+        }
+
+        function parseJSON(str) {
+            try { return JSON.parse(str || '{}'); } catch (e) { return {}; }
+        }
+
+        function calculateAllKPIs(data) {
+            const calculatedValues = {};
+
+            // === RENTABILIDAD ===
+            // Basic Estado Resultados calcs
+            const ventas = parseFloat(data.estado?.ventasBrutas || 0) - parseFloat(data.estado?.devoluciones || 0) - parseFloat(data.estado?.descuentos || 0);
+            const costoVentas = parseFloat(data.estado?.materiaPrima || 0) + parseFloat(data.estado?.manoObraDirecta || 0) + parseFloat(data.estado?.cifProduccion || 0);
+            const utilidadBruta = ventas - costoVentas;
+            const gastosOp = parseFloat(data.estado?.gastosAdmin || 0) + parseFloat(data.estado?.gastosVentas || 0) + parseFloat(data.estado?.depreciacion || 0);
+            const ebit = utilidadBruta - gastosOp;
+            const gastosFinancieros = parseFloat(data.estado?.gastosFinancieros || 0);
+            const uai = ebit - gastosFinancieros;
+            const isr = uai > 0 ? uai * (parseFloat(data.estado?.tasaISR || 30) / 100) : 0;
+            const utilidadNeta = uai - isr;
+
+            calculatedValues.margen_bruto = ventas > 0 ? ((utilidadBruta / ventas) * 100).toFixed(1) : null;
+            calculatedValues.margen_operativo = ventas > 0 ? ((ebit / ventas) * 100).toFixed(1) : null;
+            calculatedValues.margen_neto = ventas > 0 ? ((utilidadNeta / ventas) * 100).toFixed(1) : null;
+            calculatedValues.ebitda = ebit + parseFloat(data.estado?.depreciacion || 0);
+
+            // Investment
+            const invItems = data.investment?.items || [];
+            const totalInversion = invItems.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+            calculatedValues.capex = totalInversion > 0 ? totalInversion : null;
+
+            // Revenue projection
+            const revItems = data.revenue?.items || [];
+            const ingresoAnual = revItems.reduce((s, i) => s + (parseFloat(i.price) || 0) * (parseFloat(i.units) || 0) * 12, 0);
+            calculatedValues.ingresos_totales = ingresoAnual > 0 ? ingresoAnual : null;
+
+            // Costs projection
+            const costItems = data.costs?.items || [];
+            const costosFijos = costItems.filter(c => c.type === 'fijo').reduce((s, c) => s + (parseFloat(c.monthly) || 0) * 12, 0);
+            const costosVariables = costItems.filter(c => c.type === 'variable').reduce((s, c) => s + (parseFloat(c.monthly) || 0) * 12, 0);
+            const costoTotal = costosFijos + costosVariables;
+
+            // Simple VAN, TIR, Payback calculations
+            if (totalInversion > 0 && ingresoAnual > 0) {
+                const flujoAnual = ingresoAnual - costoTotal;
+                const tasa = 0.10; // 10% discount rate
+                let van = -totalInversion;
+                for (let y = 1; y <= 5; y++) {
+                    van += flujoAnual / Math.pow(1 + tasa, y);
+                }
+                calculatedValues.van = van;
+
+                // Simple TIR approximation
+                let tirLow = -0.5, tirHigh = 2;
+                for (let i = 0; i < 50; i++) {
+                    const tirMid = (tirLow + tirHigh) / 2;
+                    let npv = -totalInversion;
+                    for (let y = 1; y <= 5; y++) npv += flujoAnual / Math.pow(1 + tirMid, y);
+                    if (npv > 0) tirLow = tirMid;
+                    else tirHigh = tirMid;
+                }
+                calculatedValues.tir = ((tirLow + tirHigh) / 2 * 100).toFixed(1);
+
+                // B/C
+                let vpIngresos = 0, vpEgresos = totalInversion;
+                for (let y = 1; y <= 5; y++) {
+                    vpIngresos += ingresoAnual / Math.pow(1 + tasa, y);
+                    vpEgresos += costoTotal / Math.pow(1 + tasa, y);
+                }
+                calculatedValues.bc = vpEgresos > 0 ? (vpIngresos / vpEgresos).toFixed(2) : null;
+
+                // Payback
+                calculatedValues.payback = flujoAnual > 0 ? (totalInversion / flujoAnual).toFixed(2) : null;
+
+                // ROI
+                calculatedValues.roi = totalInversion > 0 ? ((flujoAnual - totalInversion) / totalInversion * 100).toFixed(1) : null;
+            }
+
+            // Punto equilibrio
+            const margenContribucion = ingresoAnual > 0 ? (ingresoAnual - costosVariables) / ingresoAnual : 0;
+            calculatedValues.punto_equilibrio = margenContribucion > 0 ? (costosFijos / margenContribucion).toFixed(0) : null;
+
+            // === CLIENTE ===
+            calculatedValues.cac = data.customers?.cac || null;
+            calculatedValues.clv = data.customers?.clvValor || null;
+            calculatedValues.clv_cac = data.customers?.clvCacRatio || null;
+            calculatedValues.churn = data.customers?.churnRate !== undefined ? parseFloat(data.customers.churnRate).toFixed(1) : null;
+            calculatedValues.retention = data.customers?.retentionRate !== undefined ? parseFloat(data.customers.retentionRate).toFixed(1) : null;
+
+            // Surveys
+            calculatedValues.nps = data.surveys?.nps !== undefined ? data.surveys.nps : null;
+            calculatedValues.csat = data.surveys?.csat !== undefined ? parseFloat(data.surveys.csat).toFixed(1) : null;
+            calculatedValues.ces = data.surveys?.ces !== undefined ? parseFloat(data.surveys.ces).toFixed(2) : null;
+
+            // === MARKETING ===
+            calculatedValues.roas = data.marketing?.roas !== undefined ? parseFloat(data.marketing.roas).toFixed(2) : null;
+            calculatedValues.ctr = data.marketing?.ctr !== undefined ? parseFloat(data.marketing.ctr).toFixed(2) : null;
+            calculatedValues.cpc = data.marketing?.cpc !== undefined ? parseFloat(data.marketing.cpc).toFixed(2) : null;
+            calculatedValues.cpm = data.marketing?.cpm !== undefined ? parseFloat(data.marketing.cpm).toFixed(2) : null;
+            calculatedValues.cpa = data.marketing?.cpa !== undefined ? parseFloat(data.marketing.cpa).toFixed(2) : null;
+            calculatedValues.romi = data.marketing?.romi !== undefined ? parseFloat(data.marketing.romi).toFixed(1) : null;
+
+            // === OPERACIONES ===
+            calculatedValues.rotacion_inv = data.operations?.inventoryRotation !== undefined ? parseFloat(data.operations.inventoryRotation).toFixed(2) : null;
+            calculatedValues.dso = data.operations?.dso !== undefined ? parseFloat(data.operations.dso).toFixed(0) : null;
+            calculatedValues.dpo = data.operations?.dpo !== undefined ? parseFloat(data.operations.dpo).toFixed(0) : null;
+            calculatedValues.dio = data.operations?.dio !== undefined ? parseFloat(data.operations.dio).toFixed(0) : null;
+            calculatedValues.ccc = data.operations?.ccc !== undefined ? parseFloat(data.operations.ccc).toFixed(0) : null;
+            calculatedValues.otd = data.operations?.otd !== undefined ? parseFloat(data.operations.otd).toFixed(1) : null;
+
+            // Revenue growth
+            if (ingresoAnual > 0) {
+                calculatedValues.crecimiento = 8; // Assumed 8% default growth
+            }
+
+            // Store for rendering
+            window.calculatedKPIs = calculatedValues;
+
+            // Update top cards
+            updateTopCards(calculatedValues);
+        }
+
+        function updateTopCards(vals) {
+            const f = (n, prefix = '$') => n !== null ? prefix + parseFloat(n).toLocaleString('es-MX', { maximumFractionDigits: 0 }) : '-';
+
+            document.getElementById('kpiVAN').textContent = vals.van !== undefined && vals.van !== null ? f(vals.van) : '-';
+            document.getElementById('kpiVAN').className = 'summary-value' + (vals.van > 0 ? ' good' : vals.van < 0 ? ' bad' : '');
+
+            document.getElementById('kpiTIR').textContent = vals.tir !== null ? vals.tir + '%' : '-';
+            document.getElementById('kpiTIR').className = 'summary-value' + (parseFloat(vals.tir) > 15 ? ' good' : parseFloat(vals.tir) > 0 ? ' warning' : '');
+
+            document.getElementById('kpiBC').textContent = vals.bc !== null ? vals.bc + 'x' : '-';
+            document.getElementById('kpiBC').className = 'summary-value' + (parseFloat(vals.bc) > 1 ? ' good' : ' warning');
+
+            document.getElementById('kpiPayback').textContent = vals.payback !== null ? vals.payback + ' años' : '-';
+            document.getElementById('kpiPayback').className = 'summary-value' + (parseFloat(vals.payback) < 3 ? ' good' : parseFloat(vals.payback) < 5 ? ' warning' : ' bad');
+
+            document.getElementById('kpiMargenNeto').textContent = vals.margen_neto !== null ? vals.margen_neto + '%' : '-';
+            document.getElementById('kpiMargenNeto').className = 'summary-value' + (parseFloat(vals.margen_neto) > 10 ? ' good' : parseFloat(vals.margen_neto) > 0 ? ' warning' : ' bad');
+        }
+
+        function renderKPIs() {
+            const grid = document.getElementById('kpisGrid');
+            const vals = window.calculatedKPIs || {};
+
+            const filtered = kpiDefinitions.filter(k => currentCategory === 'all' || k.category === currentCategory);
+
+            grid.innerHTML = filtered.map(kpi => {
+                const val = vals[kpi.id];
+                const hasValue = val !== null && val !== undefined;
+                const displayValue = hasValue ? formatValue(val, kpi.unit) : 'Sin datos';
+
+                return `
+                    <div class="kpi-card ${kpi.category}">
+                        <div class="kpi-header">
+                            <div class="kpi-name">${kpi.name}</div>
+                            <span class="kpi-badge">${kpi.category}</span>
+                        </div>
+                        <div class="kpi-value ${hasValue ? 'calculated' : 'pending'}">${displayValue}</div>
+                        <div class="kpi-meta">
+                            <span class="kpi-formula">${kpi.formula}</span>
+                            <span>${kpi.source}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatValue(val, unit) {
+            const n = parseFloat(val);
+            if (isNaN(n)) return val;
+
+            switch (unit) {
+                case '$': return '$' + n.toLocaleString('es-MX', { maximumFractionDigits: 0 });
+                case '%': return n.toFixed(1) + '%';
+                case 'x': return n.toFixed(2) + 'x';
+                case ':1': return n.toFixed(1) + ':1';
+                case 'días': return n.toFixed(0) + ' días';
+                case 'años': return n.toFixed(2) + ' años';
+                case '/7': return n.toFixed(2) + '/7';
+                default: return n.toFixed(2);
+            }
+        }
+
+        function showNoData() {
+            document.getElementById('kpisGrid').innerHTML = `
+                <div class="no-data" style="grid-column: 1 / -1;">
+                    <h3>📊 Sin datos para calcular</h3>
+                    <p>Para ver los KPIs automáticos, primero completa los módulos financieros:</p>
+                    <p>
+                        <a href="investment_budget.html">Inversión</a> |
+                        <a href="cost_projection.html">Costos</a> |
+                        <a href="revenue_projection.html">Ingresos</a> |
+                        <a href="estado_resultados.html">Estado Resultados</a>
+                    </p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,444 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/revenue_projection.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/revenue_projection.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Proyección de Ingresos por producto/servicio a 5 años
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Proyección de Ingresos</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .config-bar {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            background: var(--surface);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .config-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .config-item label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .config-item input {
+            width: 80px;
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .summary-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .summary-card {
+            background: var(--surface);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .summary-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .table-container {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        td input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        td input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        td.calc {
+            font-weight: 500;
+            text-align: right;
+            color: #10b981;
+        }
+
+        .row-total {
+            background: var(--surface-light);
+            font-weight: 600;
+        }
+
+        .row-total td {
+            text-align: right;
+        }
+
+        .row-total td:first-child {
+            text-align: left;
+        }
+
+        .btn-add-row {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>💰 Proyección de Ingresos</h1>
+            <p class="subtitle">Define tus productos/servicios y proyecta ventas a 5 años</p>
+        </div>
+
+        <!-- Config Bar -->
+        <div class="config-bar">
+            <div class="config-item">
+                <label>📈 Crecimiento Anual:</label>
+                <input type="number" id="crecimiento" value="10" min="0" max="100" step="1" onchange="recalculate()">
+                <span>%</span>
+            </div>
+        </div>
+
+        <!-- Summary by Year -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-value" id="year1">$0</div>
+                <div class="summary-label">Ventas Año 1</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="grossMargin1" style="color: #60a5fa;">$0</div>
+                <div class="summary-label">Utilidad Bruta A1</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="netIncome1" style="color: #fbbf24;">$0</div>
+                <div class="summary-label">Utilidad Neta A1</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="marginPercent1">0%</div>
+                <div class="summary-label">Margen Neto %</div>
+            </div>
+        </div>
+
+        <!-- Profitability Alert -->
+        <div id="profitAlert"
+            style="display:none; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; font-weight: 600;">
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-container">
+            <div class="section-title">
+                <h3>📦 Productos / Servicios</h3>
+                <button class="btn-add-row" onclick="addRow()">+ Agregar Producto</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Producto/Servicio</th>
+                        <th style="width: 10%;">Precio Venta</th>
+                        <th style="width: 10%;">Costo Unit.</th>
+                        <th style="width: 10%;">Unidades/Mes</th>
+                        <th style="width: 15%;">Venta Anual (A1)</th>
+                        <th style="width: 15%;">Utilidad Bruta (A1)</th>
+                        <th style="width: 5%;"></th>
+                    </tr>
+                </thead>
+                <tbody id="productosBody"></tbody>
+                <tfoot id="productosFoot"></tfoot>
+            </table>
+            <p class="text-muted" style="font-size: 0.8rem; margin-top: 1rem;">
+                * La proyección a 5 años asume que tanto precio como costos crecen con la tasa configurada.
+            </p>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let productos = [];
+        let crecimiento = 10;
+        let fixedCostsMonthly = 0;
+        let currentProjectId = null;
+
+        const defaultProductos = [
+            { nombre: 'Producto Principal', precio: 500, costo: 200, unidadesMes: 100 },
+            { nombre: 'Servicio Adicional', precio: 200, costo: 50, unidadesMes: 50 },
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadProjectData, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProjectData);
+        window.addEventListener('plania:save', saveProjectData);
+
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) {
+                productos = [...defaultProductos];
+                renderTable();
+                return;
+            }
+
+            currentProjectId = project.id_proyecto;
+
+            // Load Revenue Data
+            try {
+                const data = JSON.parse(project.g12_proyeccion_ingresos_json || '{}');
+                productos = data.productos?.length > 0 ? data.productos : [...defaultProductos];
+                // Ensure 'costo' property exists for legacy data
+                productos.forEach(p => { if (p.costo === undefined) p.costo = 0; });
+                crecimiento = data.crecimiento || 10;
+            } catch (e) {
+                productos = [...defaultProductos];
+                crecimiento = 10;
+            }
+
+            // Load Fixed Costs (from Cost Module g5 or g11)
+            // Try to get precise calculation from cost module if available, otherwise use g5 summary
+            try {
+                if (project.g11_proyeccion_costos_json) {
+                    const costs = JSON.parse(project.g11_proyeccion_costos_json);
+                    fixedCostsMonthly = costs.fijos ? costs.fijos.reduce((s, i) => s + (i.mensual || 0), 0) : 0;
+                } else {
+                    fixedCostsMonthly = parseFloat(project.g5_costos_fijos_mensuales) || 0;
+                }
+            } catch (e) { fixedCostsMonthly = 0; }
+
+            document.getElementById('crecimiento').value = crecimiento;
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('productosBody');
+            const growth = parseFloat(document.getElementById('crecimiento').value) / 100;
+
+            let totalVentasA1 = 0;
+            let totalCostosVarA1 = 0;
+
+            tbody.innerHTML = productos.map((item, idx) => {
+                const ventaAnual = item.precio * item.unidadesMes * 12;
+                const costoAnual = item.costo * item.unidadesMes * 12;
+                const utilidadBruta = ventaAnual - costoAnual;
+
+                totalVentasA1 += ventaAnual;
+                totalCostosVarA1 += costoAnual;
+
+                return `
+                    <tr>
+                        <td><input type="text" value="${item.nombre}" onchange="updateItem(${idx}, 'nombre', this.value)"></td>
+                        <td><input type="number" value="${item.precio}" min="0" onchange="updateItem(${idx}, 'precio', this.value)"></td>
+                        <td><input type="number" value="${item.costo}" min="0" onchange="updateItem(${idx}, 'costo', this.value)" style="border-color: #fbbf24;"></td>
+                        <td><input type="number" value="${item.unidadesMes}" min="0" onchange="updateItem(${idx}, 'unidadesMes', this.value)"></td>
+                        <td class="calc">$${formatNumber(ventaAnual)}</td>
+                        <td class="calc" style="color: #60a5fa;">$${formatNumber(utilidadBruta)}</td>
+                        <td><button class="btn-delete" onclick="deleteRow(${idx})">🗑️</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateFinancials(totalVentasA1, totalCostosVarA1);
+        }
+
+        function updateFinancials(ventasA1, variablesA1) {
+            const fijosA1 = fixedCostsMonthly * 12;
+            const utilidadBruta = ventasA1 - variablesA1;
+            const utilidadNeta = utilidadBruta - fijosA1;
+            const margen = ventasA1 > 0 ? (utilidadNeta / ventasA1) * 100 : 0;
+
+            // Update Cards
+            document.getElementById('year1').textContent = '$' + formatNumber(ventasA1);
+            document.getElementById('grossMargin1').textContent = '$' + formatNumber(utilidadBruta);
+            document.getElementById('netIncome1').textContent = '$' + formatNumber(utilidadNeta);
+            document.getElementById('marginPercent1').textContent = margen.toFixed(1) + '%';
+
+            // Update Colors
+            const netEl = document.getElementById('netIncome1');
+            const margEl = document.getElementById('marginPercent1');
+            const alertEl = document.getElementById('profitAlert');
+
+            if (utilidadNeta >= 0) {
+                netEl.style.color = '#10b981'; // Green
+                margEl.style.color = '#10b981';
+                alertEl.style.display = 'none';
+            } else {
+                netEl.style.color = '#ef4444'; // Red
+                margEl.style.color = '#ef4444';
+                alertEl.style.display = 'block';
+                alertEl.style.background = '#fef2f2';
+                alertEl.style.color = '#ef4444';
+                alertEl.style.border = '1px solid #fca5a5';
+                alertEl.textContent = `⚠️ Alerta: Tus costos fijos anuales ($${formatNumber(fijosA1)}) superan tu utilidad bruta. Necesitas vender más o reducir costos.`;
+            }
+
+            // Update Table Footer
+            const tfoot = document.getElementById('productosFoot');
+            tfoot.innerHTML = `
+                <tr class="row-total">
+                    <td colspan="4"><strong>TOTAL ANUAL (AÑO 1)</strong></td>
+                    <td class="calc">$${formatNumber(ventasA1)}</td>
+                    <td class="calc" style="color: ${utilidadBruta >= 0 ? '#60a5fa' : '#ef4444'}">$${formatNumber(utilidadBruta)}</td>
+                    <td></td>
+                </tr>
+            `;
+        }
+
+        function updateItem(idx, field, value) {
+            if (['precio', 'costo', 'unidadesMes'].includes(field)) {
+                productos[idx][field] = parseFloat(value) || 0;
+            } else {
+                productos[idx][field] = value;
+            }
+            renderTable();
+        }
+
+        function addRow() {
+            productos.push({ nombre: '', precio: 0, unidadesMes: 0 });
+            renderTable();
+        }
+
+        function deleteRow(idx) {
+            if (productos.length > 1) {
+                productos.splice(idx, 1);
+                renderTable();
+            }
+        }
+
+        function recalculate() {
+            crecimiento = parseFloat(document.getElementById('crecimiento').value);
+            renderTable();
+        }
+
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString('es-MX');
+        }
+
+        async function saveProjectData() {
+            if (!currentProjectId) {
+                PlanIA.notifySaveError();
+                return;
+            }
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: currentProjectId,
+                        g12_proyeccion_ingresos_json: JSON.stringify({ productos, crecimiento })
+                    })
+                });
+
+                const result = await res.json();
+                result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
+            } catch (err) {
+                console.error('Error saving:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+    </script>
+</body>
+
+</html>

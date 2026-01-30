@@ -1,0 +1,654 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/income_statement.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/income_statement.html  
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Estado de Resultados auto-calculado + Análisis de Rentabilidad (VAN/TIR/B-C)
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Estado de Resultados y Rentabilidad</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .summary-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-card.highlight {
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .summary-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .summary-card.highlight .summary-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .table-container {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            text-align: right;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .row-income td {
+            color: #10b981;
+        }
+
+        .row-cost td {
+            color: #ef4444;
+        }
+
+        .row-subtotal {
+            background: var(--bg);
+            font-weight: 600;
+        }
+
+        .row-total {
+            background: var(--surface-light);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .row-total td {
+            color: var(--primary);
+        }
+
+        .positive {
+            color: #10b981 !important;
+        }
+
+        .negative {
+            color: #ef4444 !important;
+        }
+
+        .config-bar {
+            display: flex;
+            gap: 2rem;
+            background: var(--surface);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .config-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .config-item label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .config-item input {
+            width: 80px;
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        .profitability-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .profitability-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .kpi-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .status-good {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-bad {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        .info-box {
+            background: rgba(37, 99, 235, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>📈 Estado de Resultados y Rentabilidad</h1>
+            <p class="subtitle">Análisis financiero completo: VAN, TIR, B/C y Payback</p>
+        </div>
+
+        <div class="info-box">
+            ⚠️ <strong>Datos calculados automáticamente</strong> de los módulos de Inversión, Costos e Ingresos.
+            Asegúrate de llenar esos módulos primero.
+        </div>
+
+        <!-- Config -->
+        <div class="config-bar">
+            <div class="config-item">
+                <label>💵 Tasa de Descuento:</label>
+                <input type="number" id="tasaDescuento" value="12" min="0" max="50" step="1" onchange="calculate()">
+                <span>%</span>
+            </div>
+            <div class="config-item">
+                <label>📊 ISR:</label>
+                <input type="number" id="tasaISR" value="30" min="0" max="50" step="1" onchange="calculate()">
+                <span>%</span>
+            </div>
+            <div class="config-item">
+                <label>🔄 Valor Rescate:</label>
+                <input type="number" id="valorRescate" value="0" min="0" onchange="calculate()">
+            </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="profitability-grid">
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="vanValue">$0</div>
+                <div class="kpi-label">VAN (Valor Actual Neto)</div>
+                <span class="kpi-status status-good" id="vanStatus">Viable</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="tirValue">0%</div>
+                <div class="kpi-label">TIR (Tasa Interna Retorno)</div>
+                <span class="kpi-status status-good" id="tirStatus">Rentable</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="bcValue">0.00</div>
+                <div class="kpi-label">Relación B/C</div>
+                <span class="kpi-status status-good" id="bcStatus">Viable</span>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="paybackValue">0 meses</div>
+                <div class="kpi-label">Período de Recuperación</div>
+                <span class="kpi-status status-good" id="paybackStatus">Aceptable</span>
+            </div>
+        </div>
+
+        <!-- Estado de Resultados -->
+        <div class="table-container">
+            <h3>📋 Estado de Resultados Proyectado</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Concepto</th>
+                        <th>Año 1</th>
+                        <th>Año 2</th>
+                        <th>Año 3</th>
+                        <th>Año 4</th>
+                        <th>Año 5</th>
+                    </tr>
+                </thead>
+                <tbody id="estadoResultadosBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Flujo de Efectivo -->
+        <div class="table-container">
+            <h3>💵 Flujo de Efectivo Descontado</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Concepto</th>
+                        <th>Año 0</th>
+                        <th>Año 1</th>
+                        <th>Año 2</th>
+                        <th>Año 3</th>
+                        <th>Año 4</th>
+                        <th>Año 5</th>
+                    </tr>
+                </thead>
+                <tbody id="flujoEfectivoBody"></tbody>
+            </table>
+            <div class="chart-container">
+                <canvas id="flowChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Punto de Equilibrio -->
+        <div class="table-container">
+            <h3>⚖️ Punto de Equilibrio</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Indicador</th>
+                        <th>Año 1</th>
+                        <th>Año 2</th>
+                        <th>Año 3</th>
+                        <th>Año 4</th>
+                        <th>Año 5</th>
+                    </tr>
+                </thead>
+                <tbody id="puntoEquilibrioBody"></tbody>
+            </table>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let projectData = null;
+        let chart = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadAllData, 600);
+        });
+
+        window.addEventListener('plania:projectChanged', loadAllData);
+
+        async function loadAllData() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) return;
+
+            projectData = project;
+            calculate();
+        }
+
+        function calculate() {
+            if (!projectData) return;
+
+            const tasaDescuento = parseFloat(document.getElementById('tasaDescuento').value) / 100;
+            const tasaISR = parseFloat(document.getElementById('tasaISR').value) / 100;
+            const valorRescate = parseFloat(document.getElementById('valorRescate').value) || 0;
+
+            // Parse data from modules
+            let inversion = 0;
+            let depreciacion = 0;
+
+            try {
+                const invData = JSON.parse(projectData.g10_presupuesto_inversion_json || '[]');
+                invData.forEach(item => {
+                    const monto = (item.cantidad || 0) * (item.costoUnitario || 0);
+                    inversion += monto;
+                    // Depreciation for equipment
+                    if (['equipo', 'maquinaria', 'mobiliario', 'vehiculo'].includes(item.tipo)) {
+                        depreciacion += monto / 5;
+                    }
+                });
+            } catch (e) {
+                inversion = parseFloat(projectData.g8_inversion_inicial) || 0;
+            }
+
+            // Costs
+            let costosFijos = [0, 0, 0, 0, 0];
+            let costosVariables = [0, 0, 0, 0, 0];
+
+            try {
+                const costData = JSON.parse(projectData.g11_proyeccion_costos_json || '{}');
+                const inflacion = (costData.inflacion || 5) / 100;
+
+                (costData.fijos || []).forEach(item => {
+                    let base = (item.mensual || 0) * 12;
+                    for (let i = 0; i < 5; i++) {
+                        costosFijos[i] += base;
+                        base *= (1 + inflacion);
+                    }
+                });
+
+                (costData.variables || []).forEach(item => {
+                    let base = (item.mensual || 0) * 12;
+                    for (let i = 0; i < 5; i++) {
+                        costosVariables[i] += base;
+                        base *= (1 + inflacion);
+                    }
+                });
+            } catch (e) {
+                console.error("Error loading costs", e);
+            }
+
+            // Revenue & Unit Costs
+            let ingresos = [0, 0, 0, 0, 0];
+            let costosVariablesUnitariosTotal = [0, 0, 0, 0, 0];
+            let hasRevenueData = false;
+
+            try {
+                const revData = JSON.parse(projectData.g12_proyeccion_ingresos_json || '{}');
+                const crecimiento = (revData.crecimiento || 10) / 100;
+
+                if (revData.productos && revData.productos.length > 0) {
+                    hasRevenueData = true;
+                    revData.productos.forEach(item => {
+                        // Revenue
+                        let baseIngreso = (item.precio || 0) * (item.unidadesMes || 0) * 12;
+
+                        // Unit Costs (Variable)
+                        let baseCosto = (item.costo || 0) * (item.unidadesMes || 0) * 12;
+
+                        for (let i = 0; i < 5; i++) {
+                            ingresos[i] += baseIngreso;
+                            costosVariablesUnitariosTotal[i] += baseCosto;
+
+                            // Grow both by inflation/growth rate
+                            baseIngreso *= (1 + crecimiento);
+                            baseCosto *= (1 + crecimiento);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Error loading revenue", e);
+            }
+
+            // Merge Unit Costs into Total Variable Costs
+            for (let i = 0; i < 5; i++) {
+                costosVariables[i] += costosVariablesUnitariosTotal[i];
+            }
+
+            // Status Alerts
+            const infoBox = document.querySelector('.info-box');
+            let missing = [];
+            if (inversion === 0) missing.push("Inversión");
+            if (!hasRevenueData) missing.push("Ingresos/Productos");
+            if (costosFijos[0] === 0 && costosVariables[0] === 0) missing.push("Costos Operativos");
+
+            if (missing.length > 0) {
+                infoBox.innerHTML = `⚠️ <strong>Atención:</strong> No se detectaron datos de: ${missing.join(', ')}. <br>Por favor completa esos módulos para obtener un cálculo real.`;
+                infoBox.style.borderLeftColor = '#f59e0b';
+                infoBox.style.background = 'rgba(245, 158, 11, 0.1)';
+            } else {
+                infoBox.innerHTML = `✅ <strong>Datos Conectados:</strong> El cálculo utiliza tus datos de Inversión, Costos y Proyección de Ventas en tiempo real.`;
+                infoBox.style.borderLeftColor = '#10b981';
+                infoBox.style.background = 'rgba(16, 185, 129, 0.1)';
+            }
+
+            // Estado de Resultados
+            const costosTotales = costosFijos.map((cf, i) => cf + costosVariables[i]);
+            const utilidadBruta = ingresos.map((ing, i) => ing - costosTotales[i]);
+            const utilidadAntesImpuestos = utilidadBruta.map(ub => ub - depreciacion);
+            const isr = utilidadAntesImpuestos.map(u => u > 0 ? u * tasaISR : 0);
+            const utilidadNeta = utilidadAntesImpuestos.map((u, i) => u - isr[i]);
+
+            renderEstadoResultados(ingresos, costosFijos, costosVariables, costosTotales, utilidadBruta, depreciacion, utilidadAntesImpuestos, isr, utilidadNeta);
+
+            // Flujo de Efectivo (add back depreciation, it's non-cash)
+            const flujoOperativo = utilidadNeta.map(u => u + depreciacion);
+            const flujos = [-inversion, ...flujoOperativo];
+            flujos[5] += valorRescate; // Add salvage value to year 5
+
+            // VAN
+            let van = -inversion;
+            for (let i = 0; i < 5; i++) {
+                van += flujoOperativo[i] / Math.pow(1 + tasaDescuento, i + 1);
+            }
+            van += valorRescate / Math.pow(1 + tasaDescuento, 5);
+
+            // TIR (Newton-Raphson approximation)
+            const tir = calculateTIR(flujos);
+
+            // B/C
+            let vnaIngresos = 0, vnaEgresos = inversion;
+            for (let i = 0; i < 5; i++) {
+                vnaIngresos += ingresos[i] / Math.pow(1 + tasaDescuento, i + 1);
+                vnaEgresos += costosTotales[i] / Math.pow(1 + tasaDescuento, i + 1);
+            }
+            const bc = vnaIngresos / vnaEgresos;
+
+            // Payback
+            let acumulado = -inversion;
+            let payback = 0;
+            for (let i = 0; i < 60; i++) { // 60 months
+                const year = Math.floor(i / 12);
+                acumulado += flujoOperativo[year] / 12;
+                if (acumulado >= 0) {
+                    payback = i + 1;
+                    break;
+                }
+            }
+
+            // Update KPIs
+            updateKPIs(van, tir, bc, payback, tasaDescuento);
+
+            // Render tables
+            renderFlujoEfectivo(flujos, tasaDescuento, inversion);
+            renderPuntoEquilibrio(ingresos, costosFijos, costosVariables);
+            renderChart(flujos);
+        }
+
+        function calculateTIR(flujos) {
+            let tir = 0.1;
+            for (let iter = 0; iter < 100; iter++) {
+                let npv = 0, dnpv = 0;
+                for (let i = 0; i < flujos.length; i++) {
+                    npv += flujos[i] / Math.pow(1 + tir, i);
+                    dnpv -= i * flujos[i] / Math.pow(1 + tir, i + 1);
+                }
+                if (Math.abs(dnpv) < 0.0001) break;
+                const newTir = tir - npv / dnpv;
+                if (Math.abs(newTir - tir) < 0.0001) break;
+                tir = newTir;
+            }
+            return tir;
+        }
+
+        function updateKPIs(van, tir, bc, payback, tasa) {
+            document.getElementById('vanValue').textContent = '$' + formatNumber(van);
+            document.getElementById('vanValue').className = 'kpi-value ' + (van >= 0 ? 'positive' : 'negative');
+            document.getElementById('vanStatus').textContent = van >= 0 ? '✓ Proyecto Viable' : '✗ No Viable';
+            document.getElementById('vanStatus').className = 'kpi-status ' + (van >= 0 ? 'status-good' : 'status-bad');
+
+            document.getElementById('tirValue').textContent = (tir * 100).toFixed(1) + '%';
+            document.getElementById('tirValue').className = 'kpi-value ' + (tir > tasa ? 'positive' : 'negative');
+            document.getElementById('tirStatus').textContent = tir > tasa ? '✓ TIR > Tasa' : '✗ TIR < Tasa';
+            document.getElementById('tirStatus').className = 'kpi-status ' + (tir > tasa ? 'status-good' : 'status-bad');
+
+            document.getElementById('bcValue').textContent = bc.toFixed(2);
+            document.getElementById('bcValue').className = 'kpi-value ' + (bc >= 1 ? 'positive' : 'negative');
+            document.getElementById('bcStatus').textContent = bc >= 1 ? '✓ B/C ≥ 1' : '✗ B/C < 1';
+            document.getElementById('bcStatus').className = 'kpi-status ' + (bc >= 1 ? 'status-good' : 'status-bad');
+
+            document.getElementById('paybackValue').textContent = payback > 0 ? payback + ' meses' : 'No recupera';
+            document.getElementById('paybackStatus').textContent = payback <= 24 ? '✓ < 2 años' : payback <= 36 ? '⚠ 2-3 años' : '✗ > 3 años';
+            document.getElementById('paybackStatus').className = 'kpi-status ' + (payback <= 24 ? 'status-good' : 'status-bad');
+        }
+
+        function renderEstadoResultados(ingresos, costosFijos, costosVariables, costosTotales, utilidadBruta, depreciacion, utilidadAntesImpuestos, isr, utilidadNeta) {
+            const tbody = document.getElementById('estadoResultadosBody');
+            tbody.innerHTML = `
+                <tr class="row-income"><td>(+) Ventas</td>${ingresos.map(v => `<td>$${formatNumber(v)}</td>`).join('')}</tr>
+                <tr class="row-cost"><td>(-) Costos Fijos</td>${costosFijos.map(v => `<td>$${formatNumber(v)}</td>`).join('')}</tr>
+                <tr class="row-cost"><td>(-) Costos Variables</td>${costosVariables.map(v => `<td>$${formatNumber(v)}</td>`).join('')}</tr>
+                <tr class="row-subtotal"><td>(=) Costos Totales</td>${costosTotales.map(v => `<td>$${formatNumber(v)}</td>`).join('')}</tr>
+                <tr class="row-subtotal"><td>(=) Utilidad Bruta</td>${utilidadBruta.map(v => `<td class="${v >= 0 ? 'positive' : 'negative'}">$${formatNumber(v)}</td>`).join('')}</tr>
+                <tr class="row-cost"><td>(-) Depreciación</td>${[0, 1, 2, 3, 4].map(() => `<td>$${formatNumber(depreciacion)}</td>`).join('')}</tr>
+                <tr class="row-subtotal"><td>(=) Utilidad Antes Impuestos</td>${utilidadAntesImpuestos.map(v => `<td class="${v >= 0 ? 'positive' : 'negative'}">$${formatNumber(v)}</td>`).join('')}</tr>
+                <tr class="row-cost"><td>(-) ISR</td>${isr.map(v => `<td>$${formatNumber(v)}</td>`).join('')}</tr>
+                <tr class="row-total"><td>(=) UTILIDAD NETA</td>${utilidadNeta.map(v => `<td class="${v >= 0 ? 'positive' : 'negative'}">$${formatNumber(v)}</td>`).join('')}</tr>
+            `;
+        }
+
+        function renderFlujoEfectivo(flujos, tasa, inversion) {
+            const tbody = document.getElementById('flujoEfectivoBody');
+            const actualizados = flujos.map((f, i) => f / Math.pow(1 + tasa, i));
+
+            let acumulado = 0;
+            const acumulados = actualizados.map(a => { acumulado += a; return acumulado; });
+
+            tbody.innerHTML = `
+                <tr><td>Flujo Neto</td>${flujos.map(f => `<td class="${f >= 0 ? 'positive' : 'negative'}">$${formatNumber(f)}</td>`).join('')}</tr>
+                <tr><td>Flujo Actualizado</td>${actualizados.map(f => `<td class="${f >= 0 ? 'positive' : 'negative'}">$${formatNumber(f)}</td>`).join('')}</tr>
+                <tr class="row-total"><td>Acumulado</td>${acumulados.map(a => `<td class="${a >= 0 ? 'positive' : 'negative'}">$${formatNumber(a)}</td>`).join('')}</tr>
+            `;
+        }
+
+        function renderPuntoEquilibrio(ingresos, costosFijos, costosVariables) {
+            const tbody = document.getElementById('puntoEquilibrioBody');
+
+            const pe = ingresos.map((ing, i) => {
+                const cv = costosVariables[i];
+                const cf = costosFijos[i];
+                if (ing === 0) return { dinero: 0, pct: 0 };
+                const margenContribucion = 1 - (cv / ing);
+                const peDinero = margenContribucion > 0 ? cf / margenContribucion : 0;
+                const pePct = (peDinero / ing) * 100;
+                return { dinero: peDinero, pct: pePct };
+            });
+
+            tbody.innerHTML = `
+                <tr><td>Punto Equilibrio ($)</td>${pe.map(p => `<td>$${formatNumber(p.dinero)}</td>`).join('')}</tr>
+                <tr><td>Punto Equilibrio (%)</td>${pe.map(p => `<td>${p.pct.toFixed(1)}%</td>`).join('')}</tr>
+            `;
+        }
+
+        function renderChart(flujos) {
+            const ctx = document.getElementById('flowChart').getContext('2d');
+            if (chart) chart.destroy();
+
+            let acum = 0;
+            const acumulados = flujos.map(f => { acum += f; return acum; });
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Año 0', 'Año 1', 'Año 2', 'Año 3', 'Año 4', 'Año 5'],
+                    datasets: [
+                        {
+                            label: 'Flujo Neto',
+                            data: flujos,
+                            backgroundColor: flujos.map(f => f >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Acumulado',
+                            data: acumulados,
+                            type: 'line',
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+        }
+
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString('es-MX');
+        }
+    </script>
+</body>
+
+</html>

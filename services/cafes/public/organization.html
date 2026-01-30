@@ -1,0 +1,883 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/organization.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Organización y Equipo</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .org-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .roles-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .roles-table th,
+        .roles-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .roles-table th {
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .roles-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .roles-table input,
+        .roles-table select {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .role-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .summary-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .orgchart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            padding: 2rem;
+            background: var(--surface);
+            border-radius: 12px;
+            margin-top: 2rem;
+            min-height: 300px;
+        }
+
+        /* Dynamic Org Chart CSS */
+        .org-level {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .org-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .org-node {
+            background: var(--bg);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            min-width: 160px;
+            max-width: 220px;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+
+        .org-node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .org-node.root-node {
+            background: rgba(37, 99, 235, 0.05);
+            border-width: 3px;
+        }
+
+        .org-connector-vertical {
+            width: 2px;
+            height: 1.5rem;
+            background: var(--surface-light);
+            /* Connects parent to horizontal bar */
+        }
+
+        .org-children {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            padding-top: 0;
+            position: relative;
+        }
+
+        /* Horizontal bar connecting siblings */
+        .org-children::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 10rem);
+            /* Needs dynamic width adjustment logic or different approach */
+            height: 2px;
+            background: red;
+            display: none;
+            /* Hard to convert generic width, utilizing branch pseudos instead */
+        }
+
+        /* Elbow Connectors using Branch Pseudos */
+        .org-children>.org-branch::before,
+        .org-children>.org-branch::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            width: 50%;
+            height: 2px;
+            background: var(--text-muted);
+            opacity: 0.3;
+        }
+
+        .org-children>.org-branch::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid var(--text-muted);
+            /* Vertical line up to horizontal bar */
+        }
+
+        /* Hide lines for single child or first/last adjustments */
+        .org-children>.org-branch:only-child::before,
+        .org-children>.org-branch:only-child::after {
+            display: none;
+        }
+
+        /* Only child needs a vertical line up if it has a parent? 
+           Actually .org-connector-vertical handles parent-down. 
+           We need a line UP from the branch to meet the parent's down line.
+        */
+        .org-children>.org-branch:only-child {
+            padding-top: 1.5rem;
+        }
+
+        .org-children>.org-branch:only-child::before {
+            /* Reuse before to draw vertical up */
+            content: '';
+            display: block;
+            width: 2px;
+            height: 1.5rem;
+            background: var(--text-muted);
+            left: 50%;
+            top: 0;
+        }
+
+
+        /* First child: Line starts from center and goes right */
+        .org-children>.org-branch:first-child::before {
+            display: none;
+        }
+
+        .org-children>.org-branch:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+
+        /* Last child: Line comes from left and ends at center */
+        .org-children>.org-branch:last-child::after {
+            display: none;
+        }
+
+        .org-children>.org-branch:last-child::before {
+            border-right: 2px solid var(--text-muted);
+            border-radius: 0 5px 0 0;
+        }
+
+        /* Middle children need full top bar */
+
+        /* Fix coloring */
+        .org-children>.org-branch::before,
+        .org-children>.org-branch::after {
+            background: var(--text-muted);
+            /* This makes the whole block background? No, height is 2px */
+        }
+
+        /* ACTIONS */
+        .org-actions {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            display: flex;
+            gap: 0.2rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .org-node:hover .org-actions {
+            opacity: 1;
+        }
+
+        .btn-mini {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            padding: 0;
+        }
+
+        .btn-mini.add {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-mini.edit {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-mini.delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .org-node-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            line-height: 1.2;
+            margin-bottom: 0.3rem;
+        }
+
+        .org-node-salary {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .org-node-resp {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-remove {
+            display: none;
+        }
+
+        /* Hide old remove buttons in table */
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="org-header">
+            <div>
+                <h1>👥 Organización y Equipo</h1>
+                <p class="text-muted">Define los puestos, sueldos y estructura organizacional</p>
+            </div>
+            <div class="flex gap-1">
+                <button class="btn btn-secondary" onclick="addRole()">➕ Agregar Puesto</button>
+                <button class="btn btn-primary" onclick="saveOrg()">💾 Guardar</button>
+            </div>
+        </div>
+
+        <div class="summary-cards" id="summary-cards">
+            <div class="summary-card">
+                <div class="summary-value" id="total-employees">0</div>
+                <div class="summary-label">Total Empleados</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="total-salaries">$0</div>
+                <div class="summary-label">Nómina Mensual</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="total-social">$0</div>
+                <div class="summary-label">Carga Social</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="total-cost">$0</div>
+                <div class="summary-label">Costo Total</div>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="roles-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Puesto</th>
+                        <th style="width: 100px;">Reporta A</th>
+                        <th style="width: 150px;">Responsabilidades</th>
+                        <th style="width: 100px;">Perfil</th>
+                        <th style="width: 60px;"># Emp</th>
+                        <th style="width: 110px;">Sueldo</th>
+                        <th style="width: 80px;">Riesgo</th>
+                        <th style="width: 100px;">Carga</th>
+                        <th style="width: 100px;">Total</th>
+                        <th style="width: 40px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="roles-body"></tbody>
+                <tfoot>
+                    <tr style="background: var(--bg); font-weight: 600;">
+                        <td></td>
+                        <td>TOTALES</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td id="foot-employees">0</td>
+                        <td id="foot-salaries">$0</td>
+                        <td></td>
+                        <td id="foot-social">$0</td>
+                        <td id="foot-total">$0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="social-charge-info">
+            <h3>📋 Desglose de Carga Social Patronal (México 2026)</h3>
+            <p class="text-muted mb-2">Cálculo basado en Salario Base de Cotización (SBC) y UMA ($108.57)</p>
+
+            <div style="background: rgba(245, 158, 11, 0.1); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <h4 style="color: #f59e0b; margin-bottom: 0.5rem;">ℹ️ Clases de Riesgo IMSS</h4>
+                <table style="width: 100%; font-size: 0.85rem;">
+                    <tr>
+                        <td><strong>Clase I (0.52%)</strong></td>
+                        <td>Oficinas, comercio, servicios financieros</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Clase II (1.13%)</strong></td>
+                        <td>Restaurantes, papelerías, tiendas, escuelas</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Clase III (2.60%)</strong></td>
+                        <td>Agricultura, ganadería, pesca, transporte</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Clase IV (4.65%)</strong></td>
+                        <td>Talleres mecánicos, manufactura, industria</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Clase V (7.59%)</strong></td>
+                        <td>Construcción, minería, trabajo de alto riesgo</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="charge-breakdown">
+                <div class="charge-item"><span>IMSS - Riesgo de Trabajo</span><span>Variable (Clase)</span></div>
+                <div class="charge-item"><span>IMSS - Cuota Fija (EyM)</span><span>20.40% UMA</span></div>
+                <div class="charge-item"><span>IMSS - Cuota Adicional</span><span>1.10% (SBC-3UMA)</span></div>
+                <div class="charge-item"><span>IMSS - Prestaciones Dinero</span><span>0.70% SBC</span></div>
+                <div class="charge-item"><span>IMSS - Invalidez y Vida</span><span>1.75% SBC</span></div>
+                <div class="charge-item"><span>IMSS - Retiro (SAR)</span><span>2.00% SBC</span></div>
+                <div class="charge-item"><span>IMSS - Cesantía y Vejez</span><span>3.15% SBC</span></div>
+                <div class="charge-item"><span>IMSS - Guarderías</span><span>1.00% SBC</span></div>
+                <div class="charge-item"><span>INFONAVIT</span><span>5.00% SBC</span></div>
+                <div class="charge-item"><span>ISN (Sonora)</span><span>3.00% Sueldo</span></div>
+            </div>
+        </div>
+
+        <!-- Proyección Anual de Nómina -->
+        <div class="social-charge-info" style="margin-top: 2rem;">
+            <h3>📈 Proyección Anual de Nómina (5 años)</h3>
+            <div style="display: flex; align-items: center; gap: 1rem; margin: 1rem 0; flex-wrap: wrap;">
+                <label>Inflación Salarial Anual:</label>
+                <input type="number" id="inflacionSalarial" value="5" min="0" max="20" step="0.5"
+                    style="width: 80px; padding: 0.5rem; text-align: center;" onchange="renderRoles()">
+                <span>%</span>
+                <button class="btn btn-secondary" onclick="fetchBanxicoInflation()" style="font-size: 0.8rem;">
+                    📊 Obtener de Banxico
+                </button>
+                <span id="banxico-status" style="font-size: 0.8rem; color: var(--text-muted);"></span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="roles-table" style="min-width: 600px;">
+                    <thead>
+                        <tr>
+                            <th>Concepto</th>
+                            <th style="text-align: right;">Año 1</th>
+                            <th style="text-align: right;">Año 2</th>
+                            <th style="text-align: right;">Año 3</th>
+                            <th style="text-align: right;">Año 4</th>
+                            <th style="text-align: right;">Año 5</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projection-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Organigrama Visual -->
+        <div style="margin-top: 2rem;">
+            <h3>📊 Organigrama</h3>
+            <div class="orgchart" id="orgchart">
+                <p class="text-muted">Agrega puestos para ver el organigrama</p>
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        // Risk class premiums (IMSS)
+        const riskPremiums = { 'I': 0.0052150, 'II': 0.0113065, 'III': 0.0259840, 'IV': 0.0465325, 'V': 0.0758875 };
+        const UMA = 108.57;
+        const ISN_RATE = 0.03;
+
+        let roles = [
+            { id: 1, name: 'Director General', count: 1, salary: 35000, riskClass: 'I', reportsTo: '-', responsibilities: 'Dirección estratégica', profile: 'MBA' },
+            { id: 2, name: 'Administrador', count: 1, salary: 18000, riskClass: 'I', reportsTo: 'Director General', responsibilities: 'Operaciones diarias', profile: 'LAE' },
+            { id: 3, name: 'Operador', count: 2, salary: 12000, riskClass: 'II', reportsTo: 'Administrador', responsibilities: 'Producción/Atención', profile: 'Preparatoria' },
+        ];
+
+        window.addEventListener('plania:projectChanged', loadOrg);
+        window.addEventListener('DOMContentLoaded', () => setTimeout(loadOrg, 500));
+
+        async function loadOrg() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) return;
+
+            try {
+                const parsed = JSON.parse(project.c4_organigrama_json || '{}');
+                if (parsed.roles && Array.isArray(parsed.roles)) {
+                    // MIGRATION: Ensure all roles have IDs and parentIds
+                    // 1. Assign IDs if missing
+                    roles = parsed.roles.map(r => ({ ...r, id: r.id || Date.now() + Math.random() }));
+
+                    // 2. Map old 'reportsTo' names to 'parentId'
+                    roles.forEach(role => {
+                        if (role.reportsTo && !role.parentId && role.reportsTo !== '-') {
+                            const parent = roles.find(p => p.name === role.reportsTo);
+                            if (parent) {
+                                role.parentId = parent.id;
+                            }
+                        }
+                    });
+                }
+            } catch (e) { console.error('Error loading org:', e); }
+
+            renderRoles();
+        }
+
+        // Calculate IMSS Social Charge based on Mexican labor law
+        function calculateSocialCharge(salary, riskClass) {
+            // UMA 2026 = $108.57 daily
+            const uma = UMA;
+            const umaMensual = uma * 30.4;
+
+            // Salario Base de Cotización (SBC) ≈ salary * 1.0493 (factor de integración)
+            const sbc = salary * 1.0493;
+            const sbcDiario = sbc / 30.4;
+
+            // 1. Riesgo de Trabajo (variable por clase)
+            const riesgoTrabajo = sbc * (riskPremiums[riskClass] || 0.0052150);
+
+            // 2. Enfermedades y Maternidad - Cuota Fija (20.40% sobre UMA)
+            const eymCuotaFija = umaMensual * 0.204;
+
+            // 3. Enfermedades y Maternidad - Excedente (1.10% sobre SBC - 3 UMA)
+            const excedente = Math.max(0, sbc - (umaMensual * 3)) * 0.011;
+
+            // 4. Prestaciones en Dinero (0.70% SBC)
+            const prestacionesDinero = sbc * 0.007;
+
+            // 5. Gastos Médicos Pensionados (1.05% SBC)
+            const gastosMedicos = sbc * 0.0105;
+
+            // 6. Invalidez y Vida (1.75% SBC)
+            const invalidezVida = sbc * 0.0175;
+
+            // 7. Retiro (SAR) (2.00% SBC)
+            const retiro = sbc * 0.02;
+
+            // 8. Cesantía y Vejez (3.15% SBC) - Patrón
+            const cesantiaVejez = sbc * 0.0315;
+
+            // 9. Guarderías (1.00% SBC)
+            const guarderias = sbc * 0.01;
+
+            // 10. INFONAVIT (5.00% SBC)
+            const infonavit = sbc * 0.05;
+
+            // 11. ISN - Impuesto Sobre Nómina (3% en Sonora, varía por estado)
+            const isn = salary * ISN_RATE;
+
+            // Total carga social
+            const totalCarga = riesgoTrabajo + eymCuotaFija + excedente + prestacionesDinero +
+                gastosMedicos + invalidezVida + retiro + cesantiaVejez + guarderias + infonavit + isn;
+
+            return totalCarga;
+        }
+
+
+        function renderRoles() {
+            const tbody = document.getElementById('roles-body');
+            let totalEmp = 0, totalSal = 0, totalSocial = 0, totalCost = 0;
+
+            // Get list of potential parents (all roles except self to avoid recursion?)
+            // For simplicity, allow all.
+            const potentialParents = [{ id: '', name: '-' }, ...roles];
+
+            tbody.innerHTML = roles.map(role => {
+                const social = calculateSocialCharge(role.salary, role.riskClass);
+                const totalPerEmp = role.salary + social;
+                const totalRole = totalPerEmp * role.count;
+
+                totalEmp += role.count;
+                totalSal += role.salary * role.count;
+                totalSocial += social * role.count;
+                totalCost += totalRole;
+
+                return `
+                    <tr data-role-id="${role.id}">
+                        <td><div class="role-icon">👤</div></td>
+                        <td><input type="text" value="${role.name}" onchange="updateRole(${role.id}, 'name', this.value)" style="min-width:100px;"></td>
+                        <td>
+                            <select onchange="updateRole(${role.id}, 'parentId', this.value)" style="font-size:0.8rem; width:120px;">
+                                ${potentialParents.map(p => `
+                                    <option value="${p.id}" ${role.parentId == p.id ? 'selected' : ''} ${p.id == role.id ? 'disabled' : ''}>
+                                        ${p.name}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </td>
+                        <td><input type="text" value="${role.responsibilities || ''}" onchange="updateRole(${role.id}, 'responsibilities', this.value)" placeholder="Responsabilidades" style="font-size:0.8rem;"></td>
+                        <td><input type="text" value="${role.profile || ''}" onchange="updateRole(${role.id}, 'profile', this.value)" placeholder="Perfil" style="font-size:0.8rem; width:80px;"></td>
+                        <td><input type="number" value="${role.count}" min="1" onchange="updateRole(${role.id}, 'count', parseInt(this.value))" style="width:50px;"></td>
+                        <td><input type="number" value="${role.salary}" min="0" step="1000" onchange="updateRole(${role.id}, 'salary', parseFloat(this.value))" style="width:90px;"></td>
+                        <td>
+                            <select onchange="updateRole(${role.id}, 'riskClass', this.value)" style="font-size:0.8rem;">
+                                ${['I', 'II', 'III', 'IV', 'V'].map(c => `<option value="${c}" ${role.riskClass === c ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td><span class="risk-badge risk-${role.riskClass}">$${social.toLocaleString('es-MX', { maximumFractionDigits: 0 })}</span></td>
+                        <td><strong>$${totalRole.toLocaleString('es-MX', { maximumFractionDigits: 0 })}</strong></td>
+                        <td><button class="btn-remove" onclick="removeRole(${role.id})">🗑️</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update footer
+            document.getElementById('foot-employees').textContent = totalEmp;
+            document.getElementById('foot-salaries').textContent = '$' + totalSal.toLocaleString('es-MX', { maximumFractionDigits: 0 });
+            document.getElementById('foot-social').textContent = '$' + totalSocial.toLocaleString('es-MX', { maximumFractionDigits: 0 });
+            document.getElementById('foot-total').textContent = '$' + totalCost.toLocaleString('es-MX', { maximumFractionDigits: 0 });
+
+            // Update summary cards
+            document.getElementById('total-employees').textContent = totalEmp;
+            document.getElementById('total-salaries').textContent = '$' + (totalSal / 1000).toFixed(0) + 'k';
+            document.getElementById('total-social').textContent = '$' + (totalSocial / 1000).toFixed(0) + 'k';
+            document.getElementById('total-cost').textContent = '$' + (totalCost / 1000).toFixed(0) + 'k';
+
+            renderProjection(totalSal, totalSocial, totalCost);
+            renderOrgChart();
+        }
+
+        function renderProjection(totalSal, totalSocial, totalCost) {
+            const tbody = document.getElementById('projection-body');
+            const inflacion = parseFloat(document.getElementById('inflacionSalarial')?.value || 5) / 100;
+
+            const salYears = [], socYears = [], totYears = [];
+            let sal = totalSal * 12, soc = totalSocial * 12;
+            for (let i = 0; i < 5; i++) {
+                salYears.push(sal);
+                socYears.push(soc);
+                totYears.push(sal + soc);
+                sal = sal * (1 + inflacion);
+                soc = soc * (1 + inflacion);
+            }
+
+            tbody.innerHTML = `
+                <tr>
+                    <td>Salarios Brutos</td>
+                    ${salYears.map(y => `<td style="text-align: right;">$${Math.round(y).toLocaleString('es-MX')}</td>`).join('')}
+                </tr>
+                <tr>
+                    <td>Cargas Sociales</td>
+                    ${socYears.map(y => `<td style="text-align: right; color: #f59e0b;">$${Math.round(y).toLocaleString('es-MX')}</td>`).join('')}
+                </tr>
+                <tr style="background: var(--surface-light); font-weight: 600;">
+                    <td><strong>Costo Total Nómina</strong></td>
+                    ${totYears.map(y => `<td style="text-align: right;"><strong>$${Math.round(y).toLocaleString('es-MX')}</strong></td>`).join('')}
+                </tr>
+            `;
+        }
+
+        function renderOrgChart() {
+            const chart = document.getElementById('orgchart');
+            if (roles.length === 0) {
+                chart.innerHTML = '<p class="text-muted">Agrega puestos para ver el organigrama</p>';
+                return;
+            }
+
+            // Build hierarchy based on parentId
+            const getChildren = (parentId) =>
+                roles.filter(r => r.parentId == parentId); // Loose equality for string/int IDs
+
+            // Find root nodes (no parentId or parentId is null/-)
+            const roots = roles.filter(r => !r.parentId || r.parentId === '-' || r.parentId === '');
+
+            // Fallback: If no explicit roots but roles exist, look for nodes whose parents don't exist
+            if (roots.length === 0 && roles.length > 0) {
+                // Find IDs that are not present as parentIds? No, simple check:
+                // Just take the one with the lowest ID (usually CEO/first created)
+                roots.push(roles[0]);
+            }
+
+            // Helper to get Role Name by ID
+            const getName = (id) => {
+                const r = roles.find(x => x.id == id);
+                return r ? r.name : 'ND';
+            };
+
+            // Build levels recursively
+            const buildLevel = (nodes, depth = 0) => {
+                if (nodes.length === 0) return '';
+
+                return `
+                    <div class="org-level-wrapper" style="display:flex; flex-direction:column; align-items:center;">
+                        <div class="org-level" style="display:flex; gap:2rem; justify-content:center;">
+                            ${nodes.map(node => {
+                    const children = getChildren(node.id);
+                    const hasChildren = children.length > 0;
+
+                    return `
+                                <div class="org-branch" style="display:flex; flex-direction:column; align-items:center;">
+                                    <div class="org-node ${depth === 0 ? 'root-node' : ''}" data-id="${node.id}" style="border-color: ${getRiskColor(node.riskClass)};">
+                                        <div class="org-actions">
+                                            <button class="btn-mini edit" onclick="editRole(${node.id})" title="Editar">✏️</button>
+                                            <button class="btn-mini add" onclick="addChild(${node.id})" title="Agregar Subordinado">➕</button>
+                                            ${depth > 0 ? `<button class="btn-mini delete" onclick="removeRole(${node.id})" title="Eliminar">🗑️</button>` : ''}
+                                        </div>
+                                        <div class="org-node-title">${node.name}</div>
+                                        <div class="org-node-salary">$${(node.salary || 0).toLocaleString()} <span style="font-size:0.7em; color:#666;">x${node.count}</span></div>
+                                        ${node.responsibilities ? `<div class="org-node-resp">${node.responsibilities}</div>` : ''}
+                                    </div>
+                                    ${hasChildren ? `
+                                        <div class="org-connector-vertical"></div>
+                                        <div class="org-children">
+                                            ${buildLevel(children, depth + 1)}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                `;
+                }).join('')}
+                        </div>
+                    </div>
+                `;
+            };
+
+            chart.innerHTML = buildLevel(roots);
+        }
+
+        function getRiskColor(cls) {
+            const colors = { 'I': '#10b981', 'II': '#06b6d4', 'III': '#f59e0b', 'IV': '#ef4444', 'V': '#8b5cf6' };
+            return colors[cls] || '#ccc';
+        }
+
+        function addRole() {
+            // Add detached role (root level sibling or error? better to use addChild)
+            const newId = Date.now();
+            roles.push({
+                id: newId,
+                name: 'Nuevo Puesto',
+                count: 1,
+                salary: 10000,
+                riskClass: 'I',
+                parentId: '', // Root level candidate
+                responsibilities: '',
+                profile: ''
+            });
+            renderRoles();
+            // Scroll to table bottom
+            setTimeout(() => {
+                const table = document.querySelector('.roles-table');
+                table.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
+        }
+
+        function addChild(parentId) {
+            const newId = Date.now();
+            roles.push({
+                id: newId,
+                name: 'Nuevo Subordinado',
+                count: 1,
+                salary: 8000,
+                riskClass: 'I',
+                parentId: parentId,
+                responsibilities: '',
+                profile: ''
+            });
+            renderRoles();
+        }
+
+        function editRole(id) {
+            // Find row index
+            const index = roles.findIndex(r => r.id == id);
+            if (index === -1) return;
+
+            // Highlight row
+            const rows = document.querySelectorAll('#roles-body tr');
+            if (rows[index]) {
+                rows[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                rows[index].style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
+                setTimeout(() => { rows[index].style.backgroundColor = ''; }, 2000);
+            }
+        }
+
+        function updateRole(id, field, value) {
+            const role = roles.find(r => r.id === id);
+            if (role) {
+                role[field] = value;
+                renderRoles();
+            }
+        }
+
+        function removeRole(id) {
+            roles = roles.filter(r => r.id !== id);
+            renderRoles();
+        }
+
+        async function saveOrg() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) {
+                alert('Selecciona un proyecto primero');
+                return;
+            }
+
+            // Show saving state on button
+            const saveBtn = document.querySelector('.btn-primary');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '⏳ Guardando...';
+            saveBtn.disabled = true;
+
+            // Merge with existing data (canvas might be there)
+            let existing = {};
+            try {
+                existing = JSON.parse(project.c4_organigrama_json || '{}');
+            } catch (e) { }
+
+            existing.roles = roles;
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: project.id_proyecto,
+                        c4_organigrama_json: JSON.stringify(existing)
+                    })
+                });
+                const result = await res.json();
+
+                saveBtn.disabled = false;
+
+                if (result.success) {
+                    project.c4_organigrama_json = JSON.stringify(existing);
+                    saveBtn.innerHTML = '✅ Guardado';
+                    setTimeout(() => { saveBtn.innerHTML = originalText; }, 2000);
+                } else {
+                    saveBtn.innerHTML = originalText;
+                    alert('Error: ' + (result.error || 'No se pudo guardar'));
+                }
+            } catch (err) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+                alert('Error de conexión: ' + err.message);
+            }
+        }
+
+        async function fetchBanxicoInflation() {
+            const statusEl = document.getElementById('banxico-status');
+            statusEl.textContent = '⏳ Consultando Banxico...';
+
+            try {
+                const res = await fetch('api_banxico.php?action=inflacion');
+                const data = await res.json();
+
+                if (data.success && data.stats) {
+                    // Use projected inflation for 2026 or last known value
+                    const inflacion = data.stats.proyeccion_2026 || data.stats.ultimo;
+                    document.getElementById('inflacionSalarial').value = inflacion.toFixed(1);
+
+                    statusEl.textContent = `✅ Inflación ${inflacion.toFixed(1)}% (${data.source === 'fallback' ? 'Proyección Banxico' : 'API Banxico'})`;
+
+                    // Re-render with new inflation
+                    renderRoles();
+                } else {
+                    statusEl.textContent = '⚠️ Error al obtener datos';
+                }
+            } catch (err) {
+                statusEl.textContent = '⚠️ Error de conexión';
+                console.error('Banxico API error:', err);
+            }
+        }
+    </script>
+</body>
+
+</html>

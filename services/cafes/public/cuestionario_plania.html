@@ -1,0 +1,539 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA - Cuestionario del Emprendedor (PDF Imprimible)
+ARCHIVO: public/cuestionario_plania.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Cuestionario imprimible para llenar a mano y enviar
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario de Plan de Negocios - PlanIA</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 1.5cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #1a1a1a;
+            background: #fff;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #2563eb;
+        }
+
+        .header h1 {
+            font-size: 20pt;
+            color: #2563eb;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 10pt;
+        }
+
+        .logo-text {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 8px 15px;
+            font-size: 12pt;
+            font-weight: bold;
+            border-radius: 5px;
+            margin-bottom: 12px;
+        }
+
+        .question {
+            margin-bottom: 15px;
+        }
+
+        .question-label {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+            display: block;
+            font-size: 10pt;
+        }
+
+        .question-help {
+            font-size: 9pt;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+
+        .answer-line {
+            border-bottom: 1px solid #cbd5e1;
+            min-height: 25px;
+            margin-bottom: 3px;
+        }
+
+        .answer-box {
+            border: 1px solid #cbd5e1;
+            min-height: 60px;
+            border-radius: 4px;
+            padding: 5px;
+        }
+
+        .answer-box.large {
+            min-height: 90px;
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .row .question {
+            flex: 1;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            font-size: 9pt;
+            color: #64748b;
+        }
+
+        .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 40px;
+        }
+
+        .signature-box {
+            flex: 1;
+            text-align: center;
+        }
+
+        .signature-line {
+            border-top: 1px solid #1a1a1a;
+            padding-top: 5px;
+            margin-top: 40px;
+            font-size: 9pt;
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 9pt;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .checkbox {
+            width: 14px;
+            height: 14px;
+            border: 1px solid #94a3b8;
+            display: inline-block;
+        }
+
+        @media print {
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .print-btn:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+
+    <div class="header">
+        <div class="logo-text">🚀 FONDO THOTH AC</div>
+        <h1>Cuestionario de Plan de Negocios</h1>
+        <p>Complete este formulario para iniciar su plan de negocios con PlanIA</p>
+    </div>
+
+    <div class="info-box">
+        <strong>📋 Instrucciones:</strong> Por favor llene cada campo con letra clara. Los campos marcados con (*) son
+        obligatorios.
+        Este cuestionario será revisado por un consultor de Fondo Thoth AC para ayudarle a desarrollar su plan de
+        negocios.
+    </div>
+
+    <!-- UNIDAD I: PORTADA Y DATOS GENERALES -->
+    <div class="section">
+        <div class="section-title">📋 Unidad I - Portada y Datos Generales</div>
+
+        <div class="row">
+            <div class="question">
+                <span class="question-label">1. Nombre del Negocio *</span>
+                <span class="question-help">El nombre que identifica a su empresa o emprendimiento</span>
+                <div class="answer-line"></div>
+            </div>
+            <div class="question">
+                <span class="question-label">2. Nombre del Emprendedor *</span>
+                <span class="question-help">Su nombre completo</span>
+                <div class="answer-line"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="question">
+                <span class="question-label">3. Teléfono de Contacto</span>
+                <div class="answer-line"></div>
+            </div>
+            <div class="question">
+                <span class="question-label">4. Correo Electrónico</span>
+                <div class="answer-line"></div>
+            </div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">5. Carta de Presentación</span>
+            <span class="question-help">Breve descripción de quién es usted, su experiencia y por qué emprende</span>
+            <div class="answer-box large"></div>
+        </div>
+    </div>
+
+    <!-- UNIDAD II: RESUMEN EJECUTIVO -->
+    <div class="section">
+        <div class="section-title">💡 Unidad II - Resumen Ejecutivo</div>
+
+        <div class="question">
+            <span class="question-label">6. Descripción del Negocio *</span>
+            <span class="question-help">¿Qué es su negocio y qué ofrece? Describa sus productos o servicios</span>
+            <div class="answer-box large"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">7. Problema u Oportunidad</span>
+            <span class="question-help">¿Qué problema resuelve o qué oportunidad aprovecha con su negocio?</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">8. Propuesta de Valor</span>
+            <span class="question-help">¿Qué hace diferente o único a su negocio comparado con la competencia?</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="row">
+            <div class="question">
+                <span class="question-label">9. Cliente Objetivo</span>
+                <span class="question-help">¿A quién le vende? (Ej: Familias, jóvenes, empresas)</span>
+                <div class="answer-line"></div>
+            </div>
+            <div class="question">
+                <span class="question-label">10. Monto Solicitado ($)</span>
+                <span class="question-help">Cantidad de financiamiento que necesita</span>
+                <div class="answer-line"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UNIDAD III: PERFIL DEL EMPRENDEDOR -->
+    <div class="section">
+        <div class="section-title">👤 Unidad III - Perfil del Emprendedor</div>
+
+        <div class="question">
+            <span class="question-label">11. Experiencia y Habilidades</span>
+            <span class="question-help">¿Qué experiencia laboral o habilidades tiene relacionadas con este
+                negocio?</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">12. Motivación para Emprender</span>
+            <span class="question-help">¿Por qué quiere iniciar este negocio? ¿Cuál es su motivación personal?</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="row">
+            <div class="question">
+                <span class="question-label">13. Disponibilidad de Tiempo</span>
+                <span class="question-help">¿Cuántas horas a la semana puede dedicar al negocio?</span>
+                <div class="answer-line"></div>
+            </div>
+            <div class="question">
+                <span class="question-label">14. ¿Es su actividad principal?</span>
+                <div class="checkbox-group" style="margin-top: 8px;">
+                    <div class="checkbox-item"><span class="checkbox"></span> Sí</div>
+                    <div class="checkbox-item"><span class="checkbox"></span> No, tengo otro empleo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UNIDAD IV: ESTUDIO DE MERCADO -->
+    <div class="section">
+        <div class="section-title">📊 Unidad IV - Estudio de Mercado</div>
+
+        <div class="question">
+            <span class="question-label">15. Segmento de Cliente</span>
+            <span class="question-help">Describa su cliente ideal: edad, género, ubicación, hábitos de compra, nivel
+                socioeconómico</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">16. Ventaja Competitiva</span>
+            <span class="question-help">¿Por qué los clientes le comprarían a usted en lugar de a la competencia?</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="row">
+            <div class="question">
+                <span class="question-label">17. NECESIDAD - ¿Qué carencia resuelve?</span>
+                <span class="question-help">Ej: Las familias necesitan comida saludable pero no tienen tiempo</span>
+                <div class="answer-box" style="min-height: 45px;"></div>
+            </div>
+            <div class="question">
+                <span class="question-label">18. DESEO - ¿Cómo quieren satisfacerla?</span>
+                <span class="question-help">Ej: Quieren comida casera lista para calentar</span>
+                <div class="answer-box" style="min-height: 45px;"></div>
+            </div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">19. DEMANDA - ¿Pueden y quieren pagar por su solución?</span>
+            <span class="question-help">Ej: Sí, familias de clase media gastan $200-300 diarios en comida</span>
+            <div class="answer-box" style="min-height: 45px;"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">20. Dirección del Negocio</span>
+            <span class="question-help">Calle, número, colonia, ciudad, código postal</span>
+            <div class="answer-line"></div>
+            <div class="answer-line"></div>
+        </div>
+    </div>
+
+    <!-- UNIDAD V: ORGANIZACIÓN DEL NEGOCIO -->
+    <div class="section">
+        <div class="section-title">🏭 Unidad V - Organización del Negocio</div>
+
+        <div class="question">
+            <span class="question-label">21. Proceso de Producción/Servicio</span>
+            <span class="question-help">Describa paso a paso cómo produce su producto o presta su servicio</span>
+            <div class="answer-box large"></div>
+        </div>
+
+        <div class="row">
+            <div class="question">
+                <span class="question-label">22. Capacidad de Producción</span>
+                <span class="question-help">Ej: 50 unidades por semana, 20 clientes por día</span>
+                <div class="answer-line"></div>
+            </div>
+            <div class="question">
+                <span class="question-label">23. ¿Cuántos empleados tiene o necesita?</span>
+                <div class="answer-line"></div>
+            </div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">24. Liste sus principales productos o servicios con precios estimados</span>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; width: 50%;">Producto/Servicio 1:</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; width: 25%;">Precio: $</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; width: 25%;">Costo: $</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Producto/Servicio 2:</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Precio: $</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Costo: $</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Producto/Servicio 3:</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Precio: $</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Costo: $</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- UNIDAD VI: PLAN DE MARKETING -->
+    <div class="section">
+        <div class="section-title">📣 Unidad VI - Plan de Marketing</div>
+
+        <div class="row">
+            <div class="question">
+                <span class="question-label">25. Nombre de la Marca</span>
+                <span class="question-help">Nombre comercial e identidad de su marca</span>
+                <div class="answer-line"></div>
+            </div>
+            <div class="question">
+                <span class="question-label">26. Canales de Venta</span>
+                <span class="question-help">Ej: WhatsApp, redes sociales, local físico, ferias</span>
+                <div class="answer-line"></div>
+            </div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">27. Estrategia de Precios</span>
+            <span class="question-help">¿Cómo define sus precios? ¿Son más altos, iguales o más bajos que la
+                competencia?</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">28. Estrategia de Promoción</span>
+            <span class="question-help">¿Cómo dará a conocer su negocio? (promociones, redes, volantes, referidos,
+                etc.)</span>
+            <div class="answer-box"></div>
+        </div>
+    </div>
+
+    <!-- UNIDAD VII: PLAN FINANCIERO -->
+    <div class="section">
+        <div class="section-title">💰 Unidad VII - Plan Financiero</div>
+
+        <div class="row">
+            <div class="question">
+                <span class="question-label">29. Costos Fijos Mensuales ($)</span>
+                <span class="question-help">Renta, luz, agua, internet, salarios, etc.</span>
+                <div class="answer-line"></div>
+            </div>
+            <div class="question">
+                <span class="question-label">30. Inversión Inicial Necesaria ($)</span>
+                <span class="question-help">Total para iniciar el negocio</span>
+                <div class="answer-line"></div>
+            </div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">31. Plan de Uso del Capital Solicitado</span>
+            <span class="question-help">Detalle en qué se gastará el financiamiento solicitado</span>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; width: 60%;">Concepto:</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; width: 40%;">Monto: $</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Concepto:</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Monto: $</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Concepto:</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">Monto: $</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px; font-weight: bold;">TOTAL:</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 8px;">$</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- UNIDAD VIII: IMPACTO Y COMPROMISOS -->
+    <div class="section">
+        <div class="section-title">🌟 Unidad VIII - Impacto y Compromisos</div>
+
+        <div class="question">
+            <span class="question-label">32. Impacto Social</span>
+            <span class="question-help">¿Cómo beneficia su negocio a la comunidad? (empleos, servicios, etc.)</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">33. Impacto Económico Familiar</span>
+            <span class="question-help">¿Cuánto ingreso adicional espera generar para su familia?</span>
+            <div class="answer-box"></div>
+        </div>
+
+        <div class="question">
+            <span class="question-label">34. Compromiso del Emprendedor</span>
+            <span class="question-help">Su compromiso con la continuidad del negocio y el pago del financiamiento</span>
+            <div class="answer-box"></div>
+        </div>
+    </div>
+
+    <!-- FIRMAS -->
+    <div class="signature-area">
+        <div class="signature-box">
+            <div class="signature-line">Firma del Emprendedor</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line">Fecha</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line">Firma del Consultor (uso interno)</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><strong>Fondo Thoth AC</strong> - PlanIA: Plataforma Inteligente de Planes de Negocio</p>
+        <p>Este cuestionario es confidencial. La información proporcionada será utilizada exclusivamente para la
+            elaboración de su plan de negocios.</p>
+        <p>© 2026 Fondo Thoth AC - www.fondothoth.com</p>
+    </div>
+</body>
+
+</html>

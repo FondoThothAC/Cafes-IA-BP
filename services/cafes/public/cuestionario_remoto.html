@@ -1,0 +1,852 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA - Formulario Remoto del Emprendedor
+ARCHIVO: public/cuestionario_remoto.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Formulario web para que emprendedores llenen remotamente y se 
+             guarde directamente en la base de datos de HostGator
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario de Plan de Negocios - PlanIA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg) 0%, #1e1b4b 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--surface-light);
+        }
+
+        .logo {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        }
+
+        .progress-step.completed {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .section {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--surface-light);
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .form-group label span.required {
+            color: var(--error);
+        }
+
+        .form-group .help-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-style: italic;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.85rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        .info-box {
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .success-screen {
+            text-align: center;
+            padding: 3rem;
+            display: none;
+        }
+
+        .success-screen.show {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-screen h2 {
+            color: var(--success);
+            margin-bottom: 1rem;
+        }
+
+        .success-screen p {
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .project-code {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.25rem;
+            color: var(--primary);
+            margin: 1rem 0;
+            display: inline-block;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🚀</div>
+            <h1>Cuestionario de Plan de Negocios</h1>
+            <p>Complete este formulario para iniciar su proyecto con Fondo Thoth AC</p>
+        </div>
+
+        <div id="alertSuccess" class="alert alert-success"></div>
+        <div id="alertError" class="alert alert-error"></div>
+
+        <!-- Progress Steps -->
+        <div class="progress-container">
+            <div class="progress-step active" data-step="1" onclick="goToStep(1)">1</div>
+            <div class="progress-step" data-step="2" onclick="goToStep(2)">2</div>
+            <div class="progress-step" data-step="3" onclick="goToStep(3)">3</div>
+            <div class="progress-step" data-step="4" onclick="goToStep(4)">4</div>
+            <div class="progress-step" data-step="5" onclick="goToStep(5)">5</div>
+            <div class="progress-step" data-step="6" onclick="goToStep(6)">6</div>
+            <div class="progress-step" data-step="7" onclick="goToStep(7)">7</div>
+            <div class="progress-step" data-step="8" onclick="goToStep(8)">8</div>
+        </div>
+
+        <form id="questionnaireForm">
+            <!-- Section 1: Datos Generales -->
+            <div class="section active" data-step="1">
+                <h2 class="section-title">
+                    <span class="section-icon">📋</span>
+                    Unidad I - Datos Generales
+                </h2>
+
+                <div class="info-box">
+                    📌 Los campos marcados con <span style="color: var(--error);">*</span> son obligatorios.
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>Nombre del Negocio <span class="required">*</span></label>
+                        <input type="text" name="a1_nombre_negocio" required placeholder="Ej: Florería La Rosa">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre del Emprendedor <span class="required">*</span></label>
+                        <input type="text" name="a2_nombre_emprendedor" required placeholder="Nombre completo">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>Teléfono de Contacto</label>
+                        <input type="tel" name="telefono" placeholder="Ej: 662 123 4567">
+                    </div>
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" name="email" placeholder="correo@ejemplo.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Carta de Presentación</label>
+                    <p class="help-text">Breve descripción de quién es usted, su experiencia y por qué emprende</p>
+                    <textarea name="a4_carta_presentacion" rows="4" placeholder="Cuéntenos sobre usted..."></textarea>
+                </div>
+            </div>
+
+            <!-- Section 2: Resumen Ejecutivo -->
+            <div class="section" data-step="2">
+                <h2 class="section-title">
+                    <span class="section-icon">💡</span>
+                    Unidad II - Resumen Ejecutivo
+                </h2>
+
+                <div class="form-group">
+                    <label>Descripción del Negocio <span class="required">*</span></label>
+                    <p class="help-text">¿Qué es su negocio y qué productos/servicios ofrece?</p>
+                    <textarea name="b1_descripcion_negocio" required rows="4"
+                        placeholder="Describa su negocio..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Problema u Oportunidad</label>
+                    <p class="help-text">¿Qué problema resuelve o qué oportunidad aprovecha?</p>
+                    <textarea name="b2_problema_oportunidad" rows="3"
+                        placeholder="El problema que resuelvo es..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Propuesta de Valor</label>
+                    <p class="help-text">¿Qué hace diferente o único a su negocio?</p>
+                    <textarea name="b3_propuesta_valor" rows="3"
+                        placeholder="Lo que me hace diferente es..."></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>Cliente Objetivo</label>
+                        <input type="text" name="b4_cliente_objetivo_resumen" placeholder="Ej: Familias de clase media">
+                    </div>
+                    <div class="form-group">
+                        <label>Monto Solicitado ($)</label>
+                        <input type="number" name="b5_monto_solicitado" min="0" step="100" placeholder="50000">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Perfil del Emprendedor -->
+            <div class="section" data-step="3">
+                <h2 class="section-title">
+                    <span class="section-icon">👤</span>
+                    Unidad III - Perfil del Emprendedor
+                </h2>
+
+                <div class="form-group">
+                    <label>Experiencia y Habilidades</label>
+                    <p class="help-text">¿Qué experiencia y habilidades tiene relacionadas con este negocio?</p>
+                    <textarea name="c1_experiencia_habilidades" rows="3"
+                        placeholder="Mi experiencia incluye..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Motivación para Emprender</label>
+                    <p class="help-text">¿Por qué quiere iniciar este negocio?</p>
+                    <textarea name="c2_motivacion" rows="3" placeholder="Quiero emprender porque..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Disponibilidad de Tiempo</label>
+                    <input type="text" name="c3_compromiso_tiempo" placeholder="Ej: 40 horas semanales">
+                </div>
+            </div>
+
+            <!-- Section 4: Estudio de Mercado -->
+            <div class="section" data-step="4">
+                <h2 class="section-title">
+                    <span class="section-icon">📊</span>
+                    Unidad IV - Estudio de Mercado
+                </h2>
+
+                <div class="form-group">
+                    <label>Segmento de Cliente</label>
+                    <p class="help-text">Describa su cliente ideal: edad, género, ubicación, hábitos de compra</p>
+                    <textarea name="d1_segmento_cliente" rows="3" placeholder="Mi cliente ideal es..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Ventaja Competitiva</label>
+                    <p class="help-text">¿Por qué los clientes le elegirán a usted sobre la competencia?</p>
+                    <textarea name="d5_ventaja_competitiva" rows="3"
+                        placeholder="Los clientes me elegirán porque..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>💭 NECESIDAD - ¿Qué carencia resuelve?</label>
+                    <textarea name="i_necesidad" rows="2"
+                        placeholder="Ej: Las familias necesitan alimentación saludable pero no tienen tiempo"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>❤️ DESEO - ¿Cómo quieren satisfacerla?</label>
+                    <textarea name="i_deseo" rows="2"
+                        placeholder="Ej: Quieren comida casera lista para calentar"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>💰 DEMANDA - ¿Pueden y quieren pagar?</label>
+                    <textarea name="i_demanda" rows="2"
+                        placeholder="Ej: Sí, familias de clase media gastan $200-300 diarios"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Dirección del Negocio</label>
+                    <input type="text" name="d8_direccion_formateada" placeholder="Calle, Número, Colonia, Ciudad, CP">
+                </div>
+            </div>
+
+            <!-- Section 5: Organización -->
+            <div class="section" data-step="5">
+                <h2 class="section-title">
+                    <span class="section-icon">🏭</span>
+                    Unidad V - Organización del Negocio
+                </h2>
+
+                <div class="form-group">
+                    <label>Proceso de Producción/Servicio</label>
+                    <p class="help-text">Describa paso a paso cómo produce su producto o presta su servicio</p>
+                    <textarea name="e1_proceso_produccion" rows="4"
+                        placeholder="1. Primero... 2. Luego... 3. Finalmente..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Capacidad de Producción</label>
+                    <input type="text" name="e2_capacidad_produccion" placeholder="Ej: 50 unidades por semana">
+                </div>
+            </div>
+
+            <!-- Section 6: Marketing -->
+            <div class="section" data-step="6">
+                <h2 class="section-title">
+                    <span class="section-icon">📣</span>
+                    Unidad VI - Plan de Marketing
+                </h2>
+
+                <div class="form-group">
+                    <label>Nombre de Marca</label>
+                    <input type="text" name="f1_nombre_marca" placeholder="Nombre comercial de su marca">
+                </div>
+
+                <div class="form-group">
+                    <label>Estrategia de Precios</label>
+                    <p class="help-text">¿Cómo define sus precios? ¿Por encima o debajo de la competencia?</p>
+                    <textarea name="f2_estrategia_precios" rows="3" placeholder="Mis precios serán..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Canales de Venta</label>
+                    <input type="text" name="f3_canales_venta"
+                        placeholder="Ej: WhatsApp, Redes Sociales, Local físico, Ferias">
+                </div>
+
+                <div class="form-group">
+                    <label>Estrategia de Promoción</label>
+                    <p class="help-text">¿Cómo dará a conocer su negocio?</p>
+                    <textarea name="f4_estrategia_promocion" rows="3"
+                        placeholder="Para promocionarme voy a..."></textarea>
+                </div>
+            </div>
+
+            <!-- Section 7: Finanzas -->
+            <div class="section" data-step="7">
+                <h2 class="section-title">
+                    <span class="section-icon">💰</span>
+                    Unidad VII - Plan Financiero
+                </h2>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label>Costos Fijos Mensuales ($)</label>
+                        <p class="help-text">Renta, luz, agua, internet, salarios, etc.</p>
+                        <input type="number" name="g5_costos_fijos_mensuales" min="0" step="100" placeholder="5000">
+                    </div>
+                    <div class="form-group">
+                        <label>Inversión Inicial ($)</label>
+                        <p class="help-text">Total necesario para iniciar</p>
+                        <input type="number" name="g8_inversion_inicial" min="0" step="100" placeholder="50000">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Plan de Uso del Capital</label>
+                    <p class="help-text">Detalle en qué se gastará el financiamiento solicitado</p>
+                    <textarea name="g9_uso_capital" rows="4"
+                        placeholder="El dinero se usará en: 1. ... 2. ... 3. ..."></textarea>
+                </div>
+            </div>
+
+            <!-- Section 8: Impacto -->
+            <div class="section" data-step="8">
+                <h2 class="section-title">
+                    <span class="section-icon">🌟</span>
+                    Unidad VIII - Impacto y Compromisos
+                </h2>
+
+                <div class="form-group">
+                    <label>Impacto Social</label>
+                    <p class="help-text">¿Cómo beneficia su negocio a la comunidad?</p>
+                    <textarea name="h1_impacto_social" rows="3"
+                        placeholder="Mi negocio beneficia a la comunidad porque..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Impacto Económico Familiar</label>
+                    <p class="help-text">¿Cuánto ingreso adicional espera generar para su familia?</p>
+                    <textarea name="h2_impacto_economico" rows="3"
+                        placeholder="Espero generar aproximadamente $... mensuales"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Compromiso del Emprendedor</label>
+                    <p class="help-text">Su compromiso con la continuidad del negocio</p>
+                    <textarea name="h4_compromiso" rows="3" placeholder="Me comprometo a..."></textarea>
+                </div>
+
+                <div class="info-box">
+                    ✅ <strong>¡Último paso!</strong> Al enviar este formulario, su información será guardada y un
+                    consultor
+                    de Fondo Thoth AC se pondrá en contacto con usted para continuar con su plan de negocios.
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-secondary" id="btnPrev" onclick="prevStep()"
+                    style="visibility: hidden;">
+                    ← Anterior
+                </button>
+                <button type="button" class="btn btn-primary" id="btnNext" onclick="nextStep()">
+                    Siguiente →
+                </button>
+                <button type="button" class="btn btn-success" id="btnSubmit" onclick="submitForm()"
+                    style="display: none;">
+                    📤 Enviar Cuestionario
+                </button>
+            </div>
+        </form>
+
+        <!-- Success Screen -->
+        <div class="section success-screen" id="successScreen">
+            <div class="success-icon">✅</div>
+            <h2>¡Cuestionario Enviado Exitosamente!</h2>
+            <p>Su información ha sido guardada correctamente.</p>
+            <p>Un consultor de Fondo Thoth AC se pondrá en contacto con usted pronto.</p>
+
+            <div class="project-code" id="projectCode">-</div>
+            <p style="font-size: 0.85rem;">Guarde este código para dar seguimiento a su proyecto</p>
+
+            <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 1rem;">
+                📋 Llenar otro cuestionario
+            </button>
+        </div>
+
+        <footer>
+            <p>© 2026 <a href="https://fondothoth.com" target="_blank">Fondo Thoth AC</a> - PlanIA</p>
+            <p>Plataforma Inteligente de Planes de Negocio</p>
+        </footer>
+    </div>
+
+    <script>
+        // =================================================================
+        // CONFIGURACIÓN - Cambiar esta URL al servidor de producción
+        // =================================================================
+        const CONFIG = {
+            // URL del API en HostGator - CAMBIAR ESTO EN PRODUCCIÓN
+            API_URL: 'https://fondothoth.com/plania/save_row.php',
+
+            // Alternativas:
+            // API_URL: 'http://localhost:8080/save_row.php', // Desarrollo local
+            // API_URL: '../save_row.php', // Mismo servidor
+        };
+
+        // =================================================================
+        // FUNCIONALIDAD DEL FORMULARIO
+        // =================================================================
+        let currentStep = 1;
+        const totalSteps = 8;
+
+        function goToStep(step) {
+            if (step < 1 || step > totalSteps) return;
+
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+            // Show target section
+            const targetSection = document.querySelector(`.section[data-step="${step}"]`);
+            if (targetSection) targetSection.classList.add('active');
+
+            // Update progress indicators
+            document.querySelectorAll('.progress-step').forEach(p => {
+                const pStep = parseInt(p.dataset.step);
+                p.classList.remove('active', 'completed');
+                if (pStep < step) p.classList.add('completed');
+                if (pStep === step) p.classList.add('active');
+            });
+
+            // Update buttons
+            document.getElementById('btnPrev').style.visibility = step === 1 ? 'hidden' : 'visible';
+            document.getElementById('btnNext').style.display = step === totalSteps ? 'none' : 'flex';
+            document.getElementById('btnSubmit').style.display = step === totalSteps ? 'flex' : 'none';
+
+            currentStep = step;
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function nextStep() {
+            // Validate current step before continuing
+            const currentSection = document.querySelector(`.section[data-step="${currentStep}"]`);
+            const requiredFields = currentSection.querySelectorAll('[required]');
+
+            let valid = true;
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.style.borderColor = 'var(--error)';
+                    valid = false;
+                } else {
+                    field.style.borderColor = 'var(--surface-light)';
+                }
+            });
+
+            if (!valid) {
+                showAlert('error', 'Por favor complete los campos obligatorios marcados con *');
+                return;
+            }
+
+            if (currentStep < totalSteps) {
+                goToStep(currentStep + 1);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                goToStep(currentStep - 1);
+            }
+        }
+
+        function showAlert(type, message) {
+            const alert = document.getElementById(type === 'success' ? 'alertSuccess' : 'alertError');
+            alert.textContent = message;
+            alert.style.display = 'block';
+
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        function generateUUID() {
+            // Generate a readable UUID for the entrepreneur
+            const prefix = 'EMP';
+            const timestamp = Date.now().toString(36).toUpperCase();
+            const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+            return `${prefix}-${timestamp}-${random}`;
+        }
+
+        async function submitForm() {
+            const form = document.getElementById('questionnaireForm');
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('btnSubmit');
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Enviando...';
+
+            // Build data object
+            const data = {
+                action: 'create',
+                uuid_usuario: generateUUID(),
+                estatus_proyecto: 'borrador'
+            };
+
+            // Add form fields
+            for (const [key, value] of formData.entries()) {
+                if (value.trim()) {
+                    data[key] = value.trim();
+                }
+            }
+
+            try {
+                const response = await fetch(CONFIG.API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success || result.id_proyecto) {
+                    // Show success screen
+                    document.getElementById('questionnaireForm').style.display = 'none';
+                    document.querySelector('.progress-container').style.display = 'none';
+                    document.getElementById('successScreen').classList.add('show');
+                    document.getElementById('successScreen').style.display = 'block';
+                    document.getElementById('projectCode').textContent = `Proyecto #${result.id_proyecto} - ${data.uuid_usuario}`;
+                } else {
+                    throw new Error(result.error || 'Error desconocido al guardar');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('error', 'Error al enviar el cuestionario. Por favor intente nuevamente.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '📤 Enviar Cuestionario';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            goToStep(1);
+        });
+    </script>
+</body>
+
+</html>

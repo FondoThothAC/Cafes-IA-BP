@@ -1,0 +1,20 @@
+# =================================================================================
+# PROYECTO: PlanIA
+# ARCHIVO: public/.htaccess
+# COPYRIGHT: © 2026 Fondo Thoth AC.
+# =================================================================================
+
+RewriteEngine On
+
+# Allow direct access to existing files
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Route API requests
+RewriteRule ^api/(.*)$ save_row.php [QSA,L]
+
+# Allow CORS
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type"

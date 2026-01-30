@@ -1,0 +1,574 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/estado_resultados.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/estado_resultados.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Estado de Resultados con separación profesional de Costos vs Gastos
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Estado de Resultados</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .statement-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .statement-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .statement-row:last-child {
+            border-bottom: none;
+        }
+
+        .statement-label {
+            color: var(--text-muted);
+        }
+
+        .statement-value {
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .statement-group {
+            margin-bottom: 1rem;
+        }
+
+        .group-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .subtotal-row {
+            background: var(--bg);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+            font-weight: 600;
+        }
+
+        .total-row {
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .positive {
+            color: #10b981;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .input-section {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-column h4 {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--surface-light);
+        }
+
+        .form-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: var(--text);
+        }
+
+        .years-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .year-column {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .year-header {
+            font-weight: 700;
+            text-align: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .year-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            font-size: 0.75rem;
+        }
+
+        .year-row-label {
+            color: var(--text-muted);
+        }
+
+        .year-row-value {
+            font-weight: 500;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>📋 Estado de Resultados</h1>
+            <p class="subtitle">Ingresos, Costos de Producción, Gastos de Operación y Utilidad Neta</p>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpiMargenBruto">0%</div>
+                <div class="kpi-label">Margen Bruto</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpiMargenOperativo">0%</div>
+                <div class="kpi-label">Margen Operativo</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpiMargenNeto">0%</div>
+                <div class="kpi-label">Margen Neto</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value positive" id="kpiUtilidadNeta">$0</div>
+                <div class="kpi-label">Utilidad Neta</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpiROI">0%</div>
+                <div class="kpi-label">ROI Anual</div>
+            </div>
+        </div>
+
+        <!-- Data Inputs -->
+        <div class="input-section">
+            <h3 style="margin-bottom: 1rem;">📝 Datos del Periodo (Mensual)</h3>
+            <div class="input-grid">
+                <!-- INGRESOS -->
+                <div class="input-column">
+                    <h4>💰 Ingresos</h4>
+                    <div class="form-group">
+                        <label>Ventas Brutas</label>
+                        <input type="number" id="ventasBrutas" value="150000" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>(-) Devoluciones</label>
+                        <input type="number" id="devoluciones" value="2000" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>(-) Descuentos</label>
+                        <input type="number" id="descuentos" value="3000" onchange="calculate()">
+                    </div>
+                </div>
+
+                <!-- COSTOS DE PRODUCCIÓN / VENTAS -->
+                <div class="input-column">
+                    <h4>🏭 Costos de Producción</h4>
+                    <div class="form-group">
+                        <label>Materia Prima</label>
+                        <input type="number" id="materiaPrima" value="40000" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Mano de Obra Directa</label>
+                        <input type="number" id="manoObraDirecta" value="20000" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Costos Indirectos Fab.</label>
+                        <input type="number" id="cifProduccion" value="10000" onchange="calculate()">
+                    </div>
+                </div>
+
+                <!-- GASTOS DE OPERACIÓN -->
+                <div class="input-column">
+                    <h4>🏢 Gastos de Operación</h4>
+                    <div class="form-group">
+                        <label>Gastos de Administración</label>
+                        <input type="number" id="gastosAdmin" value="15000" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Gastos de Ventas</label>
+                        <input type="number" id="gastosVentas" value="10000" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Gastos Financieros</label>
+                        <input type="number" id="gastosFinancieros" value="5000" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Depreciación</label>
+                        <input type="number" id="depreciacion" value="3000" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Tasa ISR (%)</label>
+                        <input type="number" id="tasaISR" value="30" onchange="calculate()" step="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de Resultados -->
+        <div class="statement-card">
+            <h3 style="margin-bottom: 1.5rem;">📊 Estado de Resultados Proyectado</h3>
+
+            <div class="statement-group">
+                <div class="group-title">Ingresos</div>
+                <div class="statement-row">
+                    <span class="statement-label">Ventas Brutas</span>
+                    <span class="statement-value" id="dispVentasBrutas">$0</span>
+                </div>
+                <div class="statement-row">
+                    <span class="statement-label">(-) Devoluciones y Descuentos</span>
+                    <span class="statement-value negative" id="dispDevoluciones">$0</span>
+                </div>
+                <div class="subtotal-row">
+                    <div class="statement-row" style="border: none; padding: 0;">
+                        <span style="font-weight: 700;">= Ventas Netas</span>
+                        <span class="statement-value positive" id="dispVentasNetas">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="statement-group">
+                <div class="group-title">Costos de Producción</div>
+                <div class="statement-row">
+                    <span class="statement-label">Materia Prima</span>
+                    <span class="statement-value" id="dispMateriaPrima">$0</span>
+                </div>
+                <div class="statement-row">
+                    <span class="statement-label">Mano de Obra Directa</span>
+                    <span class="statement-value" id="dispMOD">$0</span>
+                </div>
+                <div class="statement-row">
+                    <span class="statement-label">Costos Indirectos de Fabricación</span>
+                    <span class="statement-value" id="dispCIF">$0</span>
+                </div>
+                <div class="subtotal-row">
+                    <div class="statement-row" style="border: none; padding: 0;">
+                        <span style="font-weight: 700;">(-) Total Costo de Ventas</span>
+                        <span class="statement-value negative" id="dispCostoVentas">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtotal-row" style="background: var(--surface-light);">
+                <div class="statement-row" style="border: none; padding: 0;">
+                    <span style="font-weight: 700; font-size: 1.1rem;">= UTILIDAD BRUTA</span>
+                    <span class="statement-value positive" style="font-size: 1.1rem;" id="dispUtilidadBruta">$0</span>
+                </div>
+            </div>
+
+            <div class="statement-group" style="margin-top: 1.5rem;">
+                <div class="group-title">Gastos de Operación</div>
+                <div class="statement-row">
+                    <span class="statement-label">Gastos de Administración</span>
+                    <span class="statement-value" id="dispGastosAdmin">$0</span>
+                </div>
+                <div class="statement-row">
+                    <span class="statement-label">Gastos de Ventas</span>
+                    <span class="statement-value" id="dispGastosVentas">$0</span>
+                </div>
+                <div class="statement-row">
+                    <span class="statement-label">Depreciación</span>
+                    <span class="statement-value" id="dispDepreciacion">$0</span>
+                </div>
+                <div class="subtotal-row">
+                    <div class="statement-row" style="border: none; padding: 0;">
+                        <span style="font-weight: 700;">(-) Total Gastos de Operación</span>
+                        <span class="statement-value negative" id="dispGastosOperacion">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subtotal-row" style="background: var(--surface-light);">
+                <div class="statement-row" style="border: none; padding: 0;">
+                    <span style="font-weight: 700; font-size: 1.1rem;">= UTILIDAD DE OPERACIÓN (EBIT)</span>
+                    <span class="statement-value" style="font-size: 1.1rem;" id="dispUtilidadOperacion">$0</span>
+                </div>
+            </div>
+
+            <div class="statement-group" style="margin-top: 1.5rem;">
+                <div class="group-title">Costos Financieros e Impuestos</div>
+                <div class="statement-row">
+                    <span class="statement-label">(-) Gastos Financieros</span>
+                    <span class="statement-value negative" id="dispGastosFinancieros">$0</span>
+                </div>
+                <div class="statement-row">
+                    <span class="statement-label">= Utilidad Antes de Impuestos</span>
+                    <span class="statement-value" id="dispUAI">$0</span>
+                </div>
+                <div class="statement-row">
+                    <span class="statement-label">(-) ISR (<span id="dispTasaISR">30</span>%)</span>
+                    <span class="statement-value negative" id="dispISR">$0</span>
+                </div>
+            </div>
+
+            <div class="total-row">
+                <div class="statement-row" style="border: none; padding: 0; color: white;">
+                    <span style="font-weight: 700;">= UTILIDAD NETA</span>
+                    <span class="statement-value" id="dispUtilidadNeta">$0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proyección 5 años -->
+        <h3 style="margin-bottom: 1rem;">📈 Proyección a 5 Años</h3>
+        <div class="years-grid" id="yearsGrid">
+            <!-- Generated by JS -->
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let currentProjectId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadProjectData, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProjectData);
+        window.addEventListener('plania:save', saveProjectData);
+
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) { calculate(); return; }
+            currentProjectId = project.id_proyecto;
+
+            try {
+                const data = JSON.parse(project.i6_estado_resultados_json || '{}');
+                if (data.ventasBrutas !== undefined) {
+                    const fields = ['ventasBrutas', 'devoluciones', 'descuentos', 'materiaPrima',
+                        'manoObraDirecta', 'cifProduccion', 'gastosAdmin', 'gastosVentas',
+                        'gastosFinancieros', 'depreciacion', 'tasaISR'];
+                    fields.forEach(f => {
+                        if (data[f] !== undefined) document.getElementById(f).value = data[f];
+                    });
+                }
+            } catch (e) { }
+            calculate();
+        }
+
+        function calculate() {
+            const ventasBrutas = parseFloat(document.getElementById('ventasBrutas').value) || 0;
+            const devoluciones = parseFloat(document.getElementById('devoluciones').value) || 0;
+            const descuentos = parseFloat(document.getElementById('descuentos').value) || 0;
+            const materiaPrima = parseFloat(document.getElementById('materiaPrima').value) || 0;
+            const mod = parseFloat(document.getElementById('manoObraDirecta').value) || 0;
+            const cif = parseFloat(document.getElementById('cifProduccion').value) || 0;
+            const gastosAdmin = parseFloat(document.getElementById('gastosAdmin').value) || 0;
+            const gastosVentas = parseFloat(document.getElementById('gastosVentas').value) || 0;
+            const gastosFinancieros = parseFloat(document.getElementById('gastosFinancieros').value) || 0;
+            const depreciacion = parseFloat(document.getElementById('depreciacion').value) || 0;
+            const tasaISR = parseFloat(document.getElementById('tasaISR').value) || 30;
+
+            // Calculations
+            const devDesc = devoluciones + descuentos;
+            const ventasNetas = ventasBrutas - devDesc;
+            const costoVentas = materiaPrima + mod + cif;
+            const utilidadBruta = ventasNetas - costoVentas;
+            const gastosOperacion = gastosAdmin + gastosVentas + depreciacion;
+            const utilidadOperacion = utilidadBruta - gastosOperacion;
+            const utilidadAntesImpuestos = utilidadOperacion - gastosFinancieros;
+            const isr = utilidadAntesImpuestos > 0 ? utilidadAntesImpuestos * (tasaISR / 100) : 0;
+            const utilidadNeta = utilidadAntesImpuestos - isr;
+
+            // Margins
+            const margenBruto = ventasNetas > 0 ? (utilidadBruta / ventasNetas) * 100 : 0;
+            const margenOperativo = ventasNetas > 0 ? (utilidadOperacion / ventasNetas) * 100 : 0;
+            const margenNeto = ventasNetas > 0 ? (utilidadNeta / ventasNetas) * 100 : 0;
+
+            // Format function
+            const f = (n) => '$' + n.toLocaleString('es-MX', { minimumFractionDigits: 0 });
+
+            // Update displays
+            document.getElementById('dispVentasBrutas').textContent = f(ventasBrutas);
+            document.getElementById('dispDevoluciones').textContent = '-' + f(devDesc);
+            document.getElementById('dispVentasNetas').textContent = f(ventasNetas);
+            document.getElementById('dispMateriaPrima').textContent = f(materiaPrima);
+            document.getElementById('dispMOD').textContent = f(mod);
+            document.getElementById('dispCIF').textContent = f(cif);
+            document.getElementById('dispCostoVentas').textContent = f(costoVentas);
+            document.getElementById('dispUtilidadBruta').textContent = f(utilidadBruta);
+            document.getElementById('dispGastosAdmin').textContent = f(gastosAdmin);
+            document.getElementById('dispGastosVentas').textContent = f(gastosVentas);
+            document.getElementById('dispDepreciacion').textContent = f(depreciacion);
+            document.getElementById('dispGastosOperacion').textContent = f(gastosOperacion);
+            document.getElementById('dispUtilidadOperacion').textContent = f(utilidadOperacion);
+            document.getElementById('dispGastosFinancieros').textContent = f(gastosFinancieros);
+            document.getElementById('dispUAI').textContent = f(utilidadAntesImpuestos);
+            document.getElementById('dispTasaISR').textContent = tasaISR;
+            document.getElementById('dispISR').textContent = f(isr);
+            document.getElementById('dispUtilidadNeta').textContent = f(utilidadNeta);
+
+            // KPIs
+            document.getElementById('kpiMargenBruto').textContent = margenBruto.toFixed(1) + '%';
+            document.getElementById('kpiMargenOperativo').textContent = margenOperativo.toFixed(1) + '%';
+            document.getElementById('kpiMargenNeto').textContent = margenNeto.toFixed(1) + '%';
+            document.getElementById('kpiUtilidadNeta').textContent = f(utilidadNeta * 12);
+            document.getElementById('kpiROI').textContent = (margenNeto * 1.2).toFixed(1) + '%';
+
+            // 5 Year projection
+            generateYearsGrid(ventasNetas, costoVentas, gastosOperacion, gastosFinancieros, tasaISR);
+        }
+
+        function generateYearsGrid(ventas, costos, gastos, financieros, tasaISR) {
+            const growth = 1.08; // 8% annual growth
+            const inflation = 1.05; // 5% cost inflation
+            const f = (n) => '$' + Math.round(n).toLocaleString('es-MX');
+
+            let html = '';
+            for (let y = 1; y <= 5; y++) {
+                const v = ventas * 12 * Math.pow(growth, y - 1);
+                const c = costos * 12 * Math.pow(inflation, y - 1);
+                const g = gastos * 12 * Math.pow(inflation, y - 1);
+                const fin = financieros * 12;
+                const utilBruta = v - c;
+                const utilOp = utilBruta - g;
+                const uai = utilOp - fin;
+                const isr = uai > 0 ? uai * (tasaISR / 100) : 0;
+                const utilNeta = uai - isr;
+
+                html += `
+                    <div class="year-column">
+                        <div class="year-header">Año ${y}</div>
+                        <div class="year-row"><span class="year-row-label">Ventas</span><span class="year-row-value positive">${f(v)}</span></div>
+                        <div class="year-row"><span class="year-row-label">Costo Vtas</span><span class="year-row-value">${f(c)}</span></div>
+                        <div class="year-row"><span class="year-row-label">Util. Bruta</span><span class="year-row-value">${f(utilBruta)}</span></div>
+                        <div class="year-row"><span class="year-row-label">Gastos Op.</span><span class="year-row-value">${f(g)}</span></div>
+                        <div class="year-row"><span class="year-row-label">EBIT</span><span class="year-row-value">${f(utilOp)}</span></div>
+                        <div class="year-row"><span class="year-row-label">ISR</span><span class="year-row-value negative">${f(isr)}</span></div>
+                        <div class="year-row" style="border-top: 2px solid var(--primary); padding-top: 0.5rem; margin-top: 0.5rem;">
+                            <span class="year-row-label" style="font-weight: 700;">Util. Neta</span>
+                            <span class="year-row-value positive" style="font-weight: 700;">${f(utilNeta)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('yearsGrid').innerHTML = html;
+        }
+
+        async function saveProjectData() {
+            if (!currentProjectId) { PlanIA.notifySaveError(); return; }
+
+            const fields = ['ventasBrutas', 'devoluciones', 'descuentos', 'materiaPrima',
+                'manoObraDirecta', 'cifProduccion', 'gastosAdmin', 'gastosVentas',
+                'gastosFinancieros', 'depreciacion', 'tasaISR'];
+            const data = {};
+            fields.forEach(f => data[f] = parseFloat(document.getElementById(f).value));
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', id_proyecto: currentProjectId, i6_estado_resultados_json: JSON.stringify(data) })
+                });
+                const result = await res.json();
+                result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
+            } catch (err) { PlanIA.notifySaveError(); }
+        }
+    </script>
+</body>
+
+</html>

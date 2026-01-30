@@ -1,0 +1,650 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/projects_list.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/projects_list.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Lista de proyectos con acciones CRUD
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Mis Proyectos</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #06b6d4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            outline: none;
+            width: 200px;
+        }
+
+        button,
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .btn-icon:hover {
+            color: var(--text);
+            background: var(--surface-light);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            border-radius: 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .filter-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--text);
+        }
+
+        /* Projects Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .project-card {
+            background: var(--surface);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);
+        }
+
+        .card-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--surface-light);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .card-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--surface-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-borrador {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .status-revision_ia {
+            background: rgba(37, 99, 235, 0.2);
+            color: var(--primary);
+        }
+
+        .status-completo {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-publicado {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            padding-bottom: 2rem;
+        }
+
+        @media (max-width: 640px) {
+            .header-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <header>
+            <div class="logo">
+                <h1>📋 Mis Proyectos</h1>
+            </div>
+            <div class="header-actions">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="searchInput" placeholder="Buscar proyectos...">
+                </div>
+                <a href="wizard.html" class="btn btn-primary">+ Nuevo Proyecto</a>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">Todos</button>
+            <button class="filter-btn" data-filter="borrador">📝 Borrador</button>
+            <button class="filter-btn" data-filter="revision_ia">🤖 En Revisión IA</button>
+            <button class="filter-btn" data-filter="completo">✅ Completo</button>
+            <button class="filter-btn" data-filter="publicado">🚀 Publicado</button>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="projects-grid" id="projectsGrid">
+            <!-- Projects will be loaded here -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-state-icon">📁</div>
+            <h3>No hay proyectos</h3>
+            <p>Crea tu primer plan de negocios para empezar</p>
+            <a href="wizard.html" class="btn btn-primary" style="margin-top: 1rem;">+ Crear Proyecto</a>
+        </div>
+
+        <footer class="footer">
+            © 2026 Fondo Thoth AC
+        </footer>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚠️ Eliminar Proyecto</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar el proyecto "<strong id="deleteProjectName"></strong>"?</p>
+                <p style="margin-top: 0.5rem;">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn" style="background: var(--error); color: white;"
+                    onclick="confirmDelete()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let projects = [];
+        let currentFilter = 'all';
+        let deleteProjectId = null;
+
+        // Load projects on page load
+        document.addEventListener('DOMContentLoaded', loadProjects);
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderProjects();
+            });
+        });
+
+        // Search input
+        document.getElementById('searchInput').addEventListener('input', renderProjects);
+
+        async function loadProjects() {
+            const uuid = localStorage.getItem('uuid_usuario') || 'demo-user';
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'list', uuid_usuario: uuid })
+                });
+                const data = await res.json();
+                projects = data.projects || [];
+                renderProjects();
+            } catch (err) {
+                console.error('Error loading projects:', err);
+                projects = [];
+                renderProjects();
+            }
+        }
+
+        function renderProjects() {
+            const grid = document.getElementById('projectsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            // Filter projects
+            let filtered = projects.filter(p => {
+                const matchesFilter = currentFilter === 'all' || p.estatus_proyecto === currentFilter;
+                const matchesSearch = !searchTerm ||
+                    (p.a1_nombre_negocio || '').toLowerCase().includes(searchTerm) ||
+                    (p.a2_nombre_emprendedor || '').toLowerCase().includes(searchTerm);
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            grid.innerHTML = filtered.map(p => createProjectCard(p)).join('');
+        }
+
+        function createProjectCard(project) {
+            const progress = calculateProgress(project);
+            const statusLabels = {
+                'borrador': 'Borrador',
+                'revision_ia': 'Revisión IA',
+                'completo': 'Completo',
+                'publicado': 'Publicado'
+            };
+
+            return `
+                <div class="project-card" data-id="${project.id_proyecto}">
+                    <div class="card-header">
+                        <div class="card-title">${project.a1_nombre_negocio || 'Sin nombre'}</div>
+                        <div class="card-subtitle">${project.a2_nombre_emprendedor || 'Sin emprendedor'}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <span class="meta-item">📅 ${formatDate(project.fecha_actualizacion)}</span>
+                            ${project.b5_monto_solicitado ? `<span class="meta-item">💰 $${parseFloat(project.b5_monto_solicitado).toLocaleString()}</span>` : ''}
+                            ${project.d6_latitud ? `<span class="meta-item">📍 Georeferenciado</span>` : ''}
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="progress-text">${progress}% completado</div>
+                    </div>
+                    <div class="card-footer">
+                        <span class="status-badge status-${project.estatus_proyecto}">
+                            ${statusLabels[project.estatus_proyecto] || project.estatus_proyecto}
+                        </span>
+                        <div class="card-actions">
+                            <button class="btn-icon" title="Editar" onclick="editProject(${project.id_proyecto})">✏️</button>
+                            <button class="btn-icon" title="Duplicar" onclick="duplicateProject(${project.id_proyecto})">📋</button>
+                            <button class="btn-icon" title="Exportar PDF" onclick="exportProject(${project.id_proyecto})">📄</button>
+                            <button class="btn-icon" title="Eliminar" onclick="deleteProject(${project.id_proyecto}, '${(project.a1_nombre_negocio || '').replace(/'/g, "\\'")}')">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateProgress(project) {
+            const fields = [
+                'a1_nombre_negocio', 'a2_nombre_emprendedor',
+                'b1_descripcion_negocio', 'b3_propuesta_valor',
+                'd1_segmento_cliente', 'd6_latitud',
+                'e1_proceso_produccion', 'e3_productos_bom_json',
+                'g5_costos_fijos_mensuales', 'g8_inversion_inicial',
+                'h1_impacto_social'
+            ];
+
+            let filled = fields.filter(f => project[f] && project[f] !== '[]' && project[f] !== 'null').length;
+            return Math.round((filled / fields.length) * 100);
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function editProject(id) {
+            window.location.href = `wizard.html?edit=${id}`;
+        }
+
+        async function duplicateProject(id) {
+            const project = projects.find(p => p.id_proyecto == id);
+            if (!project) return;
+
+            const newProject = { ...project };
+            delete newProject.id_proyecto;
+            delete newProject.fecha_creacion;
+            delete newProject.fecha_actualizacion;
+            newProject.a1_nombre_negocio = (project.a1_nombre_negocio || 'Sin nombre') + ' (Copia)';
+            newProject.estatus_proyecto = 'borrador';
+            newProject.action = 'create';
+            newProject.uuid_usuario = localStorage.getItem('uuid_usuario') || 'demo-user';
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newProject)
+                });
+                const result = await res.json();
+                if (result.success || result.id_proyecto) {
+                    alert('Proyecto duplicado exitosamente');
+                    loadProjects();
+                }
+            } catch (err) {
+                alert('Error al duplicar: ' + err.message);
+            }
+        }
+
+        function deleteProject(id, name) {
+            deleteProjectId = id;
+            document.getElementById('deleteProjectName').textContent = name;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deleteProjectId = null;
+        }
+
+        async function confirmDelete() {
+            if (!deleteProjectId) return;
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', id_proyecto: deleteProjectId })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    closeModal();
+                    loadProjects();
+                } else {
+                    alert('Error al eliminar: ' + (result.error || 'Desconocido'));
+                }
+            } catch (err) {
+                alert('Error al eliminar: ' + err.message);
+            }
+        }
+
+        function exportProject(id) {
+            // Set current project and go to export page
+            localStorage.setItem('plania_current_project', id);
+            window.location.href = `export_pdf.html?id=${id}`;
+        }
+    </script>
+</body>
+
+</html>

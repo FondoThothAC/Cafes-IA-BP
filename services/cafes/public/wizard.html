@@ -1,0 +1,1291 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/wizard.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend - Wizard)
+ARCHIVO: public/wizard.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT (Interfaz de usuario).
+DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Editor de Proyecto</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        .wizard-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Progress */
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .progress-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--surface-light);
+            transform: translateY(-50%);
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            z-index: 1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active {
+            background: var(--primary);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        }
+
+        .progress-step.completed {
+            background: var(--success);
+        }
+
+        /* Steps */
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+        }
+
+        .step-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+        }
+
+        /* Form Fields with Icons */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .field-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .field-label label {
+            font-weight: 500;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .field-icons {
+            display: flex;
+            gap: 0.25rem;
+            margin-left: auto;
+        }
+
+        .icon-btn {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .icon-btn.info:hover {
+            color: var(--info);
+        }
+
+        .icon-btn.ai:hover {
+            color: #a855f7;
+        }
+
+        .icon-btn.future {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            padding: 1rem;
+            border-radius: 8px;
+            max-width: 350px;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .tooltip.show {
+            display: block;
+        }
+
+        .tooltip-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .tooltip-content {
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .ai-prompt {
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            color: #a855f7;
+        }
+
+        .btn-copy {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        /* Grid */
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* BOM */
+        .bom-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .bom-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .btn-remove {
+            background: var(--error);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .btn-add {
+            width: 100%;
+            padding: 1rem;
+            background: transparent;
+            border: 2px dashed var(--surface-light);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .btn-add:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Nav buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+
+        .save-indicator {
+            text-align: center;
+            padding: 0.5rem;
+            color: var(--success);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container wizard-container">
+        <div class="page-header" style="text-align: center;">
+            <h1 id="wizard-title">✏️ Nuevo Proyecto</h1>
+            <p class="subtitle">Completa tu plan de negocios paso a paso</p>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-container">
+            <div class="progress-step active" data-step="1" onclick="goToStep(1)">1</div>
+            <div class="progress-step" data-step="2" onclick="goToStep(2)">2</div>
+            <div class="progress-step" data-step="3" onclick="goToStep(3)">3</div>
+            <div class="progress-step" data-step="4" onclick="goToStep(4)">4</div>
+            <div class="progress-step" data-step="5" onclick="goToStep(5)">5</div>
+            <div class="progress-step" data-step="6" onclick="goToStep(6)">6</div>
+            <div class="progress-step" data-step="7" onclick="goToStep(7)">7</div>
+            <div class="progress-step" data-step="8" onclick="goToStep(8)">8</div>
+        </div>
+
+        <form id="wizardForm">
+            <!-- Step 1: Portada -->
+            <div class="step active" data-step="1">
+                <div class="step-card">
+                    <h2 class="step-title">📋 Unidad I - Portada y Datos Generales</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="a1_nombre_negocio">Nombre del Negocio *</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="nombre_negocio">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="nombre_negocio">🤖</button>
+                                <button type="button" class="icon-btn future" title="Próximamente">⚡</button>
+                            </div>
+                        </div>
+                        <input type="text" id="a1_nombre_negocio" name="a1_nombre_negocio" required
+                            placeholder="Ej: Florería La Rosa">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="a2_nombre_emprendedor">Nombre del Emprendedor *</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="nombre_emprendedor">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="nombre_emprendedor">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <input type="text" id="a2_nombre_emprendedor" name="a2_nombre_emprendedor" required
+                            placeholder="Nombre completo">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="a4_carta_presentacion">Carta de Presentación</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="carta_presentacion">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="carta_presentacion">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="a4_carta_presentacion" name="a4_carta_presentacion" rows="4"
+                            placeholder="Breve descripción de quién eres, tu experiencia y por qué emprendes..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Resumen Ejecutivo -->
+            <div class="step" data-step="2">
+                <div class="step-card">
+                    <h2 class="step-title">💡 Unidad II - Resumen Ejecutivo</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="b1_descripcion_negocio">Descripción del Negocio *</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="descripcion_negocio">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="descripcion_negocio">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="b1_descripcion_negocio" name="b1_descripcion_negocio" required rows="4"
+                            placeholder="¿Qué es tu negocio y qué ofrece?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="b2_problema_oportunidad">Problema u Oportunidad</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="problema_oportunidad">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="problema_oportunidad">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="b2_problema_oportunidad" name="b2_problema_oportunidad" rows="3"
+                            placeholder="¿Qué problema resuelve o qué oportunidad aprovecha?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="b3_propuesta_valor">Propuesta de Valor</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="propuesta_valor">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="propuesta_valor">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="b3_propuesta_valor" name="b3_propuesta_valor" rows="3"
+                            placeholder="¿Qué te hace diferente de la competencia?"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="b4_cliente_objetivo_resumen">Cliente Objetivo</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="cliente_objetivo">ℹ️</button>
+                                    <button type="button" class="icon-btn ai" data-ai="cliente_objetivo">🤖</button>
+                                    <button type="button" class="icon-btn future">⚡</button>
+                                </div>
+                            </div>
+                            <input type="text" id="b4_cliente_objetivo_resumen" name="b4_cliente_objetivo_resumen"
+                                placeholder="Ej: Familias de clase media">
+                        </div>
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="b5_monto_solicitado">Monto Solicitado ($)</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="monto_solicitado">ℹ️</button>
+                                </div>
+                            </div>
+                            <input type="number" id="b5_monto_solicitado" name="b5_monto_solicitado" min="0" step="100"
+                                placeholder="50000">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Perfil del Emprendedor -->
+            <div class="step" data-step="3">
+                <div class="step-card">
+                    <h2 class="step-title">👤 Unidad III - Perfil del Emprendedor</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="c1_experiencia_habilidades">Experiencia y Habilidades</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="experiencia">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="experiencia">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="c1_experiencia_habilidades" name="c1_experiencia_habilidades" rows="3"
+                            placeholder="¿Qué experiencia y habilidades tienes?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="c2_motivacion">Motivación para Emprender</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="motivacion">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="motivacion">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="c2_motivacion" name="c2_motivacion" rows="3"
+                            placeholder="¿Por qué quieres emprender este negocio?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="c3_compromiso_tiempo">Disponibilidad de Tiempo</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="tiempo">ℹ️</button>
+                            </div>
+                        </div>
+                        <input type="text" id="c3_compromiso_tiempo" name="c3_compromiso_tiempo"
+                            placeholder="Ej: 40 horas semanales">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Estudio de Mercado -->
+            <div class="step" data-step="4">
+                <div class="step-card">
+                    <h2 class="step-title">📊 Unidad IV - Estudio de Mercado</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="d1_segmento_cliente">Segmento de Cliente</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="segmento_cliente">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="segmento_cliente">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="d1_segmento_cliente" name="d1_segmento_cliente" rows="3"
+                            placeholder="Describe tu cliente ideal (edad, género, ubicación, hábitos de compra)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="d5_ventaja_competitiva">Ventaja Competitiva</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="ventaja_competitiva">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="ventaja_competitiva">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="d5_ventaja_competitiva" name="d5_ventaja_competitiva" rows="3"
+                            placeholder="¿Por qué los clientes te elegirán a ti sobre la competencia?"></textarea>
+                    </div>
+
+                    <!-- Análisis N-D-D -->
+                    <div
+                        style="background: var(--surface); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--surface-light);">
+                        <h3 style="color: var(--primary); margin: 0 0 1rem; font-size: 1rem;">📊 Análisis
+                            Necesidad-Deseo-Demanda</h3>
+
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="i_necesidad">💭 NECESIDAD - ¿Qué carencia resuelves?</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="necesidad">ℹ️</button>
+                                </div>
+                            </div>
+                            <textarea id="i_necesidad" name="i_necesidad" rows="2"
+                                placeholder="Ej: Las familias necesitan alimentación saludable pero no tienen tiempo para cocinar"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="i_deseo">❤️ DESEO - ¿Cómo quieren satisfacerla?</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="deseo">ℹ️</button>
+                                </div>
+                            </div>
+                            <textarea id="i_deseo" name="i_deseo" rows="2"
+                                placeholder="Ej: Quieren comida casera lista para calentar, no comida rápida procesada"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="i_demanda">💰 DEMANDA - ¿Pueden y quieren pagar?</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="demanda">ℹ️</button>
+                                </div>
+                            </div>
+                            <textarea id="i_demanda" name="i_demanda" rows="2"
+                                placeholder="Ej: Sí, familias de clase media gastan $200-300 diarios en comida"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Embudo de Ventas -->
+                    <div
+                        style="background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; color: white;">
+                        <h3 style="color: #60a5fa; margin: 0 0 1rem; font-size: 1rem;">🎯 Embudo de Ventas</h3>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label for="i_mercado_objetivo" style="color: #fcd34d; font-size: 0.9rem;">Mercado
+                                    Potencial (personas)</label>
+                                <input type="number" id="i_mercado_objetivo" name="i_mercado_objetivo" min="0"
+                                    step="100" placeholder="10000"
+                                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
+                            </div>
+                            <div class="form-group">
+                                <label for="i_alcance_pct" style="color: #60a5fa; font-size: 0.9rem;">Alcance % (ven tu
+                                    marca)</label>
+                                <input type="number" id="i_alcance_pct" name="i_alcance_pct" min="0" max="100" step="1"
+                                    placeholder="30"
+                                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label for="i_conversion_pct" style="color: #4ade80; font-size: 0.9rem;">Conversión %
+                                    (compran)</label>
+                                <input type="number" id="i_conversion_pct" name="i_conversion_pct" min="0" max="100"
+                                    step="1" placeholder="10"
+                                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
+                            </div>
+                            <div class="form-group">
+                                <label for="g5_precio_promedio" style="color: white; font-size: 0.9rem;">Ticket Promedio
+                                    ($)</label>
+                                <input type="number" id="g5_precio_promedio" name="g5_precio_promedio" min="0" step="10"
+                                    placeholder="250"
+                                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">
+                            </div>
+                        </div>
+                        <div id="funnel-result"
+                            style="text-align: center; margin-top: 0.5rem; padding: 0.75rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <span style="font-size: 0.8rem; color: #94a3b8;">Ventas estimadas: </span>
+                            <span id="funnel-sales"
+                                style="font-size: 1.1rem; font-weight: 700; color: #4ade80;">$0/mes</span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="d6_latitud">Latitud</label>
+                                <div class="field-icons"><button type="button" class="icon-btn info"
+                                        data-info="coordenadas">ℹ️</button></div>
+                            </div>
+                            <input type="number" id="d6_latitud" name="d6_latitud" step="0.00000001"
+                                placeholder="29.0729">
+                        </div>
+                        <div class="form-group">
+                            <div class="field-label"><label for="d7_longitud">Longitud</label></div>
+                            <input type="number" id="d7_longitud" name="d7_longitud" step="0.00000001"
+                                placeholder="-110.9559">
+                        </div>
+                    </div>
+
+                    <!-- Map Container -->
+                    <div class="form-group">
+                        <label>Selecciona la ubicación en el mapa</label>
+                        <div id="map-container" style="height: 300px; width: 100%; border-radius: 8px; z-index: 0;">
+                        </div>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-top: 5px;">Haga clic en el mapa para
+                            fijar la ubicación.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="d8_direccion_formateada">Dirección del Negocio</label>
+                            <div class="field-icons"><button type="button" class="icon-btn info"
+                                    data-info="direccion">ℹ️</button></div>
+                        </div>
+                        <input type="text" id="d8_direccion_formateada" name="d8_direccion_formateada"
+                            placeholder="Calle, Número, Colonia, Ciudad">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Organización -->
+            <div class="step" data-step="5">
+                <div class="step-card">
+                    <h2 class="step-title">🏭 Unidad V - Organización del Negocio</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="e1_proceso_produccion">Proceso de Producción/Servicio</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="proceso_produccion">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="proceso_produccion">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="e1_proceso_produccion" name="e1_proceso_produccion" rows="4"
+                            placeholder="Describe paso a paso cómo produces tu producto/servicio"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="e2_capacidad_produccion">Capacidad de Producción</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="capacidad">ℹ️</button>
+                            </div>
+                        </div>
+                        <input type="text" id="e2_capacidad_produccion" name="e2_capacidad_produccion"
+                            placeholder="Ej: 50 unidades por semana">
+                    </div>
+
+                    <!-- BOM Builder -->
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label>Productos/Servicios (Lista de Materiales)</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="bom">ℹ️</button>
+                            </div>
+                        </div>
+                        <div id="bomContainer"></div>
+                        <button type="button" class="btn-add" onclick="addBomItem()">+ Agregar Producto</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Marketing -->
+            <div class="step" data-step="6">
+                <div class="step-card">
+                    <h2 class="step-title">📣 Unidad VI - Plan de Marketing</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="f1_nombre_marca">Nombre e Identidad de Marca</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="marca">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="marca">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <input type="text" id="f1_nombre_marca" name="f1_nombre_marca"
+                            placeholder="Nombre de tu marca y concepto">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="f2_estrategia_precios">Estrategia de Precios</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="estrategia_precios">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="estrategia_precios">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="f2_estrategia_precios" name="f2_estrategia_precios" rows="3"
+                            placeholder="¿Cómo defines tus precios? ¿Por encima o debajo de la competencia?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="f3_canales_venta">Canales de Venta</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="canales_venta">ℹ️</button>
+                            </div>
+                        </div>
+                        <input type="text" id="f3_canales_venta" name="f3_canales_venta"
+                            placeholder="Ej: WhatsApp, Redes Sociales, Local físico, Ferias">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="f4_estrategia_promocion">Estrategia de Promoción</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="promocion">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="promocion">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="f4_estrategia_promocion" name="f4_estrategia_promocion" rows="3"
+                            placeholder="¿Cómo darás a conocer tu negocio? (promociones, redes, referidos, etc.)"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 7: Finanzas -->
+            <div class="step" data-step="7">
+                <div class="step-card">
+                    <h2 class="step-title">💰 Unidad VII - Plan Financiero</h2>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="g5_costos_fijos_mensuales">Costos Fijos Mensuales ($)</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info" data-info="costos_fijos">ℹ️</button>
+                                </div>
+                            </div>
+                            <input type="number" id="g5_costos_fijos_mensuales" name="g5_costos_fijos_mensuales" min="0"
+                                step="100" placeholder="5000">
+                        </div>
+                        <div class="form-group">
+                            <div class="field-label">
+                                <label for="g8_inversion_inicial">Inversión Inicial ($)</label>
+                                <div class="field-icons">
+                                    <button type="button" class="icon-btn info"
+                                        data-info="inversion_inicial">ℹ️</button>
+                                </div>
+                            </div>
+                            <input type="number" id="g8_inversion_inicial" name="g8_inversion_inicial" min="0"
+                                step="100" placeholder="50000">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="g9_uso_capital">Plan de Uso del Capital Semilla</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="uso_capital">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="uso_capital">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="g9_uso_capital" name="g9_uso_capital" rows="3"
+                            placeholder="Detalla en qué se gastará el capital solicitado"></textarea>
+                    </div>
+
+                    <p class="text-muted" style="text-align: center; margin-top: 1rem;">
+                        📊 Para análisis financiero detallado usa el módulo <a href="financial_planner.html"
+                            style="color: var(--primary);">Plan Financiero</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 8: Impacto -->
+            <div class="step" data-step="8">
+                <div class="step-card">
+                    <h2 class="step-title">🌟 Unidad VIII - Impacto y Compromisos</h2>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="h1_impacto_social">Impacto Social</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="impacto_social">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="impacto_social">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="h1_impacto_social" name="h1_impacto_social" rows="3"
+                            placeholder="¿Cómo beneficia tu negocio a la comunidad?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="h2_impacto_economico">Impacto Económico Familiar</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="impacto_economico">ℹ️</button>
+                                <button type="button" class="icon-btn ai" data-ai="impacto_economico">🤖</button>
+                                <button type="button" class="icon-btn future">⚡</button>
+                            </div>
+                        </div>
+                        <textarea id="h2_impacto_economico" name="h2_impacto_economico" rows="3"
+                            placeholder="¿Cuánto ingreso adicional esperas generar para tu familia?"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="field-label">
+                            <label for="h4_compromiso">Compromiso del Emprendedor</label>
+                            <div class="field-icons">
+                                <button type="button" class="icon-btn info" data-info="compromiso">ℹ️</button>
+                            </div>
+                        </div>
+                        <textarea id="h4_compromiso" name="h4_compromiso" rows="3"
+                            placeholder="Tu compromiso con la continuidad del negocio"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-buttons">
+                <button type="button" class="btn btn-secondary" onclick="prevStep()" id="btnPrev"
+                    style="visibility: hidden;">← Anterior</button>
+
+                <!-- AI AGENT BUTTON -->
+                <button type="button" class="btn btn-accent" id="btnAiAgent" onclick="runAiAgent()"
+                    style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; color: white; display: none;">
+                    🤖 Auto-completar con IA Local
+                </button>
+
+                <button type="button" class="btn btn-primary" onclick="nextStep()" id="btnNext">Siguiente →</button>
+                <button type="button" class="btn btn-success" onclick="submitForm()" id="btnSubmit"
+                    style="display: none;">💾 Guardar Proyecto</button>
+            </div>
+
+            <div class="save-indicator" id="saveIndicator"></div>
+        </form>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip">
+        <div class="tooltip-title" id="tooltip-title"></div>
+        <div class="tooltip-content" id="tooltip-content"></div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Field info and AI prompts
+        const fieldInfo = {
+            nombre_negocio: { title: 'Nombre del Negocio', desc: 'El nombre comercial de tu empresa. Debe ser memorable, fácil de pronunciar y representar lo que ofreces.' },
+            nombre_emprendedor: { title: 'Emprendedor', desc: 'Tu nombre completo como responsable del proyecto.' },
+            carta_presentacion: { title: 'Carta de Presentación', desc: 'Breve historia personal: quién eres, tu experiencia relevante, y por qué emprendiste este negocio.' },
+            descripcion_negocio: { title: 'Descripción', desc: 'Resumen claro de qué ofrece tu negocio: productos/servicios principales, ubicación y propósito.' },
+            problema_oportunidad: { title: 'Problema/Oportunidad', desc: 'El problema que resuelves o la necesidad del mercado que detectaste como oportunidad.' },
+            propuesta_valor: { title: 'Propuesta de Valor', desc: 'Lo que te hace único y diferente de la competencia: ¿por qué elegirte a ti?' },
+            cliente_objetivo: { title: 'Cliente Objetivo', desc: 'A quién le vendes: demografía, hábitos, capacidad de pago.' },
+            monto_solicitado: { title: 'Monto Solicitado', desc: 'Capital semilla necesario para iniciar o crecer el negocio.' },
+            experiencia: { title: 'Experiencia', desc: 'Habilidades y experiencia previa relacionada con el negocio.' },
+            motivacion: { title: 'Motivación', desc: 'Razones personales por las que emprendes este proyecto.' },
+            tiempo: { title: 'Disponibilidad', desc: 'Horas semanales que dedicarás al negocio.' },
+            segmento_cliente: { title: 'Segmento', desc: 'Descripción detallada de tu cliente ideal: edad, género, ubicación, nivel socioeconómico, comportamiento.' },
+            ventaja_competitiva: { title: 'Ventaja Competitiva', desc: 'Tu diferenciador único: precio, calidad, servicio, ubicación, etc.' },
+            coordenadas: { title: 'Ubicación GPS', desc: 'Latitud y longitud de tu negocio (puedes obtenerlas de Google Maps).' },
+            direccion: { title: 'Dirección', desc: 'Ubicación física completa del negocio.' },
+            proceso_produccion: { title: 'Proceso', desc: 'Pasos para producir tu producto o prestar tu servicio.' },
+            capacidad: { title: 'Capacidad', desc: 'Cuánto puedes producir/atender por día/semana/mes.' },
+            bom: { title: 'Lista de Productos', desc: 'Catálogo de productos/servicios con precio de venta y costo estimado.' },
+            marca: { title: 'Marca', desc: 'Nombre comercial e identidad visual de tu negocio.' },
+            estrategia_precios: { title: 'Estrategia de Precios', desc: 'Cómo defines tus precios: por costo más margen, por competencia, por valor percibido.' },
+            canales_venta: { title: 'Canales', desc: 'Dónde y cómo venderás: local, online, WhatsApp, ferias, etc.' },
+            promocion: { title: 'Promoción', desc: 'Estrategias de bajo costo para dar a conocer tu negocio.' },
+            costos_fijos: { title: 'Costos Fijos', desc: 'Gastos mensuales que no cambian: renta, servicios, sueldos.' },
+            inversion_inicial: { title: 'Inversión Inicial', desc: 'Dinero necesario para comenzar: equipo, inventario, adecuaciones.' },
+            uso_capital: { title: 'Uso del Capital', desc: 'Detalle de cómo usarás el dinero solicitado.' },
+            impacto_social: { title: 'Impacto Social', desc: 'Beneficios para la comunidad: empleos, servicios, mejora de calidad de vida.' },
+            impacto_economico: { title: 'Impacto Económico', desc: 'Ingreso adicional esperado para tu familia.' },
+            compromiso: { title: 'Compromiso', desc: 'Tu promesa de dedicación y continuidad del negocio.' },
+            necesidad: { title: 'NECESIDAD', desc: 'Estado de carencia del cliente. ¿Qué problema o falta tiene tu cliente que tu producto/servicio resuelve? Piensa en necesidades básicas o funcionales.' },
+            deseo: { title: 'DESEO', desc: 'Forma específica de satisfacer la necesidad. ¿Cómo QUIERE el cliente resolver su problema? El deseo es más específico y emocional que la necesidad.' },
+            demanda: { title: 'DEMANDA', desc: 'Deseo respaldado por poder de compra. ¿El cliente tiene capacidad económica Y está dispuesto a pagar por tu solución?' },
+        };
+
+        const aiPrompts = {
+            nombre_negocio: 'Sugiere 5 nombres creativos para un negocio de [GIRO] en [CIUDAD], que sean memorables y fáciles de pronunciar.',
+            carta_presentacion: 'Redacta una carta de presentación de 150 palabras para un emprendedor de [GIRO] que tiene [X años] de experiencia en [ÁREA].',
+            descripcion_negocio: 'Describe en 100 palabras un negocio de [GIRO] ubicado en [CIUDAD] que ofrece [PRODUCTOS/SERVICIOS].',
+            problema_oportunidad: 'Identifica 3 problemas que resuelve un negocio de [GIRO] y 3 oportunidades de mercado en [REGIÓN].',
+            propuesta_valor: 'Crea una propuesta de valor diferenciadora para un negocio de [GIRO] que compite contra [COMPETIDORES].',
+            cliente_objetivo: 'Define el cliente ideal para un negocio de [GIRO] en [CIUDAD] incluyendo demografía, hábitos y poder adquisitivo.',
+            experiencia: 'Redacta un párrafo describiendo la experiencia relevante de alguien con background en [ÁREA] para emprender en [GIRO].',
+            motivacion: 'Explica 3 motivaciones personales para emprender un negocio de [GIRO] como sustento familiar.',
+            segmento_cliente: 'Segmenta el mercado para un negocio de [GIRO] en [CIUDAD] usando variables demográficas y psicográficas.',
+            ventaja_competitiva: 'Lista 5 ventajas competitivas que puede tener un negocio de [GIRO] pequeño frente a cadenas grandes.',
+            proceso_produccion: 'Describe el proceso paso a paso para producir [PRODUCTO] o prestar [SERVICIO].',
+            marca: 'Sugiere un nombre de marca y eslogan para un negocio de [GIRO] que transmita [VALORES].',
+            estrategia_precios: 'Define una estrategia de precios para un negocio de [GIRO] considerando costos de [X] y precios de competencia de [Y].',
+            promocion: 'Lista 10 estrategias de promoción de bajo costo para un negocio de [GIRO] en [CIUDAD].',
+            uso_capital: 'Detalla el uso de $[MONTO] de capital semilla para iniciar un negocio de [GIRO].',
+            impacto_social: 'Describe el impacto social de un negocio de [GIRO] en una comunidad de [TIPO].',
+            impacto_economico: 'Calcula el impacto económico familiar de un negocio de [GIRO] que genera $[VENTAS] mensuales.',
+        };
+
+        let currentStep = 1;
+        const totalSteps = 8;
+        let isEditMode = false;
+        let editProjectId = null;
+        let bomItems = [];
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const API_URL = 'save_row.php';
+            const editId = params.get('edit');
+            if (editId) {
+                isEditMode = true;
+                editProjectId = editId;
+                document.getElementById('wizard-title').textContent = '✏️ Editar Proyecto';
+            }
+
+            setTimeout(() => {
+                if (isEditMode && editProjectId) {
+                    loadProjectData(editProjectId);
+                }
+            }, 500);
+
+            setupTooltips();
+            setupFunnelCalc();
+        });
+
+        // Sales Funnel Calculator
+        function setupFunnelCalc() {
+            const fields = ['i_mercado_objetivo', 'i_alcance_pct', 'i_conversion_pct', 'g5_precio_promedio'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', calcFunnel);
+                }
+            });
+        }
+
+        function calcFunnel() {
+            const mercado = parseFloat(document.getElementById('i_mercado_objetivo')?.value) || 0;
+            const alcance = parseFloat(document.getElementById('i_alcance_pct')?.value) || 0;
+            const conversion = parseFloat(document.getElementById('i_conversion_pct')?.value) || 0;
+            const ticket = parseFloat(document.getElementById('g5_precio_promedio')?.value) || 0;
+
+            const clientes = Math.round(mercado * (alcance / 100) * (conversion / 100));
+            const ventasMes = clientes * ticket;
+
+            const resultEl = document.getElementById('funnel-sales');
+            if (resultEl) {
+                resultEl.textContent = '$' + ventasMes.toLocaleString() + '/mes';
+            }
+        }
+
+        // Map Logic (global scope)
+        let map = null;
+        let marker = null;
+
+        function initMap() {
+            if (map) return; // Already initialized
+            const mapContainer = document.getElementById('map-container');
+            if (!mapContainer) return; // Container not found
+
+            // Default: Hermosillo, Sonora (or get from inputs if set)
+            let lat = parseFloat(document.getElementById('d6_latitud').value) || 29.0729;
+            let lon = parseFloat(document.getElementById('d7_longitud').value) || -110.9559;
+
+            map = L.map('map-container').setView([lat, lon], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add initial marker if coords exist
+            if (document.getElementById('d6_latitud').value) {
+                marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+                marker.on('dragend', function (event) {
+                    const position = marker.getLatLng();
+                    updateCoords(position.lat, position.lng);
+                });
+            }
+
+            // Click event
+            map.on('click', function (e) {
+                if (marker) {
+                    marker.setLatLng(e.latlng);
+                } else {
+                    marker = L.marker(e.latlng, { draggable: true }).addTo(map);
+                    marker.on('dragend', function (event) {
+                        const position = marker.getLatLng();
+                        updateCoords(position.lat, position.lng);
+                    });
+                }
+                updateCoords(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Refresh layout in case it was hidden
+            setTimeout(() => { map.invalidateSize(); }, 100);
+        }
+
+        function updateCoords(lat, lng) {
+            document.getElementById('d6_latitud').value = lat.toFixed(6);
+            document.getElementById('d7_longitud').value = lng.toFixed(6);
+
+            // Reverse Geocoding
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
+                headers: { 'User-Agent': 'PlanIA_App/1.0' }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        document.getElementById('d8_direccion_formateada').value = data.display_name;
+                    }
+                })
+                .catch(err => console.error('Geocoding error:', err));
+        }
+
+        // Tooltips
+        function setupTooltips() {
+            document.addEventListener('click', (e) => {
+                const infoBtn = e.target.closest('.icon-btn.info');
+                const aiBtn = e.target.closest('.icon-btn.ai');
+
+                if (infoBtn) {
+                    const key = infoBtn.dataset.info;
+                    showTooltip(infoBtn, fieldInfo[key]?.title || '', fieldInfo[key]?.desc || '', null);
+                } else if (aiBtn) {
+                    const key = aiBtn.dataset.ai;
+                    showTooltip(aiBtn, '🤖 Prompt para IA', 'Copia este prompt y úsalo con ChatGPT o similar:', aiPrompts[key]);
+                } else {
+                    hideTooltip();
+                }
+            });
+        }
+
+        function showTooltip(btn, title, content, aiPrompt) {
+            const tooltip = document.getElementById('tooltip');
+            const rect = btn.getBoundingClientRect();
+
+            let html = `<div class="tooltip-title">${title}</div><div class="tooltip-content">${content}</div>`;
+            if (aiPrompt) {
+                html += `<div class="ai-prompt">${aiPrompt}</div>`;
+                html += `<button class="btn btn-secondary btn-copy" onclick="copyPrompt('${aiPrompt.replace(/'/g, "\\'")}')">📋 Copiar Prompt</button>`;
+            }
+
+            tooltip.innerHTML = html;
+            tooltip.style.top = (rect.bottom + 10) + 'px';
+            tooltip.style.left = Math.max(10, rect.left - 150) + 'px';
+            tooltip.classList.add('show');
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').classList.remove('show');
+        }
+
+        function copyPrompt(text) {
+            navigator.clipboard.writeText(text);
+            alert('Prompt copiado al portapapeles');
+            hideTooltip();
+        }
+
+        // Navigation
+        function goToStep(step) {
+            if (step === 4) {
+                setTimeout(initMap, 500);
+            }
+            if (step < 1 || step > totalSteps) return;
+
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step[data-step="${step}"]`).classList.add('active');
+
+            document.querySelectorAll('.progress-step').forEach((s, i) => {
+                s.classList.remove('active');
+                if (i + 1 < step) s.classList.add('completed');
+                else s.classList.remove('completed');
+                if (i + 1 === step) s.classList.add('active');
+            });
+
+            currentStep = step;
+            updateNavButtons();
+        }
+
+        function nextStep() { goToStep(currentStep + 1); }
+        function prevStep() { goToStep(currentStep - 1); }
+
+        function updateNavButtons() {
+            document.getElementById('btnPrev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+            document.getElementById('btnNext').style.display = currentStep === totalSteps ? 'none' : 'block';
+            document.getElementById('btnSubmit').style.display = currentStep === totalSteps ? 'block' : 'none';
+        }
+
+        // BOM
+        function addBomItem() {
+            const idx = bomItems.length;
+            bomItems.push({ producto: '', precio_venta: 0, costo: 0 });
+            renderBom();
+        }
+
+        function removeBomItem(idx) {
+            bomItems.splice(idx, 1);
+            renderBom();
+        }
+
+        function renderBom() {
+            const container = document.getElementById('bomContainer');
+            container.innerHTML = bomItems.map((item, i) => `
+                <div class="bom-item">
+                    <div class="bom-header">
+                        <span>Producto ${i + 1}</span>
+                        <button type="button" class="btn-remove" onclick="removeBomItem(${i})">✕</button>
+                    </div>
+                    <div class="row">
+                        <input type="text" placeholder="Nombre del producto" value="${item.producto}" onchange="bomItems[${i}].producto = this.value">
+                        <input type="number" placeholder="Precio venta $" value="${item.precio_venta || ''}" onchange="bomItems[${i}].precio_venta = parseFloat(this.value) || 0">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load project for editing
+        async function loadProjectData(id) {
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get', id_proyecto: id })
+                });
+                const project = await res.json();
+
+                if (project && project.id_proyecto) {
+                    // Populate form fields
+                    Object.keys(project).forEach(key => {
+                        const el = document.getElementById(key);
+                        if (el) el.value = project[key] || '';
+                    });
+
+                    // Load BOM
+                    try {
+                        bomItems = JSON.parse(project.e3_productos_bom_json || '[]');
+                        renderBom();
+                    } catch (e) { }
+                }
+            } catch (err) {
+                console.error('Error loading project:', err);
+            }
+        }
+
+        // Submit form
+        async function submitForm() {
+            const formData = new FormData(document.getElementById('wizardForm'));
+            const data = Object.fromEntries(formData.entries());
+
+            data.e3_productos_bom_json = JSON.stringify(bomItems);
+            data.uuid_usuario = localStorage.getItem('uuid_usuario') || 'demo-user';
+            data.action = isEditMode ? 'update' : 'create';
+
+            if (isEditMode) data.id_proyecto = editProjectId;
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success || result.id_proyecto) {
+                    document.getElementById('saveIndicator').textContent = '✅ Proyecto guardado correctamente';
+                    setTimeout(() => {
+                        window.location.href = 'projects_list.html';
+                    }, 1500);
+                } else {
+                    alert('Error: ' + (result.error || 'No se pudo guardar'));
+                }
+            } catch (err) {
+                alert('Error de conexión');
+            }
+        }
+    </script>
+    <!-- AI Agent Modal -->
+    <div id="aiModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div
+            style="background: var(--surface); padding: 2rem; border-radius: 16px; max-width: 500px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+            <h2 style="color: #a855f7; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                🤖 Agente de Investigación IA
+            </h2>
+            <p style="color: var(--text); margin-bottom: 1.5rem; line-height: 1.6;">
+                Este agente utilizará los recursos de tu PC para investigar automáticamente:
+            </p>
+            <ul style="color: var(--text-muted); margin-bottom: 1.5rem; padding-left: 1.5rem;">
+                <li>🔍 Buscará <strong>competidores reales</strong> en Google/Maps.</li>
+                <li>💰 Encontrará <strong>precios de mercado</strong> en tu zona.</li>
+                <li>🧠 Usará tu <strong>Ollama Local</strong> para redactar el plan.</li>
+            </ul>
+            <div
+                style="background: rgba(168, 85, 247, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; color: #a855f7;">
+                <strong>Nota:</strong> Se abrirá un navegador invisible. El proceso toma 1-2 minutos.
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeAiModal()">Cancelar</button>
+                <button type="button" class="btn btn-accent" onclick="confirmRunAi()"
+                    style="background: #a855f7; color: white; border: none;">🚀 Iniciar Investigación</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAiProjectId = null;
+
+        function openAiModal(projectId) {
+            currentAiProjectId = projectId;
+            const modal = document.getElementById('aiModal');
+            modal.style.display = 'flex';
+            // Animation
+            const content = modal.querySelector('div');
+            content.style.transform = 'scale(0.9)';
+            content.style.opacity = '0';
+            setTimeout(() => {
+                content.style.transition = 'all 0.3s ease';
+                content.style.transform = 'scale(1)';
+                content.style.opacity = '1';
+            }, 10);
+        }
+
+        function closeAiModal() {
+            document.getElementById('aiModal').style.display = 'none';
+        }
+
+        // AI AGENT LOGIC
+        function runAiAgent() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('edit');
+
+            if (!projectId) {
+                alert("⚠️ Por favor guarda el proyecto primero para obtener un ID.");
+                return;
+            }
+
+            openAiModal(projectId);
+        }
+
+        async function confirmRunAi() {
+            closeAiModal();
+            const btn = document.getElementById('btnAiAgent');
+
+            // UI Loading state
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "⏳ Investigando (1-2 min)...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('api/run_ai_agent.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_proyecto: currentAiProjectId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert("✅ ¡Investigación completada!\n\nSe han actualizado los datos de competidores, precios y mercado. Recarga la página para ver los cambios.");
+                    location.reload();
+                } else {
+                    console.error("AI Error:", data);
+                    alert("❌ Error del Agente IA:\n" + (data.error || "Error desconocido") + "\n\nDetalles en consola.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("❌ Error de conexión con el agente local.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Show AI Agent button if editing
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('edit')) {
+                const btn = document.getElementById('btnAiAgent');
+                if (btn) btn.style.display = 'inline-block';
+            }
+        });
+    </script>
+</body>
+
+</html>

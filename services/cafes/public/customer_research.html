@@ -1,0 +1,1177 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/customer_research.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/customer_research.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Módulo de Investigación de Cliente - Encuestas N-D-D
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Investigación de Cliente</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .research-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .research-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ndd-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ndd-card.necesidad {
+            border-top: 4px solid #fcd34d;
+        }
+
+        .ndd-card.deseo {
+            border-top: 4px solid #60a5fa;
+        }
+
+        .ndd-card.demanda {
+            border-top: 4px solid #4ade80;
+        }
+
+        .ndd-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .ndd-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .ndd-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .ndd-stat {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .ndd-stat.necesidad {
+            color: #fcd34d;
+        }
+
+        .ndd-stat.deseo {
+            color: #60a5fa;
+        }
+
+        .ndd-stat.demanda {
+            color: #4ade80;
+        }
+
+        .ndd-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .survey-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .survey-section h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .question-card {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .answer-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .answer-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--surface-light);
+            background: transparent;
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .answer-btn:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .answer-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .answer-btn.yes {
+            border-color: #22c55e;
+        }
+
+        .answer-btn.yes.selected {
+            background: #22c55e;
+        }
+
+        .answer-btn.no {
+            border-color: #ef4444;
+        }
+
+        .answer-btn.no.selected {
+            background: #ef4444;
+        }
+
+        .response-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .response-item {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .response-badges {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.necesidad {
+            background: rgba(252, 211, 77, 0.2);
+            color: #fcd34d;
+        }
+
+        .badge.deseo {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+
+        .badge.demanda {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .funnel-visual {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+
+        .funnel-stage {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .funnel-stage.necesidad-stage {
+            background: linear-gradient(90deg, #fcd34d 0%, #f59e0b 100%);
+            width: 100%;
+        }
+
+        .funnel-stage.deseo-stage {
+            background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);
+            width: 70%;
+            margin: 0 auto 0.5rem;
+        }
+
+        .funnel-stage.demanda-stage {
+            background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+            width: 40%;
+            margin: 0 auto;
+        }
+
+        .stage-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .stage-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .insights-box {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .insight-item:last-child {
+            border-bottom: none;
+        }
+
+        .insight-icon {
+            font-size: 1.5rem;
+        }
+
+        .insight-text h4 {
+            margin: 0 0 0.25rem;
+        }
+
+        .insight-text p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .btn-add-response {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-add-response:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>🔬 Investigación de Cliente</h1>
+            <p class="subtitle">Encuestas N-D-D para validar tu mercado</p>
+        </div>
+
+        <!-- Project & Product Selector -->
+        <div class="survey-section" style="margin-bottom: 1.5rem;">
+            <h3>📦 Seleccionar Producto a Evaluar</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Evalúa cada producto por separado para saber cuál
+                tiene más demanda</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">1.
+                        Proyecto:</label>
+                    <select id="projectSelect" class="form-control">
+                        <option value="">Selecciona proyecto...</option>
+                    </select>
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">2.
+                        Producto:</label>
+                    <select id="productSelect" class="form-control" disabled>
+                        <option value="">Primero selecciona proyecto...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Current Product Display -->
+            <div id="currentProductDisplay"
+                style="display: none; margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); border-radius: 12px; color: white;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">Evaluando:</div>
+                        <div style="font-size: 1.25rem; font-weight: 700;" id="currentProductName">-</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.75rem; color: #94a3b8;">Precio:</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #4ade80;" id="currentProductPrice">$0
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Comparison Grid -->
+        <div id="productsComparisonSection" style="display: none; margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 1rem;">📊 Comparativa de Productos</h3>
+            <div id="productsComparisonGrid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <!-- Product comparison cards will be inserted here -->
+            </div>
+        </div>
+
+        <!-- NDD Summary Cards -->
+        <div class="research-grid">
+            <div class="ndd-card necesidad">
+                <div class="ndd-icon">💭</div>
+                <div class="ndd-title necesidad">NECESIDAD</div>
+                <div class="ndd-subtitle">¿Tienen el problema?</div>
+                <div class="ndd-stat necesidad" id="necesidadPct">0%</div>
+                <div class="ndd-label"><span id="necesidadCount">0</span> de <span id="totalResponses">0</span></div>
+            </div>
+            <div class="ndd-card deseo">
+                <div class="ndd-icon">❤️</div>
+                <div class="ndd-title deseo">DESEO</div>
+                <div class="ndd-subtitle">¿Quieren tu solución?</div>
+                <div class="ndd-stat deseo" id="deseoPct">0%</div>
+                <div class="ndd-label"><span id="deseoCount">0</span> de <span id="totalResponses2">0</span></div>
+            </div>
+            <div class="ndd-card demanda">
+                <div class="ndd-icon">💰</div>
+                <div class="ndd-title demanda">DEMANDA</div>
+                <div class="ndd-subtitle">¿Pagarían por ello?</div>
+                <div class="ndd-stat demanda" id="demandaPct">0%</div>
+                <div class="ndd-label"><span id="demandaCount">0</span> de <span id="totalResponses3">0</span></div>
+            </div>
+        </div>
+
+        <!-- Funnel Visualization -->
+        <div class="funnel-visual">
+            <h3 style="margin: 0 0 1.5rem; text-align: center;">🎯 Embudo de Validación</h3>
+            <div class="funnel-stage necesidad-stage">
+                <div class="stage-label">NECESIDAD - Mercado con el problema</div>
+                <div class="stage-value" id="funnelNecesidad">0 personas</div>
+            </div>
+            <div class="funnel-stage deseo-stage">
+                <div class="stage-label">DESEO - Interesados en tu solución</div>
+                <div class="stage-value" id="funnelDeseo">0 personas</div>
+            </div>
+            <div class="funnel-stage demanda-stage">
+                <div class="stage-label">DEMANDA - Dispuestos a pagar</div>
+                <div class="stage-value" id="funnelDemanda">0 personas</div>
+            </div>
+            <div
+                style="text-align: center; margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                <div style="font-size: 0.85rem; color: #94a3b8;">Clientes potenciales validados</div>
+                <div style="font-size: 2rem; font-weight: 700; color: #4ade80;" id="clientesValidados">0</div>
+            </div>
+        </div>
+
+        <!-- Add Response Section -->
+        <div class="survey-section">
+            <h3>➕ Registrar Respuesta de Encuesta</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Registra las respuestas de cada persona encuestada
+            </p>
+
+            <!-- Product context display -->
+            <div id="surveyProductContext"
+                style="display: none; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05)); padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Evaluando producto:</div>
+                <div style="font-size: 1.1rem; font-weight: 600;" id="surveyProductName">-</div>
+                <div style="font-size: 0.9rem; color: #4ade80;" id="surveyProductPrice">Precio: $0</div>
+            </div>
+
+            <!-- Question 1: Necesidad -->
+            <div class="question-card">
+                <div class="question-text">1️⃣ <span id="q1Text">¿Esta persona tiene la NECESIDAD que tu producto
+                        resuelve?</span></div>
+                <div class="answer-options">
+                    <button class="answer-btn yes" data-question="necesidad" data-value="1">✅ Sí, tiene la
+                        necesidad</button>
+                    <button class="answer-btn no" data-question="necesidad" data-value="0">❌ No, no aplica</button>
+                </div>
+            </div>
+
+            <!-- Question 2: Deseo -->
+            <div class="question-card">
+                <div class="question-text">2️⃣ <span id="q2Text">¿DESEA específicamente tu solución? (no cualquier
+                        alternativa)</span></div>
+                <div class="answer-options">
+                    <button class="answer-btn yes" data-question="deseo" data-value="1">✅ Sí, le interesa MI
+                        producto</button>
+                    <button class="answer-btn" data-question="deseo" data-value="2" style="border-color: #f59e0b;">⚠️
+                        Interesado, pero compararía opciones</button>
+                    <button class="answer-btn no" data-question="deseo" data-value="0">❌ No le interesa</button>
+                </div>
+            </div>
+
+            <!-- Question 3: Demanda con rangos de precio -->
+            <div class="question-card">
+                <div class="question-text">3️⃣ ¿Cuánto estaría DISPUESTO a pagar por <strong id="q3ProductName">este
+                        producto</strong>?</div>
+                <div class="answer-options" id="priceRangeOptions">
+                    <!-- Price range buttons generated dynamically based on product price -->
+                </div>
+                <div style="margin-top: 0.75rem;">
+                    <button class="answer-btn no" data-question="demanda" data-value="0" style="width: 100%;">❌ No
+                        pagaría / No tiene capacidad</button>
+                </div>
+            </div>
+
+            <!-- Question 4: Frecuencia de compra -->
+            <div class="question-card">
+                <div class="question-text">4️⃣ ¿Con qué FRECUENCIA compraría este producto?</div>
+                <div class="answer-options">
+                    <button class="answer-btn" data-question="frecuencia" data-value="semanal"
+                        style="border-color: #10b981;">📆 Semanal</button>
+                    <button class="answer-btn" data-question="frecuencia" data-value="mensual"
+                        style="border-color: #3b82f6;">📅 Mensual</button>
+                    <button class="answer-btn" data-question="frecuencia" data-value="trimestral"
+                        style="border-color: #f59e0b;">📆 Trimestral</button>
+                    <button class="answer-btn" data-question="frecuencia" data-value="anual"
+                        style="border-color: #8b5cf6;">📆 Anual</button>
+                    <button class="answer-btn" data-question="frecuencia" data-value="unico"
+                        style="border-color: #64748b;">☝️ Única vez</button>
+                </div>
+            </div>
+
+            <!-- Question 5: Canal preferido -->
+            <div class="question-card">
+                <div class="question-text">5️⃣ ¿Dónde PREFERIRÍA comprar?</div>
+                <div class="answer-options">
+                    <button class="answer-btn" data-question="canal" data-value="tienda"
+                        style="border-color: #10b981;">🏪 Tienda física</button>
+                    <button class="answer-btn" data-question="canal" data-value="online"
+                        style="border-color: #3b82f6;">🌐 Online</button>
+                    <button class="answer-btn" data-question="canal" data-value="whatsapp"
+                        style="border-color: #22c55e;">📱 WhatsApp</button>
+                    <button class="answer-btn" data-question="canal" data-value="redes"
+                        style="border-color: #ec4899;">📸 Redes sociales</button>
+                    <button class="answer-btn" data-question="canal" data-value="domicilio"
+                        style="border-color: #f59e0b;">🚚 A domicilio</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <input type="text" id="respondentName" class="form-control"
+                    placeholder="Nombre del encuestado (opcional)" style="margin-bottom: 0.5rem;">
+            </div>
+
+            <button class="btn-add-response" onclick="addResponse()" style="margin-top: 1rem;">
+                ➕ Registrar Respuesta
+            </button>
+
+            <!-- Share Public Survey Link -->
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--surface-light);">
+                <h4 style="margin-bottom: 0.75rem; color: var(--text-muted); font-size: 0.9rem;">📤 Compartir encuesta
+                    con clientes</h4>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="shareSurveyLink()" id="shareBtn" style="flex: 1;">
+                        🔗 Copiar enlace de encuesta
+                    </button>
+                    <button class="btn btn-success" onclick="openSurveyPreview()" style="flex-shrink: 0;">
+                        👁️ Vista previa
+                    </button>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    Envía este enlace a tus clientes por WhatsApp, email o redes sociales
+                </p>
+            </div>
+        </div>
+
+        <!-- Responses List -->
+        <div class="survey-section">
+            <h3>📋 Respuestas Registradas (<span id="responseCount">0</span>)</h3>
+            <div class="response-list" id="responseList">
+                <div class="empty-state">
+                    <div class="icon">📊</div>
+                    <p>Aún no hay respuestas registradas</p>
+                    <p style="font-size: 0.85rem;">Comienza a encuestar a posibles clientes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights -->
+        <div class="insights-box">
+            <h3>💡 Insights Automáticos</h3>
+            <div id="insightsList">
+                <div class="insight-item">
+                    <div class="insight-icon">📊</div>
+                    <div class="insight-text">
+                        <h4>Recolecta al menos 10 respuestas</h4>
+                        <p>Para obtener insights estadísticamente relevantes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
+            <button class="btn btn-primary" onclick="saveToProject()">💾 Guardar en Proyecto</button>
+            <button class="btn btn-secondary" onclick="exportCSV()">📥 Exportar CSV</button>
+            <button class="btn btn-secondary" onclick="clearResponses()">🗑️ Limpiar Datos</button>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let responses = [];
+        let allProductResponses = {}; // { productId: [responses] }
+        let currentProject = null;
+        let currentProduct = null;
+        let products = [];
+        let currentAnswers = { necesidad: null, deseo: null, demanda: null, frecuencia: null, canal: null, precioSeleccionado: null };
+
+        // Initialize - Use global navbar project
+        document.addEventListener('DOMContentLoaded', () => {
+            setupAnswerButtons();
+
+            // Wait for PlanIA to be ready
+            setTimeout(() => {
+                loadFromNavbar();
+            }, 600);
+        });
+
+        // Listen for project changes in navbar
+        window.addEventListener('plania:projectChanged', loadFromNavbar);
+
+        function loadFromNavbar() {
+            const project = PlanIA.getCurrentProject();
+            if (project) {
+                currentProject = project;
+
+                // Hide the project selector since we use navbar
+                document.getElementById('projectSelect').parentElement.style.display = 'none';
+
+                loadProducts();
+            } else {
+                showToast('Selecciona un proyecto en el navbar', 'error');
+            }
+        }
+
+        function resetProductSelector() {
+            const productSelect = document.getElementById('productSelect');
+            productSelect.innerHTML = '<option value="">Selecciona producto...</option>';
+            productSelect.disabled = true;
+            document.getElementById('currentProductDisplay').style.display = 'none';
+            document.getElementById('productsComparisonSection').style.display = 'none';
+            products = [];
+            currentProduct = null;
+            responses = [];
+            updateUI();
+        }
+
+        function loadProducts() {
+            // Load products from Revenue Module (g12_proyeccion_ingresos_json)
+            products = [];
+            if (currentProject.g12_proyeccion_ingresos_json) {
+                try {
+                    const revenueData = JSON.parse(currentProject.g12_proyeccion_ingresos_json);
+                    products = revenueData.productos || [];
+                } catch (e) {
+                    console.error('Error parsing revenue products:', e);
+                }
+            }
+
+            // Load all saved NDD responses
+            allProductResponses = {};
+            if (currentProject.i_ndd_responses_json) {
+                try {
+                    allProductResponses = JSON.parse(currentProject.i_ndd_responses_json);
+                } catch (e) {
+                    console.error('Error parsing saved responses:', e);
+                }
+            }
+
+            // Populate product selector
+            const productSelect = document.getElementById('productSelect');
+            productSelect.innerHTML = '<option value="">Selecciona producto...</option>';
+
+            if (products.length === 0) {
+                productSelect.innerHTML = '<option value="">No hay productos. Agrégalos en Ingresos</option>';
+                productSelect.disabled = true;
+                showToast('Agrega productos en el módulo de Ingresos', 'error');
+            } else {
+                products.forEach((p, idx) => {
+                    const option = document.createElement('option');
+                    option.value = idx;
+                    option.textContent = p.nombre || `Producto ${idx + 1}`;
+                    productSelect.appendChild(option);
+                });
+                productSelect.disabled = false;
+
+                productSelect.onchange = (e) => {
+                    if (e.target.value !== '') {
+                        selectProduct(parseInt(e.target.value));
+                    }
+                };
+
+                // Show comparison grid
+                renderProductComparison();
+            }
+        }
+
+        function selectProduct(idx) {
+            currentProduct = products[idx];
+            currentProduct._idx = idx;
+
+            // Load responses for this product
+            const productKey = `product_${idx}`;
+            responses = allProductResponses[productKey] || [];
+
+            const productName = currentProduct.nombre || 'Producto';
+            const productPrice = currentProduct.precio || 0;
+
+            // Update header display
+            document.getElementById('currentProductDisplay').style.display = 'block';
+            document.getElementById('currentProductName').textContent = productName;
+            document.getElementById('currentProductPrice').textContent = '$' + productPrice.toLocaleString();
+
+            // Update survey context
+            document.getElementById('surveyProductContext').style.display = 'block';
+            document.getElementById('surveyProductName').textContent = productName;
+            document.getElementById('surveyProductPrice').textContent = 'Precio: $' + productPrice.toLocaleString();
+
+            // Personalize questions
+            document.getElementById('q1Text').textContent = `¿Esta persona tiene la NECESIDAD que "${productName}" resuelve?`;
+            document.getElementById('q2Text').textContent = `¿DESEA específicamente "${productName}"?`;
+            document.getElementById('q3ProductName').textContent = productName;
+
+            // Generate dynamic price ranges
+            generatePriceRanges(productPrice);
+
+            updateUI();
+            renderProductComparison();
+        }
+
+        function generatePriceRanges(basePrice) {
+            const container = document.getElementById('priceRangeOptions');
+
+            // Generate 5 price ranges around the base price
+            const ranges = [
+                { pct: 0.5, label: 'Menos de la mitad' },
+                { pct: 0.75, label: '75% del precio' },
+                { pct: 1.0, label: 'Precio completo' },
+                { pct: 1.25, label: 'Hasta 25% más' },
+                { pct: 1.5, label: 'Hasta 50% más' }
+            ];
+
+            container.innerHTML = ranges.map((range, idx) => {
+                const price = Math.round(basePrice * range.pct);
+                const isFullPrice = range.pct === 1.0;
+                const color = range.pct < 1 ? '#f59e0b' : (range.pct === 1 ? '#22c55e' : '#10b981');
+
+                return `
+                    <button class="answer-btn ${isFullPrice ? 'yes' : ''}" 
+                            data-question="demanda" 
+                            data-value="${range.pct}" 
+                            data-price="${price}"
+                            style="border-color: ${color};">
+                        ${isFullPrice ? '✅' : '💰'} $${price.toLocaleString()} ${range.pct === 1 ? '(precio actual)' : ''}
+                    </button>
+                `;
+            }).join('');
+
+            // Re-attach click handlers for new buttons
+            setupAnswerButtons();
+        }
+
+        function renderProductComparison() {
+            const container = document.getElementById('productsComparisonGrid');
+            const section = document.getElementById('productsComparisonSection');
+
+            if (products.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+
+            container.innerHTML = products.map((p, idx) => {
+                const productKey = `product_${idx}`;
+                const productResponses = allProductResponses[productKey] || [];
+                const total = productResponses.length;
+                const demandaCount = productResponses.filter(r => r.demanda === 1).length;
+                const demandaPct = total > 0 ? Math.round((demandaCount / total) * 100) : 0;
+                const isSelected = currentProduct?._idx === idx;
+
+                // Determine color based on demand
+                let badgeColor = '#64748b';
+                if (total >= 5) {
+                    if (demandaPct >= 50) badgeColor = '#22c55e';
+                    else if (demandaPct >= 30) badgeColor = '#f59e0b';
+                    else badgeColor = '#ef4444';
+                }
+
+                return `
+                    <div style="background: ${isSelected ? 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)' : 'var(--surface)'}; 
+                                border-radius: 12px; padding: 1rem; cursor: pointer; transition: all 0.2s;
+                                border: 2px solid ${isSelected ? '#3b82f6' : 'transparent'};"
+                         onclick="document.getElementById('productSelect').value='${idx}'; selectProduct(${idx});">
+                        <div style="font-weight: 600; color: ${isSelected ? 'white' : 'var(--text)'}; margin-bottom: 0.5rem;">
+                            ${p.nombre || p.name || 'Producto ' + (idx + 1)}
+                        </div>
+                        <div style="font-size: 0.85rem; color: ${isSelected ? '#4ade80' : 'var(--text-muted)'}; margin-bottom: 0.75rem;">
+                            $${(p.precio || p.price || 0).toLocaleString()}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.8rem; color: ${isSelected ? '#94a3b8' : 'var(--text-muted)'};">
+                                ${total} encuestas
+                            </span>
+                            <span style="background: ${badgeColor}; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                                ${demandaPct}% demanda
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setupAnswerButtons() {
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const question = btn.dataset.question;
+                    const value = parseInt(btn.dataset.value);
+
+                    // Deselect other buttons in same question
+                    document.querySelectorAll(`[data-question="${question}"]`).forEach(b => {
+                        b.classList.remove('selected');
+                    });
+
+                    btn.classList.add('selected');
+                    currentAnswers[question] = value;
+                });
+            });
+        }
+
+        function addResponse() {
+            if (!currentProduct) {
+                showToast('Primero selecciona un producto', 'error');
+                return;
+            }
+
+            if (currentAnswers.necesidad === null || currentAnswers.deseo === null || currentAnswers.demanda === null) {
+                showToast('Por favor responde las 3 preguntas', 'error');
+                return;
+            }
+
+            const response = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                name: document.getElementById('respondentName').value || 'Anónimo',
+                notes: document.getElementById('respondentNotes').value,
+                productName: currentProduct.nombre,
+                productPrice: currentProduct.precio,
+                necesidad: currentAnswers.necesidad,
+                deseo: currentAnswers.deseo,
+                demanda: currentAnswers.demanda > 0 ? 1 : 0, // Normalize for stats (any price = demand)
+                precioSeleccionado: currentAnswers.demanda > 0 ? currentAnswers.demanda : null, // Store the actual price multiplier
+                frecuencia: currentAnswers.frecuencia,
+                canal: currentAnswers.canal
+            };
+
+            responses.push(response);
+
+            // Save to allProductResponses
+            const productKey = `product_${currentProduct._idx}`;
+            allProductResponses[productKey] = responses;
+
+            saveResponsesToStorage();
+            updateUI();
+            renderProductComparison();
+            resetForm();
+            showToast('Respuesta registrada ✅', 'success');
+        }
+
+        function resetForm() {
+            currentAnswers = { necesidad: null, deseo: null, demanda: null, frecuencia: null, canal: null, precioSeleccionado: null };
+            document.querySelectorAll('.answer-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('respondentName').value = '';
+            document.getElementById('respondentNotes').value = '';
+        }
+
+        function updateUI() {
+            const total = responses.length;
+            const necesidadCount = responses.filter(r => r.necesidad === 1).length;
+            const deseoCount = responses.filter(r => r.deseo === 1).length;
+            const demandaCount = responses.filter(r => r.demanda === 1).length;
+
+            // Update stats
+            document.getElementById('necesidadPct').textContent = total ? Math.round((necesidadCount / total) * 100) + '%' : '0%';
+            document.getElementById('deseoPct').textContent = total ? Math.round((deseoCount / total) * 100) + '%' : '0%';
+            document.getElementById('demandaPct').textContent = total ? Math.round((demandaCount / total) * 100) + '%' : '0%';
+
+            document.getElementById('necesidadCount').textContent = necesidadCount;
+            document.getElementById('deseoCount').textContent = deseoCount;
+            document.getElementById('demandaCount').textContent = demandaCount;
+
+            document.getElementById('totalResponses').textContent = total;
+            document.getElementById('totalResponses2').textContent = total;
+            document.getElementById('totalResponses3').textContent = total;
+
+            // Update funnel (based on project market size if available)
+            const marketSize = currentProject?.i_mercado_objetivo || 10000;
+            const necesidadPct = total ? (necesidadCount / total) : 0;
+            const deseoPct = total ? (deseoCount / total) : 0;
+            const demandaPct = total ? (demandaCount / total) : 0;
+
+            const funnelNecesidad = Math.round(marketSize * necesidadPct);
+            const funnelDeseo = Math.round(marketSize * deseoPct);
+            const funnelDemanda = Math.round(marketSize * demandaPct);
+
+            document.getElementById('funnelNecesidad').textContent = funnelNecesidad.toLocaleString() + ' personas';
+            document.getElementById('funnelDeseo').textContent = funnelDeseo.toLocaleString() + ' personas';
+            document.getElementById('funnelDemanda').textContent = funnelDemanda.toLocaleString() + ' personas';
+            document.getElementById('clientesValidados').textContent = funnelDemanda.toLocaleString();
+
+            // Update funnel widths
+            const maxWidth = 100;
+            document.querySelector('.deseo-stage').style.width = (necesidadPct > 0 ? Math.max(30, (deseoPct / necesidadPct) * 70) : 70) + '%';
+            document.querySelector('.demanda-stage').style.width = (deseoPct > 0 ? Math.max(20, (demandaPct / deseoPct) * 40) : 40) + '%';
+
+            // Update response list
+            document.getElementById('responseCount').textContent = total;
+            renderResponses();
+
+            // Update insights
+            updateInsights(total, necesidadPct, deseoPct, demandaPct);
+        }
+
+        function renderResponses() {
+            const container = document.getElementById('responseList');
+
+            if (responses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📊</div>
+                        <p>Aún no hay respuestas registradas</p>
+                        <p style="font-size: 0.85rem;">Comienza a encuestar a posibles clientes</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = responses.map((r, idx) => `
+                <div class="response-item">
+                    <div>
+                        <strong>${r.name}</strong>
+                        <small style="color: var(--text-muted); margin-left: 0.5rem;">
+                            ${new Date(r.timestamp).toLocaleDateString('es-MX')}
+                        </small>
+                        ${r.notes ? `<p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-muted);">${r.notes}</p>` : ''}
+                    </div>
+                    <div class="response-badges">
+                        <span class="badge ${r.necesidad ? 'necesidad' : ''}">${r.necesidad ? '✅' : '❌'} N</span>
+                        <span class="badge ${r.deseo ? 'deseo' : ''}">${r.deseo ? '✅' : '❌'} D</span>
+                        <span class="badge ${r.demanda ? 'demanda' : ''}">${r.demanda ? '✅' : '❌'} D</span>
+                        <button onclick="deleteResponse(${r.id})" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1rem;">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateInsights(total, necesidadPct, deseoPct, demandaPct) {
+            const insights = [];
+
+            if (total < 10) {
+                insights.push({
+                    icon: '📊',
+                    title: 'Recolecta más respuestas',
+                    desc: `Tienes ${total} respuestas. Necesitas al menos 10 para validar estadísticamente.`
+                });
+            }
+
+            if (total >= 10) {
+                if (necesidadPct < 0.5) {
+                    insights.push({
+                        icon: '⚠️',
+                        title: 'Problema de necesidad',
+                        desc: `Solo ${Math.round(necesidadPct * 100)}% tiene la necesidad. Considera redefinir tu mercado objetivo.`
+                    });
+                }
+
+                if (necesidadPct > 0.7 && deseoPct < 0.4) {
+                    insights.push({
+                        icon: '💡',
+                        title: 'Oportunidad de marketing',
+                        desc: 'Hay necesidad pero bajo deseo. Mejora tu propuesta de valor o comunicación.'
+                    });
+                }
+
+                if (deseoPct > 0.5 && demandaPct < 0.3) {
+                    insights.push({
+                        icon: '💰',
+                        title: 'Barrera de precio',
+                        desc: 'Hay deseo pero baja demanda. Considera ajustar precios o métodos de pago.'
+                    });
+                }
+
+                if (demandaPct > 0.5) {
+                    insights.push({
+                        icon: '🚀',
+                        title: '¡Mercado validado!',
+                        desc: `${Math.round(demandaPct * 100)}% pagaría por tu producto. ¡Momento de lanzar!`
+                    });
+                }
+            }
+
+            if (insights.length === 0) {
+                insights.push({
+                    icon: '📈',
+                    title: 'En progreso',
+                    desc: 'Sigue recolectando datos para obtener insights.'
+                });
+            }
+
+            document.getElementById('insightsList').innerHTML = insights.map(i => `
+                <div class="insight-item">
+                    <div class="insight-icon">${i.icon}</div>
+                    <div class="insight-text">
+                        <h4>${i.title}</h4>
+                        <p>${i.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteResponse(id) {
+            responses = responses.filter(r => r.id !== id);
+
+            // Update allProductResponses
+            if (currentProduct) {
+                const productKey = `product_${currentProduct._idx}`;
+                allProductResponses[productKey] = responses;
+            }
+
+            saveResponsesToStorage();
+            updateUI();
+            renderProductComparison();
+        }
+
+        function saveResponsesToStorage() {
+            if (currentProject) {
+                localStorage.setItem('ndd_all_responses_' + currentProject.id, JSON.stringify(allProductResponses));
+            }
+        }
+
+        async function saveToProject() {
+            if (!currentProject) {
+                showToast('Selecciona un proyecto primero', 'error');
+                return;
+            }
+
+            // Calculate aggregate stats
+            let totalResponses = 0;
+            let totalNecesidad = 0;
+            let totalDeseo = 0;
+            let totalDemanda = 0;
+
+            Object.values(allProductResponses).forEach(productResps => {
+                productResps.forEach(r => {
+                    totalResponses++;
+                    if (r.necesidad === 1) totalNecesidad++;
+                    if (r.deseo === 1) totalDeseo++;
+                    if (r.demanda === 1) totalDemanda++;
+                });
+            });
+
+            // Sequential Funnel Calculation for PDF compatibility
+            // PDF Logic: Market (Need) -> x Alcance (Desire/Need) -> x Conversion (Demand/Desire)
+
+            // 1. Deseo Rate (as % of those with Need)
+            // If no one has need, assume 0. If some have need, calculate conversion to desire.
+            // Fallback: If totalNecesidad is 0 but we have responses, avoid division by zero.
+            let alcancePct = 0;
+            if (totalNecesidad > 0) {
+                alcancePct = Math.round((totalDeseo / totalNecesidad) * 100);
+            } else if (totalResponses > 0) {
+                // If 0 need, then 0 desire logically, but keep it clean
+                alcancePct = 0;
+            }
+
+            // 2. Demand Rate (as % of those with Desire)
+            let conversionPct = 0;
+            if (totalDeseo > 0) {
+                conversionPct = Math.round((totalDemanda / totalDeseo) * 100);
+            }
+
+            const data = {
+                id: currentProject.id,
+                i_ndd_responses_json: JSON.stringify(allProductResponses),
+                i_alcance_pct: alcancePct,
+                i_conversion_pct: conversionPct
+            };
+
+            try {
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ table: 'proyectos', ...data })
+                });
+
+                if (res.ok) {
+                    showToast('Guardado en proyecto ✅', 'success');
+                } else {
+                    throw new Error('Save failed');
+                }
+            } catch (err) {
+                showToast('Error al guardar', 'error');
+                console.error(err);
+            }
+        }
+
+        function exportCSV() {
+            if (responses.length === 0) {
+                showToast('No hay datos para exportar', 'error');
+                return;
+            }
+
+            const headers = ['Fecha', 'Nombre', 'Necesidad', 'Deseo', 'Demanda', 'Notas'];
+            const rows = responses.map(r => [
+                new Date(r.timestamp).toLocaleDateString('es-MX'),
+                r.name,
+                r.necesidad ? 'Sí' : 'No',
+                r.deseo ? 'Sí' : 'No',
+                r.demanda ? 'Sí' : 'No',
+                r.notes || ''
+            ]);
+
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'encuestas_ndd_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+        }
+
+        function clearResponses() {
+            if (confirm('¿Estás seguro de borrar todas las respuestas?')) {
+                responses = [];
+                saveResponsesToStorage();
+                updateUI();
+                showToast('Datos borrados', 'success');
+            }
+        }
+
+        function getSurveyLink() {
+            if (!currentProject) return null;
+
+            // Base URL (assuming current path structure)
+            const baseUrl = window.location.origin + window.location.pathname.replace('customer_research.html', 'customer_survey.html');
+            const prodIdx = currentProduct ? currentProduct._idx : 0;
+
+            return `${baseUrl}?p=${currentProject.id}&prod=${prodIdx}`;
+        }
+
+        function shareSurveyLink() {
+            const link = getSurveyLink();
+            if (!link) {
+                showToast('Selecciona un proyecto y producto primero', 'error');
+                return;
+            }
+
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Enlace copiado al portapapeles 📋', 'success');
+
+                const btn = document.getElementById('shareBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Enlace copiado';
+                setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+            }).catch(err => {
+                console.error('Error copying:', err);
+                // Fallback for non-secure contexts
+                prompt('Copia este enlace:', link);
+            });
+        }
+
+        function openSurveyPreview() {
+            const link = getSurveyLink();
+            if (link) {
+                window.open(link, '_blank');
+            } else {
+                showToast('Selecciona un proyecto primero', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            // Simple toast implementation
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                padding: 1rem 1.5rem;
+                background: ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                color: white;
+                border-radius: 8px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>

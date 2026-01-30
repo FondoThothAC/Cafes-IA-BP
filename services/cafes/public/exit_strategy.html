@@ -1,0 +1,558 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA - Estrategia de Salida
+ARCHIVO: public/exit_strategy.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Estrategia de salida para startups e inversores. Define opciones
+             de exit, horizonte temporal, y valuación objetivo. Basado en MIT.
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrategia de Salida - PlanIA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/plania-core.css">
+    <style>
+        .exit-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .exit-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .exit-card {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .exit-card.full-width {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 900px) {
+            .exit-card.full-width {
+                grid-column: span 1;
+            }
+        }
+
+        .exit-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 0 1rem;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Exit Options */
+        .exit-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .exit-option {
+            background: var(--bg);
+            border: 2px solid var(--surface-light);
+            border-radius: 12px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .exit-option:hover {
+            border-color: var(--primary);
+        }
+
+        .exit-option.selected {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .exit-option .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .exit-option .title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .exit-option .desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Timeline */
+        .timeline-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 0;
+            position: relative;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--surface-light);
+            z-index: 0;
+        }
+
+        .timeline-point {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+            cursor: pointer;
+        }
+
+        .timeline-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--surface-light);
+            border: 3px solid var(--bg);
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .timeline-point.active .timeline-dot {
+            background: var(--primary);
+            transform: scale(1.2);
+        }
+
+        .timeline-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .timeline-point.active .timeline-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Valuation */
+        .valuation-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .valuation-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .valuation-multiple {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        /* Comparables */
+        .comparable-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .comparable-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comparable-value {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <h1 style="padding: 1.5rem 1.5rem 0;">🚪 Estrategia de Salida</h1>
+        <p style="padding: 0 1.5rem; color: var(--text-muted);">
+            Para startups e inversionistas. Define cómo y cuándo los inversionistas recuperarán su inversión. Basado en
+            MIT.
+        </p>
+
+        <div class="exit-container">
+            <!-- Opciones de Salida -->
+            <div class="exit-card">
+                <h3>🎯 Opción de Salida Preferida</h3>
+
+                <div class="exit-options" id="exitOptions">
+                    <div class="exit-option" data-option="acquisition" onclick="selectExitOption(this)">
+                        <div class="icon">🏢</div>
+                        <div class="title">Adquisición</div>
+                        <div class="desc">Venta a empresa mayor</div>
+                    </div>
+                    <div class="exit-option" data-option="merger" onclick="selectExitOption(this)">
+                        <div class="icon">🤝</div>
+                        <div class="title">Fusión</div>
+                        <div class="desc">Unión con otra empresa</div>
+                    </div>
+                    <div class="exit-option" data-option="ipo" onclick="selectExitOption(this)">
+                        <div class="icon">📈</div>
+                        <div class="title">IPO</div>
+                        <div class="desc">Salida a bolsa</div>
+                    </div>
+                    <div class="exit-option" data-option="buyback" onclick="selectExitOption(this)">
+                        <div class="icon">💰</div>
+                        <div class="title">Recompra</div>
+                        <div class="desc">Fundadores compran</div>
+                    </div>
+                </div>
+                <input type="hidden" id="exit_option" data-field="exit_opcion">
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Posibles compradores / interesados</label>
+                    <textarea id="posibles_compradores" data-field="exit_compradores"
+                        placeholder="Nombres de empresas o tipo de compradores interesados..."></textarea>
+                </div>
+            </div>
+
+            <!-- Horizonte Temporal -->
+            <div class="exit-card">
+                <h3>⏰ Horizonte Temporal</h3>
+
+                <div class="timeline-container" id="timeline">
+                    <div class="timeline-point" data-years="3" onclick="selectHorizon(3)">
+                        <div class="timeline-dot"></div>
+                        <span class="timeline-label">3 años</span>
+                    </div>
+                    <div class="timeline-point active" data-years="5" onclick="selectHorizon(5)">
+                        <div class="timeline-dot"></div>
+                        <span class="timeline-label">5 años</span>
+                    </div>
+                    <div class="timeline-point" data-years="7" onclick="selectHorizon(7)">
+                        <div class="timeline-dot"></div>
+                        <span class="timeline-label">7 años</span>
+                    </div>
+                    <div class="timeline-point" data-years="10" onclick="selectHorizon(10)">
+                        <div class="timeline-dot"></div>
+                        <span class="timeline-label">10 años</span>
+                    </div>
+                </div>
+                <input type="hidden" id="exit_horizonte" data-field="exit_horizonte" value="5">
+
+                <div class="form-group">
+                    <label>Hitos antes del exit</label>
+                    <textarea id="hitos_exit" data-field="exit_hitos"
+                        placeholder="Ej: Alcanzar $10M en ventas, 1000 clientes activos, expansión a 5 países..."></textarea>
+                </div>
+            </div>
+
+            <!-- Valuación Objetivo -->
+            <div class="exit-card">
+                <h3>💎 Valuación Objetivo</h3>
+
+                <div class="valuation-card">
+                    <span style="color: var(--text-muted);">Valuación estimada al exit</span>
+                    <div class="valuation-amount" id="valuation-display">$0</div>
+                    <div class="valuation-multiple" id="multiple-display">0x ingresos</div>
+                </div>
+
+                <div class="form-row" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Ingresos proyectados (año exit)</label>
+                        <input type="number" id="ingresos_exit" data-field="exit_ingresos" placeholder="0"
+                            onchange="calculateValuation()">
+                    </div>
+                    <div class="form-group">
+                        <label>Múltiplo de valuación</label>
+                        <select id="multiplo" data-field="exit_multiplo" onchange="calculateValuation()">
+                            <option value="1">1x (bajo)</option>
+                            <option value="2">2x</option>
+                            <option value="3" selected>3x</option>
+                            <option value="5">5x</option>
+                            <option value="7">7x</option>
+                            <option value="10">10x (alto crecimiento)</option>
+                            <option value="15">15x+ (SaaS/Tech)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    💡 Los múltiplos típicos varían por industria: Retail 0.5-2x, Servicios 1-3x,
+                    SaaS 5-15x, Tech 10-20x.
+                </div>
+            </div>
+
+            <!-- Comparables -->
+            <div class="exit-card">
+                <h3>📊 Transacciones Comparables</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Empresas similares que fueron adquiridas o salieron a bolsa.
+                </p>
+
+                <div class="comparable-item">
+                    <div class="comparable-name">
+                        <span>1️⃣</span>
+                        <input type="text" id="comp_1_nombre" data-field="exit_comp1_nombre"
+                            placeholder="Nombre empresa"
+                            style="background: transparent; border: none; color: var(--text);">
+                    </div>
+                    <input type="text" id="comp_1_valor" data-field="exit_comp1_valor" class="comparable-value"
+                        placeholder="$0M"
+                        style="width: 80px; text-align: right; background: transparent; border: none;">
+                </div>
+
+                <div class="comparable-item">
+                    <div class="comparable-name">
+                        <span>2️⃣</span>
+                        <input type="text" id="comp_2_nombre" data-field="exit_comp2_nombre"
+                            placeholder="Nombre empresa"
+                            style="background: transparent; border: none; color: var(--text);">
+                    </div>
+                    <input type="text" id="comp_2_valor" data-field="exit_comp2_valor" class="comparable-value"
+                        placeholder="$0M"
+                        style="width: 80px; text-align: right; background: transparent; border: none;">
+                </div>
+
+                <div class="comparable-item">
+                    <div class="comparable-name">
+                        <span>3️⃣</span>
+                        <input type="text" id="comp_3_nombre" data-field="exit_comp3_nombre"
+                            placeholder="Nombre empresa"
+                            style="background: transparent; border: none; color: var(--text);">
+                    </div>
+                    <input type="text" id="comp_3_valor" data-field="exit_comp3_valor" class="comparable-value"
+                        placeholder="$0M"
+                        style="width: 80px; text-align: right; background: transparent; border: none;">
+                </div>
+            </div>
+
+            <!-- Distribución para Inversionistas -->
+            <div class="exit-card full-width">
+                <h3>💸 Distribución al Exit</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>% Fundadores</label>
+                        <input type="number" id="pct_fundadores" data-field="exit_pct_fundadores" placeholder="60"
+                            max="100" onchange="updateDistribution()">
+                    </div>
+                    <div class="form-group">
+                        <label>% Inversionistas</label>
+                        <input type="number" id="pct_inversionistas" data-field="exit_pct_inversionistas"
+                            placeholder="35" max="100" onchange="updateDistribution()">
+                    </div>
+                    <div class="form-group">
+                        <label>% ESOP (empleados)</label>
+                        <input type="number" id="pct_esop" data-field="exit_pct_esop" placeholder="5" max="100"
+                            onchange="updateDistribution()">
+                    </div>
+                    <div class="form-group">
+                        <label>Total</label>
+                        <div id="total-pct" style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">100%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notas sobre cap table y preferencias de liquidación</label>
+                    <textarea id="notas_captable" data-field="exit_notas_captable"
+                        placeholder="Preferencias de liquidación, anti-dilución, vesting..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let projectData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(() => {
+                projectData = PlanIA.getCurrentProject();
+                if (projectData) loadData();
+                setupListeners();
+                calculateValuation();
+            }, 500);
+        });
+
+        function loadData() {
+            document.querySelectorAll('[data-field]').forEach(el => {
+                const field = el.dataset.field;
+                if (projectData[field]) {
+                    el.value = projectData[field];
+                }
+            });
+
+            // Load exit option
+            if (projectData.exit_opcion) {
+                const option = document.querySelector(`[data-option="${projectData.exit_opcion}"]`);
+                if (option) option.classList.add('selected');
+            }
+
+            // Load horizon
+            if (projectData.exit_horizonte) {
+                selectHorizon(parseInt(projectData.exit_horizonte));
+            }
+
+            calculateValuation();
+            updateDistribution();
+        }
+
+        function setupListeners() {
+            document.querySelectorAll('[data-field]').forEach(el => {
+                el.addEventListener('change', saveData);
+                el.addEventListener('input', debounce(saveData, 1000));
+            });
+            window.addEventListener('plania:save', saveData);
+        }
+
+        function selectExitOption(el) {
+            document.querySelectorAll('.exit-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('exit_option').value = el.dataset.option;
+            saveData();
+        }
+
+        function selectHorizon(years) {
+            document.querySelectorAll('.timeline-point').forEach(p => {
+                p.classList.remove('active');
+                if (parseInt(p.dataset.years) === years) {
+                    p.classList.add('active');
+                }
+            });
+            document.getElementById('exit_horizonte').value = years;
+            saveData();
+        }
+
+        function calculateValuation() {
+            const ingresos = parseFloat(document.getElementById('ingresos_exit')?.value) || 0;
+            const multiplo = parseFloat(document.getElementById('multiplo')?.value) || 3;
+
+            const valuacion = ingresos * multiplo;
+
+            document.getElementById('valuation-display').textContent = formatCurrency(valuacion);
+            document.getElementById('multiple-display').textContent = `${multiplo}x ingresos`;
+        }
+
+        function updateDistribution() {
+            const fundadores = parseFloat(document.getElementById('pct_fundadores')?.value) || 0;
+            const inversionistas = parseFloat(document.getElementById('pct_inversionistas')?.value) || 0;
+            const esop = parseFloat(document.getElementById('pct_esop')?.value) || 0;
+
+            const total = fundadores + inversionistas + esop;
+            const el = document.getElementById('total-pct');
+            el.textContent = total + '%';
+
+            if (total === 100) {
+                el.style.color = 'var(--success)';
+            } else if (total > 100) {
+                el.style.color = 'var(--error)';
+            } else {
+                el.style.color = 'var(--warning)';
+            }
+        }
+
+        function formatCurrency(value) {
+            if (value >= 1000000000) return '$' + (value / 1000000000).toFixed(1) + 'B';
+            if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
+            if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
+            return '$' + value.toLocaleString();
+        }
+
+        async function saveData() {
+            if (!projectData) return;
+
+            const data = { id_proyecto: projectData.id_proyecto };
+
+            document.querySelectorAll('[data-field]').forEach(el => {
+                data[el.dataset.field] = el.value;
+            });
+
+            try {
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', ...data })
+                });
+                const result = await res.json();
+                if (result.success) PlanIA.notifySaved();
+            } catch (err) {
+                console.error('Save error:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+    </script>
+</body>
+
+</html>

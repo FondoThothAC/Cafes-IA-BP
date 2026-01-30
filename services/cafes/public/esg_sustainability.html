@@ -1,0 +1,683 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA - ESG y Sostenibilidad
+ARCHIVO: public/esg_sustainability.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Módulo de Environmental, Social, Governance (ESG) y alineación
+             con ODS de la ONU. Basado en OECD SME Guidelines 2025.
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESG y Sostenibilidad - PlanIA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/plania-core.css">
+    <style>
+        .esg-container {
+            padding: 1.5rem;
+        }
+
+        .esg-pillars {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .esg-pillars {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .esg-pillar {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .esg-pillar.environmental {
+            border-top: 4px solid #10b981;
+        }
+
+        .esg-pillar.social {
+            border-top: 4px solid #3b82f6;
+        }
+
+        .esg-pillar.governance {
+            border-top: 4px solid #8b5cf6;
+        }
+
+        .esg-pillar h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 0 1rem;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: var(--surface-light);
+        }
+
+        .checkbox-item.checked {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+        }
+
+        /* ODS Grid */
+        .ods-section {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .ods-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .ods-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .ods-item {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.65rem;
+            text-align: center;
+            padding: 0.5rem;
+            color: white;
+            opacity: 0.4;
+            filter: grayscale(100%);
+        }
+
+        .ods-item:hover {
+            opacity: 0.8;
+            filter: grayscale(0%);
+        }
+
+        .ods-item.selected {
+            opacity: 1;
+            filter: grayscale(0%);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .ods-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        /* ODS Colors */
+        .ods-1 {
+            background: #e5243b;
+        }
+
+        .ods-2 {
+            background: #dda63a;
+        }
+
+        .ods-3 {
+            background: #4c9f38;
+        }
+
+        .ods-4 {
+            background: #c5192d;
+        }
+
+        .ods-5 {
+            background: #ff3a21;
+        }
+
+        .ods-6 {
+            background: #26bde2;
+        }
+
+        .ods-7 {
+            background: #fcc30b;
+        }
+
+        .ods-8 {
+            background: #a21942;
+        }
+
+        .ods-9 {
+            background: #fd6925;
+        }
+
+        .ods-10 {
+            background: #dd1367;
+        }
+
+        .ods-11 {
+            background: #fd9d24;
+        }
+
+        .ods-12 {
+            background: #bf8b2e;
+        }
+
+        .ods-13 {
+            background: #3f7e44;
+        }
+
+        .ods-14 {
+            background: #0a97d9;
+        }
+
+        .ods-15 {
+            background: #56c02b;
+        }
+
+        .ods-16 {
+            background: #00689d;
+        }
+
+        .ods-17 {
+            background: #19486a;
+        }
+
+        /* Score Card */
+        .esg-score-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .esg-score-card {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .score-value.e {
+            color: #10b981;
+        }
+
+        .score-value.s {
+            color: #3b82f6;
+        }
+
+        .score-value.g {
+            color: #8b5cf6;
+        }
+
+        .score-value.total {
+            color: var(--primary);
+        }
+
+        .score-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .impact-metric {
+            background: var(--bg);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <h1 style="padding: 1.5rem 1.5rem 0;">🌱 ESG y Sostenibilidad</h1>
+        <p style="padding: 0 1.5rem 1.5rem; color: var(--text-muted);">
+            Environmental, Social & Governance. Alineación con estándares OECD y ODS de la ONU.
+        </p>
+
+        <div class="esg-container">
+            <!-- Three Pillars -->
+            <div class="esg-pillars">
+                <!-- Environmental -->
+                <div class="esg-pillar environmental">
+                    <h3>🌍 Environmental</h3>
+
+                    <div class="form-group">
+                        <label>Huella de carbono</label>
+                        <select id="huella_carbono" data-field="esg_huella_carbono">
+                            <option value="">Seleccionar...</option>
+                            <option value="muy_baja">Muy baja (digital/servicios)</option>
+                            <option value="baja">Baja (comercio)</option>
+                            <option value="media">Media (manufactura ligera)</option>
+                            <option value="alta">Alta (industria pesada)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prácticas ambientales</label>
+                        <div class="checkbox-group" id="practicas_env">
+                            <div class="checkbox-item" data-val="reciclaje" onclick="toggleCheck(this, 'env')">♻️
+                                Reciclaje</div>
+                            <div class="checkbox-item" data-val="energia_renovable" onclick="toggleCheck(this, 'env')">⚡
+                                Energía renovable</div>
+                            <div class="checkbox-item" data-val="reduccion_residuos" onclick="toggleCheck(this, 'env')">
+                                🗑️ Reducción residuos</div>
+                            <div class="checkbox-item" data-val="eficiencia_agua" onclick="toggleCheck(this, 'env')">💧
+                                Eficiencia agua</div>
+                            <div class="checkbox-item" data-val="empaque_eco" onclick="toggleCheck(this, 'env')">📦
+                                Empaque ecológico</div>
+                        </div>
+                        <input type="hidden" id="practicas_env_val" data-field="esg_practicas_env">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Meta ambiental</label>
+                        <textarea id="meta_env" data-field="esg_meta_env"
+                            placeholder="Ej: Reducir emisiones 20% para 2027..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Social -->
+                <div class="esg-pillar social">
+                    <h3>👥 Social</h3>
+
+                    <div class="form-group">
+                        <label>Impacto en empleo</label>
+                        <div class="impact-metric">
+                            <span>Empleos directos</span>
+                            <input type="number" id="empleos_directos" data-field="esg_empleos_directos"
+                                style="width: 80px; text-align: right;" placeholder="0">
+                        </div>
+                        <div class="impact-metric">
+                            <span>Empleos indirectos</span>
+                            <input type="number" id="empleos_indirectos" data-field="esg_empleos_indirectos"
+                                style="width: 80px; text-align: right;" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prácticas sociales</label>
+                        <div class="checkbox-group" id="practicas_soc">
+                            <div class="checkbox-item" data-val="diversidad" onclick="toggleCheck(this, 'soc')">🌈
+                                Diversidad e inclusión</div>
+                            <div class="checkbox-item" data-val="capacitacion" onclick="toggleCheck(this, 'soc')">📚
+                                Capacitación</div>
+                            <div class="checkbox-item" data-val="comunidad" onclick="toggleCheck(this, 'soc')">🏘️ Apoyo
+                                comunidad</div>
+                            <div class="checkbox-item" data-val="proveedores_locales"
+                                onclick="toggleCheck(this, 'soc')">📍 Proveedores locales</div>
+                            <div class="checkbox-item" data-val="salario_digno" onclick="toggleCheck(this, 'soc')">💵
+                                Salario digno</div>
+                        </div>
+                        <input type="hidden" id="practicas_soc_val" data-field="esg_practicas_soc">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Meta social</label>
+                        <textarea id="meta_soc" data-field="esg_meta_soc"
+                            placeholder="Ej: Capacitar 100 personas de la comunidad..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Governance -->
+                <div class="esg-pillar governance">
+                    <h3>⚖️ Governance</h3>
+
+                    <div class="form-group">
+                        <label>Estructura de gobierno</label>
+                        <select id="estructura_gobierno" data-field="esg_estructura">
+                            <option value="">Seleccionar...</option>
+                            <option value="unipersonal">Unipersonal</option>
+                            <option value="socios">Sociedad (2-5 socios)</option>
+                            <option value="consejo">Con consejo de administración</option>
+                            <option value="consejo_independiente">Consejo con independientes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Prácticas de gobierno</label>
+                        <div class="checkbox-group" id="practicas_gov">
+                            <div class="checkbox-item" data-val="codigo_etica" onclick="toggleCheck(this, 'gov')">📜
+                                Código de ética</div>
+                            <div class="checkbox-item" data-val="anticorrupcion" onclick="toggleCheck(this, 'gov')">🚫
+                                Política anticorrupción</div>
+                            <div class="checkbox-item" data-val="transparencia" onclick="toggleCheck(this, 'gov')">🔍
+                                Transparencia financiera</div>
+                            <div class="checkbox-item" data-val="proteccion_datos" onclick="toggleCheck(this, 'gov')">🔒
+                                Protección de datos</div>
+                            <div class="checkbox-item" data-val="canal_denuncia" onclick="toggleCheck(this, 'gov')">📢
+                                Canal de denuncia</div>
+                        </div>
+                        <input type="hidden" id="practicas_gov_val" data-field="esg_practicas_gov">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Meta de gobierno</label>
+                        <textarea id="meta_gov" data-field="esg_meta_gov"
+                            placeholder="Ej: Implementar código de ética en 6 meses..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ODS Section -->
+            <div class="ods-section">
+                <h3>🎯 Objetivos de Desarrollo Sostenible (ODS)</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">
+                    Selecciona los ODS con los que tu negocio está alineado (máximo 3 principales).
+                </p>
+
+                <div class="ods-grid" id="odsGrid">
+                    <div class="ods-item ods-1" data-ods="1" onclick="toggleODS(this)">
+                        <span class="ods-icon">🚫</span>
+                        <span>Fin Pobreza</span>
+                    </div>
+                    <div class="ods-item ods-2" data-ods="2" onclick="toggleODS(this)">
+                        <span class="ods-icon">🌾</span>
+                        <span>Hambre Cero</span>
+                    </div>
+                    <div class="ods-item ods-3" data-ods="3" onclick="toggleODS(this)">
+                        <span class="ods-icon">❤️</span>
+                        <span>Salud y Bienestar</span>
+                    </div>
+                    <div class="ods-item ods-4" data-ods="4" onclick="toggleODS(this)">
+                        <span class="ods-icon">📚</span>
+                        <span>Educación</span>
+                    </div>
+                    <div class="ods-item ods-5" data-ods="5" onclick="toggleODS(this)">
+                        <span class="ods-icon">⚧️</span>
+                        <span>Igualdad Género</span>
+                    </div>
+                    <div class="ods-item ods-6" data-ods="6" onclick="toggleODS(this)">
+                        <span class="ods-icon">💧</span>
+                        <span>Agua Limpia</span>
+                    </div>
+                    <div class="ods-item ods-7" data-ods="7" onclick="toggleODS(this)">
+                        <span class="ods-icon">⚡</span>
+                        <span>Energía Limpia</span>
+                    </div>
+                    <div class="ods-item ods-8" data-ods="8" onclick="toggleODS(this)">
+                        <span class="ods-icon">💼</span>
+                        <span>Trabajo Decente</span>
+                    </div>
+                    <div class="ods-item ods-9" data-ods="9" onclick="toggleODS(this)">
+                        <span class="ods-icon">🏭</span>
+                        <span>Industria e Innovación</span>
+                    </div>
+                    <div class="ods-item ods-10" data-ods="10" onclick="toggleODS(this)">
+                        <span class="ods-icon">⚖️</span>
+                        <span>Reducir Desigualdad</span>
+                    </div>
+                    <div class="ods-item ods-11" data-ods="11" onclick="toggleODS(this)">
+                        <span class="ods-icon">🏙️</span>
+                        <span>Ciudades Sostenibles</span>
+                    </div>
+                    <div class="ods-item ods-12" data-ods="12" onclick="toggleODS(this)">
+                        <span class="ods-icon">♻️</span>
+                        <span>Consumo Responsable</span>
+                    </div>
+                    <div class="ods-item ods-13" data-ods="13" onclick="toggleODS(this)">
+                        <span class="ods-icon">🌡️</span>
+                        <span>Acción Climática</span>
+                    </div>
+                    <div class="ods-item ods-14" data-ods="14" onclick="toggleODS(this)">
+                        <span class="ods-icon">🌊</span>
+                        <span>Vida Submarina</span>
+                    </div>
+                    <div class="ods-item ods-15" data-ods="15" onclick="toggleODS(this)">
+                        <span class="ods-icon">🌲</span>
+                        <span>Vida Terrestre</span>
+                    </div>
+                    <div class="ods-item ods-16" data-ods="16" onclick="toggleODS(this)">
+                        <span class="ods-icon">☮️</span>
+                        <span>Paz y Justicia</span>
+                    </div>
+                    <div class="ods-item ods-17" data-ods="17" onclick="toggleODS(this)">
+                        <span class="ods-icon">🤝</span>
+                        <span>Alianzas</span>
+                    </div>
+                </div>
+                <input type="hidden" id="ods_seleccionados" data-field="esg_ods">
+            </div>
+
+            <!-- ESG Score -->
+            <div class="esg-score-card">
+                <div class="score-item">
+                    <div class="score-value e" id="score-e">0</div>
+                    <div class="score-label">Environmental</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value s" id="score-s">0</div>
+                    <div class="score-label">Social</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value g" id="score-g">0</div>
+                    <div class="score-label">Governance</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value total" id="score-total">0%</div>
+                    <div class="score-label">ESG Score</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let projectData = null;
+        let selectedODS = [];
+        let practicas = { env: [], soc: [], gov: [] };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(() => {
+                projectData = PlanIA.getCurrentProject();
+                if (projectData) loadData();
+                setupListeners();
+                calculateScores();
+            }, 500);
+        });
+
+        function loadData() {
+            document.querySelectorAll('[data-field]').forEach(el => {
+                const field = el.dataset.field;
+                if (projectData[field]) {
+                    el.value = projectData[field];
+                }
+            });
+
+            // Load ODS
+            if (projectData.esg_ods) {
+                selectedODS = projectData.esg_ods.split(',');
+                document.querySelectorAll('.ods-item').forEach(item => {
+                    if (selectedODS.includes(item.dataset.ods)) {
+                        item.classList.add('selected');
+                    }
+                });
+            }
+
+            // Load practices
+            ['env', 'soc', 'gov'].forEach(type => {
+                const field = `esg_practicas_${type}`;
+                if (projectData[field]) {
+                    practicas[type] = projectData[field].split(',');
+                    document.querySelectorAll(`#practicas_${type} .checkbox-item`).forEach(item => {
+                        if (practicas[type].includes(item.dataset.val)) {
+                            item.classList.add('checked');
+                        }
+                    });
+                }
+            });
+
+            calculateScores();
+        }
+
+        function setupListeners() {
+            document.querySelectorAll('[data-field]').forEach(el => {
+                el.addEventListener('change', () => { saveData(); calculateScores(); });
+                el.addEventListener('input', debounce(() => { saveData(); calculateScores(); }, 1000));
+            });
+            window.addEventListener('plania:save', saveData);
+        }
+
+        function toggleCheck(el, type) {
+            el.classList.toggle('checked');
+            const val = el.dataset.val;
+
+            if (el.classList.contains('checked')) {
+                if (!practicas[type].includes(val)) practicas[type].push(val);
+            } else {
+                practicas[type] = practicas[type].filter(v => v !== val);
+            }
+
+            document.getElementById(`practicas_${type}_val`).value = practicas[type].join(',');
+            calculateScores();
+            saveData();
+        }
+
+        function toggleODS(el) {
+            const ods = el.dataset.ods;
+
+            if (el.classList.contains('selected')) {
+                el.classList.remove('selected');
+                selectedODS = selectedODS.filter(o => o !== ods);
+            } else {
+                if (selectedODS.length >= 3) {
+                    alert('Máximo 3 ODS principales. Deselecciona uno primero.');
+                    return;
+                }
+                el.classList.add('selected');
+                selectedODS.push(ods);
+            }
+
+            document.getElementById('ods_seleccionados').value = selectedODS.join(',');
+            calculateScores();
+            saveData();
+        }
+
+        function calculateScores() {
+            // E score: practices (5 max) + has meta
+            const eScore = practicas.env.length * 15 + (document.getElementById('meta_env')?.value ? 10 : 0);
+
+            // S score: practices (5 max) + empleos + meta
+            const empleos = (parseInt(document.getElementById('empleos_directos')?.value) || 0) +
+                (parseInt(document.getElementById('empleos_indirectos')?.value) || 0);
+            const sScore = practicas.soc.length * 12 + Math.min(empleos, 20) +
+                (document.getElementById('meta_soc')?.value ? 10 : 0);
+
+            // G score: practices (5 max) + structure + meta
+            const hasStructure = document.getElementById('estructura_gobierno')?.value ? 15 : 0;
+            const gScore = practicas.gov.length * 12 + hasStructure +
+                (document.getElementById('meta_gov')?.value ? 10 : 0);
+
+            // Total (with ODS bonus)
+            const odsBonus = selectedODS.length * 5;
+            const total = Math.min(100, Math.round((eScore + sScore + gScore) / 3 + odsBonus));
+
+            document.getElementById('score-e').textContent = Math.min(100, eScore);
+            document.getElementById('score-s').textContent = Math.min(100, sScore);
+            document.getElementById('score-g').textContent = Math.min(100, gScore);
+            document.getElementById('score-total').textContent = total + '%';
+        }
+
+        async function saveData() {
+            if (!projectData) return;
+
+            const data = { id_proyecto: projectData.id_proyecto };
+
+            document.querySelectorAll('[data-field]').forEach(el => {
+                data[el.dataset.field] = el.value;
+            });
+
+            try {
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', ...data })
+                });
+                const result = await res.json();
+                if (result.success) PlanIA.notifySaved();
+            } catch (err) {
+                console.error('Save error:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+    </script>
+</body>
+
+</html>

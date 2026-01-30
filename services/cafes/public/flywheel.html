@@ -1,0 +1,1076 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA - Flywheel Dashboard
+ARCHIVO: public/flywheel.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Dashboard del ciclo Flywheel que muestra el ciclo virtuoso de 
+             mejora continua: Adquisición → Análisis → Recomendaciones → Reinversión
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flywheel - PlanIA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/plania-core.css">
+    <style>
+        :root {
+            --flywheel-1: #10b981;
+            --flywheel-2: #3b82f6;
+            --flywheel-3: #f59e0b;
+            --flywheel-4: #8b5cf6;
+        }
+
+        .flywheel-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1024px) {
+            .flywheel-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .flywheel-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            animation: rotate 20s linear infinite;
+            animation-play-state: running;
+        }
+
+        .wheel:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .wheel-segment:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .wheel-segment.active {
+            transform: scale(1.15);
+            z-index: 20;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .segment-1 {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--flywheel-1), #059669);
+        }
+
+        .segment-2 {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, var(--flywheel-2), #1d4ed8);
+        }
+
+        .segment-3 {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--flywheel-3), #d97706);
+        }
+
+        .segment-4 {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, var(--flywheel-4), #7c3aed);
+        }
+
+        .segment-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .segment-title {
+            font-weight: 600;
+            font-size: 1rem;
+            text-align: center;
+            color: white;
+        }
+
+        .segment-metric {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+            color: white;
+        }
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: var(--surface);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid var(--surface-light);
+            z-index: 5;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+            }
+        }
+
+        .center-icon {
+            font-size: 2rem;
+        }
+
+        .center-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .center-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .center-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            max-width: 100px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .arrows {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .arrow {
+            position: absolute;
+            font-size: 2rem;
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+
+        .arrow-1 {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+        }
+
+        .arrow-2 {
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%) rotate(135deg);
+        }
+
+        .arrow-3 {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(225deg);
+        }
+
+        .arrow-4 {
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%) rotate(315deg);
+        }
+
+        /* Stage Details Panel */
+        .stage-details {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .stage-header-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stage-header h2 {
+            font-size: 1.25rem;
+            margin: 0;
+        }
+
+        .stage-header p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 0.25rem 0 0;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .stage-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 10px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--surface-light);
+            transform: translateX(5px);
+        }
+
+        .action-btn .icon {
+            font-size: 1.25rem;
+        }
+
+        .action-btn .label {
+            flex: 1;
+            text-align: left;
+        }
+
+        .action-btn .arrow-right {
+            color: var(--text-muted);
+        }
+
+        /* Cycle History */
+        .cycle-history {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+            margin-top: 1.5rem;
+        }
+
+        .cycle-history h3 {
+            margin: 0 0 1rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            width: 80px;
+        }
+
+        .history-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .history-desc {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        /* AI Chat Button */
+        .ai-chat-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .ai-chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 50px rgba(59, 130, 246, 0.6);
+        }
+
+        /* Speed Control */
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--surface);
+            border-radius: 10px;
+        }
+
+        .speed-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .speed-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: var(--surface-light);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="flywheel-container">
+        <!-- Visual Flywheel -->
+        <div class="flywheel-visual">
+            <h1 style="margin-bottom: 2rem; font-size: 1.75rem;">
+                🔄 Ciclo Flywheel de tu Negocio
+            </h1>
+
+            <div class="wheel-container">
+                <div class="wheel" id="wheel">
+                    <!-- Segment 1: Adquisición -->
+                    <div class="wheel-segment segment-1" onclick="selectStage(1)" data-stage="1">
+                        <span class="segment-icon">🎯</span>
+                        <span class="segment-title">Adquisición</span>
+                        <span class="segment-metric" id="metric1">0 datos</span>
+                    </div>
+
+                    <!-- Segment 2: Análisis -->
+                    <div class="wheel-segment segment-2" onclick="selectStage(2)" data-stage="2">
+                        <span class="segment-icon">🔬</span>
+                        <span class="segment-title">Análisis</span>
+                        <span class="segment-metric" id="metric2">0 insights</span>
+                    </div>
+
+                    <!-- Segment 3: Recomendaciones -->
+                    <div class="wheel-segment segment-3" onclick="selectStage(3)" data-stage="3">
+                        <span class="segment-icon">💡</span>
+                        <span class="segment-title">Recomendaciones</span>
+                        <span class="segment-metric" id="metric3">0 sugerencias</span>
+                    </div>
+
+                    <!-- Segment 4: Reinversión -->
+                    <div class="wheel-segment segment-4" onclick="selectStage(4)" data-stage="4">
+                        <span class="segment-icon">📈</span>
+                        <span class="segment-title">Reinversión</span>
+                        <span class="segment-metric" id="metric4">0% mejora</span>
+                    </div>
+                </div>
+
+                <!-- Center - Shows project logo or default -->
+                <div class="wheel-center" id="wheelCenter">
+                    <div class="center-logo" id="centerLogo">
+                        <span class="center-icon" id="centerIcon">🚀</span>
+                    </div>
+                    <span class="center-label" id="centerLabel">Tu Negocio</span>
+                </div>
+
+                <!-- Arrows -->
+                <div class="arrows">
+                    <span class="arrow arrow-1">→</span>
+                    <span class="arrow arrow-2">→</span>
+                    <span class="arrow arrow-3">→</span>
+                    <span class="arrow arrow-4">→</span>
+                </div>
+            </div>
+
+            <!-- Speed Control -->
+            <div class="speed-control">
+                <span class="speed-label">⚡ Velocidad del ciclo:</span>
+                <input type="range" class="speed-slider" id="speedSlider" min="5" max="60" value="20"
+                    onchange="updateSpeed(this.value)">
+                <span id="speedValue">20s</span>
+            </div>
+        </div>
+
+        <!-- Stage Details Panel -->
+        <div class="details-panel">
+            <div class="stage-details" id="stageDetails">
+                <div class="stage-header">
+                    <div class="stage-header-icon" id="stageIcon" style="background: var(--flywheel-1);">🎯</div>
+                    <div>
+                        <h2 id="stageName">Adquisición</h2>
+                        <p id="stageDesc">Captura de datos del cuestionario</p>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" id="primaryMetric">24</div>
+                        <div class="metric-label" id="primaryLabel">Campos completados</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="secondaryMetric">85%</div>
+                        <div class="metric-label" id="secondaryLabel">Completitud</div>
+                    </div>
+                </div>
+
+                <div class="stage-actions" id="stageActions">
+                    <button class="action-btn" onclick="navigateTo('wizard.html')">
+                        <span class="icon">📋</span>
+                        <span class="label">Ir al Cuestionario</span>
+                        <span class="arrow-right">→</span>
+                    </button>
+                    <button class="action-btn" onclick="generateAIAnalysis()">
+                        <span class="icon">🤖</span>
+                        <span class="label">Generar Análisis con IA</span>
+                        <span class="arrow-right">→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PROJECT HEALTH INDICATORS -->
+            <div class="health-indicators"
+                style="background: var(--surface); border-radius: var(--border-radius); padding: 1.5rem; border: 1px solid var(--surface-light); margin-top: 1.5rem;">
+                <h3 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    🏥 Salud del Proyecto
+                    <span id="healthScore"
+                        style="margin-left: auto; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; background: var(--success); color: white;">--</span>
+                </h3>
+
+                <!-- Financial Indicators -->
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="font-size: 0.85rem; color: var(--flywheel-3); margin-bottom: 0.5rem;">💰 Financieros</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_inversion" style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+                                $0</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Inversión</div>
+                        </div>
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_margen" style="font-size: 1.1rem; font-weight: 700; color: var(--success);">--%
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Margen Bruto</div>
+                        </div>
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_roi" style="font-size: 1.1rem; font-weight: 700; color: var(--flywheel-4);">--
+                                meses</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">ROI</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operational Indicators -->
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="font-size: 0.85rem; color: var(--flywheel-2); margin-bottom: 0.5rem;">⚙️ Operativos</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_productos" style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+                                0</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Productos</div>
+                        </div>
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_empleados"
+                                style="font-size: 1.1rem; font-weight: 700; color: var(--flywheel-1);">0</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Empleados</div>
+                        </div>
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_capacidad"
+                                style="font-size: 1.1rem; font-weight: 700; color: var(--flywheel-3);">--</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Capacidad</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Administrative Indicators -->
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="font-size: 0.85rem; color: var(--flywheel-1); margin-bottom: 0.5rem;">📋 Administrativos
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_completitud"
+                                style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">0%</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Completitud</div>
+                        </div>
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_encuestas"
+                                style="font-size: 1.1rem; font-weight: 700; color: var(--flywheel-2);">0</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Encuestas NDD</div>
+                        </div>
+                        <div class="health-metric"
+                            style="background: var(--bg); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div id="kpi_estatus" style="font-size: 1.1rem; font-weight: 700; color: var(--warning);">📝
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Estatus</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div style="margin-top: 1rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">
+                        <span>Progreso General</span>
+                        <span id="progressPct">0%</span>
+                    </div>
+                    <div style="height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden;">
+                        <div id="progressBar"
+                            style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--flywheel-1), var(--flywheel-2), var(--flywheel-3), var(--flywheel-4)); transition: width 0.5s;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cycle History -->
+            <div class="cycle-history">
+                <h3>📊 Historial de Ciclos</h3>
+                <div id="historyList">
+                    <div class="history-item">
+                        <span class="history-date">Hoy</span>
+                        <span class="history-badge" style="background: var(--flywheel-2); color: white;">Análisis</span>
+                        <span class="history-desc">3 insights generados</span>
+                    </div>
+                    <div class="history-item">
+                        <span class="history-date">Ayer</span>
+                        <span class="history-badge" style="background: var(--flywheel-1); color: white;">Datos</span>
+                        <span class="history-desc">Cuestionario actualizado</span>
+                    </div>
+                    <div class="history-item">
+                        <span class="history-date">23 Ene</span>
+                        <span class="history-badge" style="background: var(--flywheel-3); color: white;">Mejora</span>
+                        <span class="history-desc">2 recomendaciones aceptadas</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chat Button -->
+    <button class="ai-chat-button" onclick="openAIChat()" title="Chat con IA">
+        🤖
+    </button>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        // =================================================================
+        // FLYWHEEL MODULE - Ciclo virtuoso de mejora continua
+        // =================================================================
+
+        const stages = {
+            1: {
+                name: 'Adquisición',
+                desc: 'Captura de datos del cuestionario',
+                icon: '🎯',
+                color: 'var(--flywheel-1)',
+                metrics: { primary: 'Campos completados', secondary: 'Completitud' },
+                actions: [
+                    { icon: '📋', label: 'Ir al Cuestionario', href: 'wizard.html' },
+                    { icon: '📊', label: 'Ver Datos del Proyecto', href: 'projects_list.html' }
+                ]
+            },
+            2: {
+                name: 'Análisis',
+                desc: 'IA genera insights de negocio',
+                icon: '🔬',
+                color: 'var(--flywheel-2)',
+                metrics: { primary: 'Insights generados', secondary: 'Precisión' },
+                actions: [
+                    { icon: '🤖', label: 'Generar Análisis con IA', action: 'generateAIAnalysis' },
+                    { icon: '📈', label: 'Ver Estudio de Mercado', href: 'market_study.html' }
+                ]
+            },
+            3: {
+                name: 'Recomendaciones',
+                desc: 'MCP sugiere mejoras basadas en datos',
+                icon: '💡',
+                color: 'var(--flywheel-3)',
+                metrics: { primary: 'Sugerencias', secondary: 'Aceptadas' },
+                actions: [
+                    { icon: '💡', label: 'Ver Recomendaciones', action: 'showRecommendations' },
+                    { icon: '📊', label: 'Análisis Financiero', href: 'financial_planner.html' }
+                ]
+            },
+            4: {
+                name: 'Reinversión',
+                desc: 'Métricas mejoran el proceso',
+                icon: '📈',
+                color: 'var(--flywheel-4)',
+                metrics: { primary: 'Mejora mensual', secondary: 'Ciclos completados' },
+                actions: [
+                    { icon: '📊', label: 'Ver KPIs', href: 'kpis.html' },
+                    { icon: '📄', label: 'Exportar Reporte', href: 'export_pdf.html' }
+                ]
+            }
+        };
+
+        let currentStage = 1;
+        let projectData = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderNavbar();
+            await loadProjectData();
+            updateMetrics();
+            selectStage(1);
+        });
+
+        async function loadProjectData() {
+            if (typeof PlanIA !== 'undefined' && PlanIA.getCurrentProject) {
+                projectData = PlanIA.getCurrentProject();
+
+                // Update center with project info
+                if (projectData) {
+                    const centerLabel = document.getElementById('centerLabel');
+                    const centerLogo = document.getElementById('centerLogo');
+
+                    // Set project name
+                    if (centerLabel && projectData.a1_nombre_negocio) {
+                        centerLabel.textContent = projectData.a1_nombre_negocio;
+                    }
+
+                    // Check if project has a logo
+                    const logoField = projectData.f2_logo_base64 || projectData.logo_url;
+
+                    if (logoField && centerLogo) {
+                        // If logo is base64
+                        if (logoField.startsWith('data:image') || logoField.length > 100) {
+                            centerLogo.innerHTML = `<img src="${logoField}" alt="Logo">`;
+                        }
+                        // If logo is a URL
+                        else if (logoField.startsWith('http') || logoField.startsWith('/')) {
+                            centerLogo.innerHTML = `<img src="${logoField}" alt="Logo" onerror="this.parentElement.innerHTML='🚀'">`;
+                        }
+                    }
+                }
+            }
+        }
+
+        function selectStage(stage) {
+            currentStage = stage;
+            const stageData = stages[stage];
+
+            // Update visual selection
+            document.querySelectorAll('.wheel-segment').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelector(`[data-stage="${stage}"]`).classList.add('active');
+
+            // Update details panel
+            document.getElementById('stageIcon').innerHTML = stageData.icon;
+            document.getElementById('stageIcon').style.background = stageData.color;
+            document.getElementById('stageName').textContent = stageData.name;
+            document.getElementById('stageDesc').textContent = stageData.desc;
+            document.getElementById('primaryLabel').textContent = stageData.metrics.primary;
+            document.getElementById('secondaryLabel').textContent = stageData.metrics.secondary;
+
+            // Update actions
+            const actionsHtml = stageData.actions.map(action => {
+                if (action.href) {
+                    return `
+                        <button class="action-btn" onclick="navigateTo('${action.href}')">
+                            <span class="icon">${action.icon}</span>
+                            <span class="label">${action.label}</span>
+                            <span class="arrow-right">→</span>
+                        </button>
+                    `;
+                } else {
+                    return `
+                        <button class="action-btn" onclick="${action.action}()">
+                            <span class="icon">${action.icon}</span>
+                            <span class="label">${action.label}</span>
+                            <span class="arrow-right">→</span>
+                        </button>
+                    `;
+                }
+            }).join('');
+            document.getElementById('stageActions').innerHTML = actionsHtml;
+        }
+
+        function updateMetrics() {
+            if (!projectData) {
+                // Default values for wheel metrics
+                document.getElementById('metric1').textContent = '0 datos';
+                document.getElementById('metric2').textContent = '0 insights';
+                document.getElementById('metric3').textContent = '0 sugerencias';
+                document.getElementById('metric4').textContent = '0% mejora';
+                document.getElementById('primaryMetric').textContent = '0';
+                document.getElementById('secondaryMetric').textContent = '0%';
+                return;
+            }
+
+            // =============================================
+            // 1. ADMINISTRATIVE INDICATORS (Completitud)
+            // =============================================
+            let filledFields = 0;
+            const totalFields = 35;
+            for (const key in projectData) {
+                if (projectData[key] && typeof projectData[key] === 'string' && projectData[key].trim()) {
+                    filledFields++;
+                }
+            }
+            const completeness = Math.min(100, Math.round((filledFields / totalFields) * 100));
+
+            // Update wheel metrics
+            document.getElementById('metric1').textContent = `${filledFields} datos`;
+            document.getElementById('primaryMetric').textContent = filledFields;
+            document.getElementById('secondaryMetric').textContent = `${completeness}%`;
+
+            // =============================================
+            // 2. FINANCIAL INDICATORS
+            // =============================================
+            const inversion = parseFloat(projectData.g8_inversion_inicial) || 0;
+            const costosFijos = parseFloat(projectData.g5_costos_fijos_mensuales) || 0;
+
+            // Parse revenue projection
+            let ingresosEstimados = 0;
+            let numProductos = 0;
+            try {
+                const revenueData = JSON.parse(projectData.g12_proyeccion_ingresos_json || '[]');
+                numProductos = revenueData.length;
+                revenueData.forEach(prod => {
+                    const precio = parseFloat(prod.precio) || 0;
+                    const cantidad = parseFloat(prod.cantidad_mensual) || 0;
+                    ingresosEstimados += precio * cantidad;
+                });
+            } catch (e) { }
+
+            // Calculate margin and ROI
+            let margenBruto = 0;
+            let roiMeses = 0;
+            if (ingresosEstimados > 0) {
+                margenBruto = Math.round(((ingresosEstimados - costosFijos) / ingresosEstimados) * 100);
+                const utilidadMensual = ingresosEstimados - costosFijos;
+                if (utilidadMensual > 0 && inversion > 0) {
+                    roiMeses = Math.round(inversion / utilidadMensual);
+                }
+            }
+
+            // =============================================
+            // 3. OPERATIONAL INDICATORS
+            // =============================================
+            let numEmpleados = 0;
+            try {
+                const orgData = JSON.parse(projectData.c4_organigrama_json || '[]');
+                orgData.forEach(role => {
+                    numEmpleados += parseInt(role.count) || 1;
+                    (role.children || []).forEach(child => {
+                        numEmpleados += parseInt(child.count) || 1;
+                    });
+                });
+            } catch (e) { }
+
+            const capacidad = projectData.e2_capacidad_produccion || '--';
+
+            // =============================================
+            // 4. NDD SURVEYS
+            // =============================================
+            let numEncuestas = 0;
+            try {
+                const nddData = JSON.parse(projectData.i_ndd_responses_json || '[]');
+                numEncuestas = nddData.length;
+            } catch (e) { }
+
+            // =============================================
+            // UPDATE ALL HEALTH INDICATORS IN THE UI
+            // =============================================
+
+            // Financial
+            document.getElementById('kpi_inversion').textContent = formatCurrency(inversion);
+            document.getElementById('kpi_margen').textContent = margenBruto > 0 ? `${margenBruto}%` : '--%';
+            document.getElementById('kpi_roi').textContent = roiMeses > 0 ? `${roiMeses} meses` : '-- meses';
+
+            // Operational  
+            document.getElementById('kpi_productos').textContent = numProductos;
+            document.getElementById('kpi_empleados').textContent = numEmpleados;
+            document.getElementById('kpi_capacidad').textContent = capacidad.substring(0, 15) || '--';
+
+            // Administrative
+            document.getElementById('kpi_completitud').textContent = `${completeness}%`;
+            document.getElementById('kpi_encuestas').textContent = numEncuestas;
+
+            // Status indicator
+            const estatus = projectData.estatus_proyecto || 'borrador';
+            const statusIcons = {
+                'borrador': '📝',
+                'revision': '🔍',
+                'aprobado': '✅',
+                'finalizado': '🏆'
+            };
+            document.getElementById('kpi_estatus').textContent = statusIcons[estatus] || '📝';
+
+            // =============================================
+            // OVERALL HEALTH SCORE
+            // =============================================
+            let healthScore = 0;
+            let healthFactors = 0;
+
+            // Completeness contributes 30%
+            healthScore += completeness * 0.3;
+            healthFactors++;
+
+            // Financial health contributes 30%
+            if (margenBruto > 20) healthScore += 30;
+            else if (margenBruto > 0) healthScore += 15;
+            healthFactors++;
+
+            // Products contributes 20%
+            if (numProductos >= 3) healthScore += 20;
+            else if (numProductos > 0) healthScore += 10;
+            healthFactors++;
+
+            // Surveys contributes 20%
+            if (numEncuestas >= 5) healthScore += 20;
+            else if (numEncuestas > 0) healthScore += numEncuestas * 4;
+            healthFactors++;
+
+            const finalScore = Math.round(healthScore);
+
+            // Update health score badge
+            const healthEl = document.getElementById('healthScore');
+            healthEl.textContent = `${finalScore}%`;
+            if (finalScore >= 70) {
+                healthEl.style.background = 'var(--success)';
+            } else if (finalScore >= 40) {
+                healthEl.style.background = 'var(--warning)';
+            } else {
+                healthEl.style.background = 'var(--error)';
+            }
+
+            // Update progress bar
+            document.getElementById('progressPct').textContent = `${finalScore}%`;
+            document.getElementById('progressBar').style.width = `${finalScore}%`;
+
+            // Wheel stage metrics
+            document.getElementById('metric2').textContent = numProductos > 0 ? `${numProductos} productos` : '0 insights';
+            document.getElementById('metric3').textContent = numEncuestas > 0 ? `${numEncuestas} encuestas` : '0 sugerencias';
+            document.getElementById('metric4').textContent = finalScore >= 50 ? `+${Math.round(finalScore / 2)}%` : '0% mejora';
+        }
+
+        // Helper function for currency formatting
+        function formatCurrency(value) {
+            if (value >= 1000000) {
+                return '$' + (value / 1000000).toFixed(1) + 'M';
+            } else if (value >= 1000) {
+                return '$' + (value / 1000).toFixed(0) + 'K';
+            }
+            return '$' + value.toLocaleString('es-MX');
+        }
+
+        function updateSpeed(value) {
+            document.getElementById('wheel').style.animationDuration = `${value}s`;
+            document.getElementById('speedValue').textContent = `${value}s`;
+        }
+
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+
+        async function generateAIAnalysis() {
+            if (!projectData) {
+                alert('Por favor selecciona un proyecto primero');
+                return;
+            }
+
+            const btn = event.target.closest('.action-btn');
+            btn.innerHTML = '<span class="icon">⏳</span><span class="label">Generando análisis...</span>';
+
+            try {
+                // Call AI analysis endpoint
+                const response = await fetch('/api/ai_analyze.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'analyze_project',
+                        project_id: projectData.id,
+                        data: projectData
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ Análisis completado!\n\n' + result.analysis.substring(0, 500) + '...');
+                    addHistoryItem('Análisis', 'Nuevo análisis generado');
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('AI Analysis error:', error);
+                alert('⚠️ Error al generar análisis. Verifica la conexión con el servidor de IA.');
+            }
+
+            btn.innerHTML = '<span class="icon">🤖</span><span class="label">Generar Análisis con IA</span><span class="arrow-right">→</span>';
+        }
+
+        function showRecommendations() {
+            alert('💡 Las recomendaciones se mostrarán aquí cuando esté integrado el MCP server.');
+        }
+
+        function openAIChat() {
+            alert('🤖 El chat con IA multimodal (Gemma3n) estará disponible próximamente.');
+        }
+
+        function addHistoryItem(type, description) {
+            const historyList = document.getElementById('historyList');
+            const colorMap = {
+                'Adquisición': 'var(--flywheel-1)',
+                'Análisis': 'var(--flywheel-2)',
+                'Recomendación': 'var(--flywheel-3)',
+                'Mejora': 'var(--flywheel-4)'
+            };
+
+            const newItem = document.createElement('div');
+            newItem.className = 'history-item';
+            newItem.innerHTML = `
+                <span class="history-date">Ahora</span>
+                <span class="history-badge" style="background: ${colorMap[type] || 'var(--primary)'}; color: white;">${type}</span>
+                <span class="history-desc">${description}</span>
+            `;
+
+            historyList.insertBefore(newItem, historyList.firstChild);
+        }
+    </script>
+</body>
+
+</html>

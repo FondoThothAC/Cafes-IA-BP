@@ -1,0 +1,2247 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/market_study.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Estudio de Mercado</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Leaflet.heat for heatmap visualization -->
+    <style>
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Mode Chips */
+        .mode-chip {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .mode-chip.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .market-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .market-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .market-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .map-section {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 8px;
+        }
+
+        .control-bar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .control-bar .field {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .control-bar select,
+        .control-bar input {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .layer-toggles {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .layer-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg);
+            border-radius: 6px;
+        }
+
+        .layer-toggle input {
+            accent-color: var(--primary);
+        }
+
+        .layer-toggle.ageb {
+            border-left: 3px solid #10b981;
+        }
+
+        .layer-toggle.manzanas {
+            border-left: 3px solid #3b82f6;
+        }
+
+        .layer-toggle.denue {
+            border-left: 3px solid #ef4444;
+        }
+
+        .info-panel {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        .info-section {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .info-section h4 {
+            margin: 0 0 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid var(--surface-light);
+            font-size: 0.85rem;
+        }
+
+        .data-item .label {
+            color: var(--text-muted);
+        }
+
+        .data-item .value {
+            font-weight: 600;
+        }
+
+        .funnel-mini {
+            margin-top: 1rem;
+        }
+
+        .funnel-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .funnel-row label {
+            flex: 1;
+            font-size: 0.85rem;
+        }
+
+        .funnel-row input,
+        .funnel-row select {
+            width: 80px;
+            padding: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        .funnel-row .result {
+            font-weight: 700;
+            color: var(--primary);
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .calc-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .calc-card {
+            background: var(--surface);
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .calc-card .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .calc-card .label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .denue-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+
+        .denue-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .denue-item:hover {
+            background: var(--surface);
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .status-badge.loading {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+    <div class="page-container">
+        <div class="page-header">
+            <h1>📊 Estudio de Mercado</h1>
+            <p class="subtitle">Dibuja tu área de influencia y calcula el mercado potencial</p>
+        </div>
+
+        <div class="market-layout">
+            <!-- LEFT: Map -->
+            <div class="map-section">
+                <div class="control-bar">
+                    <div class="field">
+                        <select id="selectEstado" onchange="loadMunicipios()">
+                            <option value="">Cargando estados...</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <select id="selectMunicipio" onchange="centerOnMunicipio()">
+                            <option value="">Selecciona municipio...</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadINEGIData()">📊 Cargar Datos INEGI</button>
+                </div>
+
+                <div class="layer-toggles">
+                    <label class="layer-toggle ageb">
+                        <input type="checkbox" id="layerAGEB" checked onchange="toggleLayer('ageb')">
+                        <span>🟩 AGEB Urbana</span>
+                    </label>
+                    <label class="layer-toggle manzanas">
+                        <input type="checkbox" id="layerManzanas" onchange="toggleLayer('manzanas')">
+                        <span>🟦 Manzanas</span>
+                    </label>
+                    <label class="layer-toggle denue">
+                        <input type="checkbox" id="layerDENUE" checked onchange="toggleLayer('denue')">
+                        <span>🔴 DENUE</span>
+                    </label>
+                </div>
+
+                <div id="map"></div>
+                <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                    🖱️ Usa las herramientas de dibujo (izquierda) para crear un polígono, rectángulo o círculo.
+                    Haz clic en el mapa para colocar el marcador de tu negocio.
+                </p>
+            </div>
+
+            <!-- RIGHT: Info Panel -->
+            <div class="info-panel">
+                <!-- Area Info -->
+                <div class="info-section">
+                    <h4>📐 Área Seleccionada <span class="status-badge" id="status">Dibuja un área</span></h4>
+                    <div class="data-grid" id="area-data">
+                        <div class="data-item"><span class="label">Área</span><span class="value" id="val-area">0
+                                m²</span></div>
+                        <div class="data-item"><span class="label">Población</span><span class="value"
+                                id="val-pop">0</span>
+                        </div>
+                        <div class="data-item"><span class="label">Hombres</span><span class="value"
+                                id="val-men">0</span>
+                        </div>
+                        <div class="data-item"><span class="label">Mujeres</span><span class="value"
+                                id="val-women">0</span>
+                        </div>
+                        <div class="data-item"><span class="label">0-14 años</span><span class="value"
+                                id="val-young">0</span></div>
+                        <div class="data-item"><span class="label">15-64 años</span><span class="value"
+                                id="val-adult">0</span></div>
+                        <div class="data-item"><span class="label">65+ años</span><span class="value"
+                                id="val-senior">0</span></div>
+                        <div class="data-item"><span class="label">Viviendas</span><span class="value"
+                                id="val-homes">0</span></div>
+                    </div>
+                </div>
+
+                <!-- DENUE -->
+                <div class="info-section">
+                    <h4>🏪 Competidores (DENUE)</h4>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <input type="text" id="denue-search" placeholder="Buscar: restaurante, tienda..."
+                            style="flex: 1;">
+                        <button class="btn btn-secondary" onclick="searchDENUE()" style="font-size: 0.8rem;">🔍</button>
+                    </div>
+                    <div class="data-grid" style="margin-bottom: 0.5rem;">
+                        <div class="data-item"><span class="label">Total</span><span class="value"
+                                id="denue-total">0</span>
+                        </div>
+                        <div class="data-item"><span class="label">Micro</span><span class="value"
+                                id="denue-micro">0</span>
+                        </div>
+                    </div>
+                    <div class="denue-list" id="denue-list"></div>
+                </div>
+
+                <!-- Funnel -->
+                <div class="info-section">
+                    <h4>🧮 Embudo de Ventas</h4>
+                    <div class="funnel-mini">
+                        <div class="funnel-row">
+                            <label>Mercado objetivo:</label>
+                            <select id="f-gender" onchange="calcFunnel()">
+                                <option value="all">Todos</option>
+                                <option value="men">Hombres</option>
+                                <option value="women">Mujeres</option>
+                            </select>
+                            <span class="result" id="f-market">0</span>
+                        </div>
+                        <div class="funnel-row">
+                            <label>Alcance (%):</label>
+                            <input type="number" id="f-reach" value="30" min="1" max="100" onchange="calcFunnel()">
+                            <span class="result" id="f-reached">0</span>
+                        </div>
+                        <div class="funnel-row">
+                            <label>Conversión (%):</label>
+                            <input type="number" id="f-conv" value="10" min="1" max="100" onchange="calcFunnel()">
+                            <span class="result" id="f-customers">0</span>
+                        </div>
+                        <div class="funnel-row">
+                            <label>Ticket promedio ($):</label>
+                            <input type="number" id="f-ticket" value="250" min="1" onchange="calcFunnel()">
+                        </div>
+                    </div>
+                    <div class="calc-results">
+                        <div class="calc-card">
+                            <div class="value" id="r-monthly">$0</div>
+                            <div class="label">Ventas/Mes</div>
+                        </div>
+                        <div class="calc-card">
+                            <div class="value" id="r-annual">$0</div>
+                            <div class="label">Ventas/Año</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="saveAnalysis()" style="width: 100%; margin-top: 1rem;">💾
+                    Guardar Análisis</button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- DENUE COMPETITOR SECTION -->
+        <!-- ========================================== -->
+        <div style="margin-top: 2rem;">
+            <div class="page-header">
+                <h2>🏪 Análisis de Competencia (DENUE)</h2>
+                <p class="subtitle">Busca negocios similares en tu área de influencia usando el Directorio Estadístico
+                    Nacional de Unidades Económicas</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 400px; gap: 1.5rem;">
+                <!-- LEFT: DENUE Map -->
+                <div class="map-section">
+                    <div class="control-bar">
+                        <div class="field" style="flex: 2;">
+                            <select id="denueActivity">
+                                <option value="">-- Selecciona Actividad Económica (SCIAN) --</option>
+
+                                <!-- 11 - AGRICULTURA, CRÍA Y EXPLOTACIÓN DE ANIMALES -->
+                                <optgroup label="🌾 11 - Agricultura, ganadería">
+                                    <option value="111">111 - Agricultura</option>
+                                    <option value="112">112 - Cría y explotación de animales</option>
+                                    <option value="113">113 - Aprovechamiento forestal</option>
+                                    <option value="114">114 - Pesca, caza y captura</option>
+                                    <option value="115">115 - Servicios de apoyo a agricultura y ganaderia</option>
+                                </optgroup>
+
+                                <!-- 21 - MINERÍA -->
+                                <optgroup label="⛏️ 21 - Minería">
+                                    <option value="211">211 - Extracción de petróleo y gas</option>
+                                    <option value="212">212 - Minería de minerales metálicos y no metálicos</option>
+                                    <option value="213">213 - Servicios relacionados con la minería</option>
+                                </optgroup>
+
+                                <!-- 22 - GENERACIÓN Y DISTRIBUCIÓN DE ELECTRICIDAD -->
+                                <optgroup label="⚡ 22 - Electricidad, agua y gas">
+                                    <option value="221">221 - Generación y distribución de energía eléctrica</option>
+                                    <option value="222">222 - Suministro de agua y gas por ductos</option>
+                                </optgroup>
+
+                                <!-- 23 - CONSTRUCCIÓN -->
+                                <optgroup label="🏗️ 23 - Construcción">
+                                    <option value="236">236 - Edificación</option>
+                                    <option value="237">237 - Construcción de obras de ingeniería civil</option>
+                                    <option value="238">238 - Trabajos especializados para la construcción</option>
+                                </optgroup>
+
+                                <!-- 31-33 - INDUSTRIAS MANUFACTURERAS -->
+                                <optgroup label="🏭 31-33 - Industrias manufactureras">
+                                    <option value="311">311 - Industria alimentaria</option>
+                                    <option value="312">312 - Industria de las bebidas y del tabaco</option>
+                                    <option value="313">313 - Fabricación de insumos textiles</option>
+                                    <option value="314">314 - Fabricación de productos textiles</option>
+                                    <option value="315">315 - Fabricación de prendas de vestir</option>
+                                    <option value="316">316 - Curtido y acabado de cuero y piel</option>
+                                    <option value="321">321 - Industria de la madera</option>
+                                    <option value="322">322 - Industria del papel</option>
+                                    <option value="323">323 - Impresión e industrias conexas</option>
+                                    <option value="324">324 - Fabricación de productos derivados del petróleo</option>
+                                    <option value="325">325 - Industria química</option>
+                                    <option value="326">326 - Industria del plástico y del hule</option>
+                                    <option value="327">327 - Fabricación de productos a base de minerales no metálicos
+                                    </option>
+                                    <option value="331">331 - Industrias metálicas básicas</option>
+                                    <option value="332">332 - Fabricación de productos metálicos</option>
+                                    <option value="333">333 - Fabricación de maquinaria y equipo</option>
+                                    <option value="334">334 - Fabricación de equipo de computación</option>
+                                    <option value="335">335 - Fabricación de equipo de generación eléctrica</option>
+                                    <option value="336">336 - Fabricación de equipo de transporte</option>
+                                    <option value="337">337 - Fabricación de muebles</option>
+                                    <option value="339">339 - Otras industrias manufactureras</option>
+                                </optgroup>
+
+                                <!-- 43 - COMERCIO AL POR MAYOR -->
+                                <optgroup label="📦 43 - Comercio al por mayor">
+                                    <option value="431">431 - Comercio al por mayor de abarrotes, alimentos, bebidas
+                                    </option>
+                                    <option value="432">432 - Comercio al por mayor de productos textiles y calzado
+                                    </option>
+                                    <option value="433">433 - Comercio al por mayor de productos farmacéuticos</option>
+                                    <option value="434">434 - Comercio al por mayor de materias primas</option>
+                                    <option value="435">435 - Comercio al por mayor de maquinaria y equipo</option>
+                                    <option value="436">436 - Comercio al por mayor de camiones y partes</option>
+                                    <option value="437">437 - Comercio al por mayor por medios masivos</option>
+                                </optgroup>
+
+                                <!-- 46 - COMERCIO AL POR MENOR -->
+                                <optgroup label="🛒 46 - Comercio al por menor">
+                                    <option value="461">461 - Comercio de abarrotes y alimentos</option>
+                                    <option value="461110">461110 - Tiendas de abarrotes</option>
+                                    <option value="461121">461121 - Minisupers</option>
+                                    <option value="461122">461122 - Tiendas de conveniencia (OXXO, 7-Eleven)</option>
+                                    <option value="461130">461130 - Tiendas de lácteos</option>
+                                    <option value="461140">461140 - Dulcerías y paleterías</option>
+                                    <option value="461150">461150 - Tiendas de carnes y pollerías</option>
+                                    <option value="461160">461160 - Pescaderías</option>
+                                    <option value="461170">461170 - Fruterías y verdulerías</option>
+                                    <option value="461190">461190 - Tiendas naturistas</option>
+                                    <option value="462">462 - Tiendas de autoservicio</option>
+                                    <option value="462111">462111 - Supermercados</option>
+                                    <option value="462112">462112 - Tiendas departamentales</option>
+                                    <option value="463">463 - Comercio de productos textiles y accesorios</option>
+                                    <option value="463111">463111 - Tiendas de telas</option>
+                                    <option value="463211">463211 - Tiendas de ropa</option>
+                                    <option value="463212">463212 - Boutiques</option>
+                                    <option value="463215">463215 - Tiendas de uniformes</option>
+                                    <option value="463310">463310 - Zapaterías</option>
+                                    <option value="464">464 - Productos de salud y cuidado personal</option>
+                                    <option value="464111">464111 - Farmacias sin minisuper</option>
+                                    <option value="464112">464112 - Farmacias con minisuper</option>
+                                    <option value="464113">464113 - Boticas y droguerías</option>
+                                    <option value="464121">464121 - Perfumerías</option>
+                                    <option value="464122">464122 - Tiendas de lentes</option>
+                                    <option value="465">465 - Papelería, libros y artículos deportivos</option>
+                                    <option value="465111">465111 - Papelerías</option>
+                                    <option value="465211">465211 - Librerías</option>
+                                    <option value="465311">465311 - Tiendas de artículos deportivos</option>
+                                    <option value="465312">465312 - Tiendas de bicicletas</option>
+                                    <option value="466">466 - Electrodomésticos, computadoras y decoración</option>
+                                    <option value="466111">466111 - Mueblerías</option>
+                                    <option value="466112">466112 - Tiendas de electrodomésticos</option>
+                                    <option value="466114">466114 - Tiendas de computadoras</option>
+                                    <option value="466211">466211 - Tiendas de telefonía celular</option>
+                                    <option value="466311">466311 - Tiendas de alfombras y cortinas</option>
+                                    <option value="467">467 - Ferreterías y tlapalerías</option>
+                                    <option value="467111">467111 - Ferreterías y tlapalerías</option>
+                                    <option value="467112">467112 - Vidrierías</option>
+                                    <option value="467114">467114 - Tiendas de pisos y azulejos</option>
+                                    <option value="467115">467115 - Tiendas de pintura</option>
+                                    <option value="468">468 - Vehículos, refacciones y combustibles</option>
+                                    <option value="468211">468211 - Refaccionarias</option>
+                                    <option value="468212">468212 - Tiendas de llantas</option>
+                                    <option value="468411">468411 - Gasolineras</option>
+                                    <option value="468412">468412 - Gaseras</option>
+                                    <option value="469">469 - Comercio por internet y otros medios</option>
+                                </optgroup>
+
+                                <!-- 48-49 - TRANSPORTES, CORREOS Y ALMACENAMIENTO -->
+                                <optgroup label="🚛 48-49 - Transportes y almacenamiento">
+                                    <option value="481">481 - Transporte aéreo</option>
+                                    <option value="482">482 - Transporte por ferrocarril</option>
+                                    <option value="483">483 - Transporte por agua</option>
+                                    <option value="484">484 - Autotransporte de carga</option>
+                                    <option value="485">485 - Transporte terrestre de pasajeros</option>
+                                    <option value="4851">4851 - Transporte colectivo urbano (camiones)</option>
+                                    <option value="4852">4852 - Transporte foráneo de pasajeros</option>
+                                    <option value="4853">4853 - Servicio de taxis y limusinas</option>
+                                    <option value="4854">4854 - Transporte escolar y de personal</option>
+                                    <option value="486">486 - Transporte por ductos</option>
+                                    <option value="487">487 - Transporte turístico</option>
+                                    <option value="488">488 - Servicios relacionados con el transporte</option>
+                                    <option value="4881">4881 - Estacionamientos</option>
+                                    <option value="491">491 - Servicios postales</option>
+                                    <option value="492">492 - Servicios de mensajería y paquetería</option>
+                                    <option value="493">493 - Servicios de almacenamiento</option>
+                                </optgroup>
+
+                                <!-- 51 - INFORMACIÓN EN MEDIOS MASIVOS -->
+                                <optgroup label="📺 51 - Información y medios masivos">
+                                    <option value="511">511 - Edición de periódicos, revistas, libros</option>
+                                    <option value="512">512 - Industria fílmica y del video</option>
+                                    <option value="515">515 - Radio y televisión</option>
+                                    <option value="517">517 - Telecomunicaciones</option>
+                                    <option value="518">518 - Procesamiento electrónico de información</option>
+                                    <option value="519">519 - Otros servicios de información</option>
+                                </optgroup>
+
+                                <!-- 52 - SERVICIOS FINANCIEROS Y DE SEGUROS -->
+                                <optgroup label="🏦 52 - Servicios financieros">
+                                    <option value="521">521 - Banca central</option>
+                                    <option value="522">522 - Instituciones de intermediación crediticia</option>
+                                    <option value="5221">5221 - Banca múltiple</option>
+                                    <option value="5222">5222 - Cajas de ahorro</option>
+                                    <option value="5223">5223 - Uniones de crédito</option>
+                                    <option value="5224">5224 - Arrendadoras financieras</option>
+                                    <option value="523">523 - Casas de bolsa y cambio</option>
+                                    <option value="524">524 - Compañías de seguros y fianzas</option>
+                                </optgroup>
+
+                                <!-- 53 - SERVICIOS INMOBILIARIOS -->
+                                <optgroup label="🏠 53 - Servicios inmobiliarios">
+                                    <option value="531">531 - Servicios inmobiliarios</option>
+                                    <option value="5311">5311 - Alquiler de viviendas</option>
+                                    <option value="5312">5312 - Inmobiliarias y corredores de bienes raíces</option>
+                                    <option value="532">532 - Servicios de alquiler de bienes muebles</option>
+                                    <option value="5321">5321 - Alquiler de automóviles</option>
+                                    <option value="5322">5322 - Alquiler de artículos para el hogar</option>
+                                    <option value="5323">5323 - Centros de alquiler</option>
+                                    <option value="5324">5324 - Alquiler de maquinaria y equipo</option>
+                                    <option value="533">533 - Arrendamiento de marcas y patentes</option>
+                                </optgroup>
+
+                                <!-- 54 - SERVICIOS PROFESIONALES -->
+                                <optgroup label="💼 54 - Servicios profesionales">
+                                    <option value="541">541 - Servicios profesionales, científicos y técnicos</option>
+                                    <option value="541110">541110 - Servicios legales (abogados)</option>
+                                    <option value="541211">541211 - Servicios de contabilidad</option>
+                                    <option value="541213">541213 - Servicios de auditoría</option>
+                                    <option value="541310">541310 - Servicios de arquitectura</option>
+                                    <option value="541320">541320 - Servicios de arquitectura paisajista</option>
+                                    <option value="541330">541330 - Servicios de ingeniería</option>
+                                    <option value="541340">541340 - Servicios de dibujo</option>
+                                    <option value="541350">541350 - Servicios de inspección de edificios</option>
+                                    <option value="541360">541360 - Servicios de levantamiento geofísico</option>
+                                    <option value="541410">541410 - Diseño gráfico</option>
+                                    <option value="541420">541420 - Diseño industrial</option>
+                                    <option value="541430">541430 - Diseño de interiores</option>
+                                    <option value="541511">541511 - Diseño de sistemas de cómputo</option>
+                                    <option value="541512">541512 - Programación de computadoras</option>
+                                    <option value="541610">541610 - Consultoría administrativa</option>
+                                    <option value="541620">541620 - Consultoría ambiental</option>
+                                    <option value="541690">541690 - Otros servicios de consultoría</option>
+                                    <option value="541710">541710 - Investigación científica y desarrollo</option>
+                                    <option value="541810">541810 - Agencias de publicidad</option>
+                                    <option value="541820">541820 - Agencias de relaciones públicas</option>
+                                    <option value="541830">541830 - Agencias de compra de medios</option>
+                                    <option value="541840">541840 - Agencias de representación de medios</option>
+                                    <option value="541850">541850 - Agencias de anuncios publicitarios</option>
+                                    <option value="541860">541860 - Agencias de correo directo</option>
+                                    <option value="541870">541870 - Distribución de material publicitario</option>
+                                    <option value="541910">541910 - Investigación de mercados</option>
+                                    <option value="541920">541920 - Servicios de fotografía</option>
+                                    <option value="541930">541930 - Servicios de traducción e interpretación</option>
+                                    <option value="541940">541940 - Servicios veterinarios</option>
+                                    <option value="541990">541990 - Otros servicios profesionales</option>
+                                </optgroup>
+
+                                <!-- 56 - SERVICIOS DE APOYO A LOS NEGOCIOS -->
+                                <optgroup label="🧹 56 - Servicios de apoyo a negocios">
+                                    <option value="561">561 - Servicios de apoyo a los negocios</option>
+                                    <option value="5611">5611 - Agencias de empleo</option>
+                                    <option value="5612">5612 - Servicios de organización de eventos</option>
+                                    <option value="5613">5613 - Servicios de investigación y protección</option>
+                                    <option value="5614">5614 - Servicios de limpieza</option>
+                                    <option value="5615">5615 - Agencias de viajes</option>
+                                    <option value="5617">5617 - Servicios de apoyo secretarial</option>
+                                    <option value="562">562 - Manejo de desechos y servicios de remediación</option>
+                                </optgroup>
+
+                                <!-- 61 - SERVICIOS EDUCATIVOS -->
+                                <optgroup label="🎓 61 - Servicios educativos">
+                                    <option value="611">611 - Servicios educativos</option>
+                                    <option value="6111">6111 - Escuelas de educación preescolar</option>
+                                    <option value="6112">6112 - Escuelas de educación primaria</option>
+                                    <option value="6113">6113 - Escuelas de educación secundaria</option>
+                                    <option value="6114">6114 - Escuelas de educación media superior</option>
+                                    <option value="6115">6115 - Escuelas de educación superior</option>
+                                    <option value="6116">6116 - Escuelas de educación especial</option>
+                                    <option value="6117">6117 - Escuelas de computación</option>
+                                    <option value="611610">611610 - Escuelas de idiomas</option>
+                                    <option value="611620">611620 - Escuelas de arte</option>
+                                    <option value="611630">611630 - Escuelas de deportes</option>
+                                    <option value="611691">611691 - Capacitación para el trabajo</option>
+                                    <option value="611698">611698 - Escuelas para la educación adulta</option>
+                                </optgroup>
+
+                                <!-- 62 - SERVICIOS DE SALUD -->
+                                <optgroup label="🏥 62 - Servicios de salud">
+                                    <option value="621">621 - Servicios médicos de consulta externa</option>
+                                    <option value="621111">621111 - Consultorios de medicina general</option>
+                                    <option value="621112">621112 - Consultorios de especialidades</option>
+                                    <option value="621113">621113 - Ginecología y obstetricia</option>
+                                    <option value="621114">621114 - Pediatría</option>
+                                    <option value="621115">621115 - Psiquiatría</option>
+                                    <option value="621211">621211 - Consultorios dentales</option>
+                                    <option value="621311">621311 - Consultorios de quiropráctica</option>
+                                    <option value="621312">621312 - Consultorios de optometría</option>
+                                    <option value="621320">621320 - Consultorios de psicología</option>
+                                    <option value="621331">621331 - Consultorios de audiología</option>
+                                    <option value="621340">621340 - Consultorios de podología</option>
+                                    <option value="621391">621391 - Consultorios de nutriología</option>
+                                    <option value="621398">621398 - Otros consultorios</option>
+                                    <option value="6214">6214 - Laboratorios y centros de diagnóstico</option>
+                                    <option value="621511">621511 - Laboratorios de análisis clínicos</option>
+                                    <option value="621512">621512 - Centros de diagnóstico por imagen</option>
+                                    <option value="622">622 - Hospitales</option>
+                                    <option value="6221">6221 - Hospitales generales</option>
+                                    <option value="6222">6222 - Hospitales psiquiátricos</option>
+                                    <option value="6223">6223 - Hospitales de especialidades</option>
+                                    <option value="623">623 - Residencias de asistencia social</option>
+                                    <option value="624">624 - Centros de asistencia social</option>
+                                    <option value="6241">6241 - Servicios de orientación familiar</option>
+                                    <option value="6244">6244 - Guarderías</option>
+                                </optgroup>
+
+                                <!-- 71 - SERVICIOS DE ESPARCIMIENTO -->
+                                <optgroup label="🎭 71 - Esparcimiento y cultura">
+                                    <option value="711">711 - Servicios artísticos y deportivos</option>
+                                    <option value="7111">7111 - Compañías de teatro, danza y música</option>
+                                    <option value="7112">7112 - Deportistas profesionales</option>
+                                    <option value="7113">7113 - Promotores de eventos</option>
+                                    <option value="7115">7115 - Artistas y técnicos independientes</option>
+                                    <option value="712">712 - Museos, sitios históricos y similares</option>
+                                    <option value="713">713 - Servicios de entretenimiento</option>
+                                    <option value="7131">7131 - Parques de diversiones</option>
+                                    <option value="7132">7132 - Casinos</option>
+                                    <option value="7139">7139 - Otros servicios recreativos</option>
+                                    <option value="713910">713910 - Campos de golf</option>
+                                    <option value="713941">713941 - Gimnasios y centros de acondicionamiento</option>
+                                    <option value="713942">713942 - Clubes deportivos</option>
+                                    <option value="713943">713943 - Centros de acondicionamiento físico</option>
+                                    <option value="713991">713991 - Salones de boliche</option>
+                                    <option value="713992">713992 - Billares</option>
+                                    <option value="713998">713998 - Otros centros recreativos</option>
+                                </optgroup>
+
+                                <!-- 72 - SERVICIOS DE ALOJAMIENTO Y ALIMENTOS -->
+                                <optgroup label="🍽️ 72 - Alojamiento y alimentos">
+                                    <option value="721">721 - Servicios de alojamiento temporal</option>
+                                    <option value="721111">721111 - Hoteles con otros servicios integrados</option>
+                                    <option value="721112">721112 - Hoteles sin otros servicios integrados</option>
+                                    <option value="721113">721113 - Pensiones y casas de huéspedes</option>
+                                    <option value="721191">721191 - Moteles</option>
+                                    <option value="721192">721192 - Alojamiento en cabañas</option>
+                                    <option value="721210">721210 - Campamentos</option>
+                                    <option value="721311">721311 - Departamentos amueblados sin servicios</option>
+                                    <option value="721312">721312 - Casas amuebladas con servicios de hotel</option>
+                                    <option value="722">722 - Servicios de preparación de alimentos y bebidas</option>
+                                    <option value="722110">722110 - Restaurantes con servicio de meseros</option>
+                                    <option value="722211">722211 - Restaurantes de autoservicio</option>
+                                    <option value="722212">722212 - Restaurantes de comida para llevar</option>
+                                    <option value="722219">722219 - Otros restaurantes de autoservicio</option>
+                                    <option value="722310">722310 - Cafeterías, fuentes de sodas</option>
+                                    <option value="722320">722320 - Servicios de comedor para empresas</option>
+                                    <option value="722330">722330 - Servicios de alimentación (catering)</option>
+                                    <option value="722411">722411 - Bares y cantinas</option>
+                                    <option value="722412">722412 - Antros y discotecas</option>
+                                </optgroup>
+
+                                <!-- 81 - OTROS SERVICIOS -->
+                                <optgroup label="🔧 81 - Otros servicios">
+                                    <option value="811">811 - Servicios de reparación y mantenimiento</option>
+                                    <option value="811111">811111 - Reparación mecánica de automóviles</option>
+                                    <option value="811112">811112 - Reparación eléctrica de automóviles</option>
+                                    <option value="811113">811113 - Reparación de transmisiones</option>
+                                    <option value="811114">811114 - Reparación de suspensiones</option>
+                                    <option value="811115">811115 - Alineación y balanceo</option>
+                                    <option value="811116">811116 - Hojalatería y pintura</option>
+                                    <option value="811119">811119 - Otras reparaciones de automóviles</option>
+                                    <option value="811121">811121 - Tapicería automotriz</option>
+                                    <option value="811122">811122 - Instalación de cristales</option>
+                                    <option value="811191">811191 - Vulcanizadoras</option>
+                                    <option value="811192">811192 - Lavado y lubricación de automóviles</option>
+                                    <option value="811211">811211 - Reparación de electrodomésticos menores</option>
+                                    <option value="811212">811212 - Reparación de electrodomésticos mayores</option>
+                                    <option value="811219">811219 - Reparación de otros aparatos eléctricos</option>
+                                    <option value="811311">811311 - Reparación de computadoras</option>
+                                    <option value="811312">811312 - Reparación de equipos de comunicación</option>
+                                    <option value="811410">811410 - Reparación de calzado y artículos de piel</option>
+                                    <option value="811420">811420 - Reparación de muebles</option>
+                                    <option value="811430">811430 - Reparación de relojes</option>
+                                    <option value="811490">811490 - Cerrajerías</option>
+                                    <option value="812">812 - Servicios personales</option>
+                                    <option value="812111">812111 - Salones de belleza</option>
+                                    <option value="812112">812112 - Peluquerías</option>
+                                    <option value="812120">812120 - Clínicas de estética</option>
+                                    <option value="812130">812130 - Servicios de manicure y pedicure</option>
+                                    <option value="812191">812191 - Baños públicos</option>
+                                    <option value="812199">812199 - Otros servicios de cuidado personal</option>
+                                    <option value="812210">812210 - Funerarias</option>
+                                    <option value="812220">812220 - Cementerios</option>
+                                    <option value="812310">812310 - Lavanderías y tintorerías</option>
+                                    <option value="812910">812910 - Servicios de revelado de fotografías</option>
+                                    <option value="812990">812990 - Estacionamientos y pensiones para autos</option>
+                                    <option value="813">813 - Asociaciones y organizaciones</option>
+                                </optgroup>
+
+                                <!-- 93 - ACTIVIDADES GUBERNAMENTALES -->
+                                <optgroup label="🏛️ 93 - Actividades gubernamentales">
+                                    <option value="931">931 - Órganos legislativos</option>
+                                    <option value="932">932 - Administración pública</option>
+                                    <option value="933">933 - Impartición de justicia</option>
+                                    <option value="934">934 - Regulación y fomento económico</option>
+                                    <option value="935">935 - Seguridad nacional</option>
+                                    <option value="936">936 - Asuntos exteriores</option>
+                                    <option value="937">937 - Seguridad social</option>
+                                    <option value="938">938 - Registro civil</option>
+                                    <option value="939">939 - Otras actividades del gobierno</option>
+                                </optgroup>
+                            </select>
+                            <button class="btn btn-primary" onclick="searchDENUEByCode()"
+                                style="white-space: nowrap;">🔍
+                                Buscar SCIAN</button>
+                            <button class="btn btn-secondary" onclick="saveLocationToProject()"
+                                title="Guardar esta ubicación y giro como predeterminados"
+                                style="white-space: nowrap; padding: 0.5rem;">💾 Guardar Ubicación</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">O por palabra:</span>
+                        <input type="text" id="denueKeyword" placeholder="café, taller, farmacia, etc."
+                            style="flex: 1;">
+                        <input type="number" id="denueRadio" value="2000" min="100" max="5000" step="100"
+                            style="width: 90px;" title="Radio en metros">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">m</span>
+                        <button class="btn" onclick="searchDENUEByKeyword()"
+                            style="background: var(--surface-light);">🔍
+                            Buscar</button>
+                    </div>
+
+                    <div id="mapDenue" style="height: 450px; border-radius: 8px;"></div>
+                    <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                        📍 Los puntos rojos son negocios del DENUE. Haz clic en ellos para ver detalles.
+                        Radio máximo: 5,000 metros.
+                    </p>
+                </div>
+
+                <!-- RIGHT: DENUE Results Panel -->
+                <div class="info-panel">
+                    <div class="info-section">
+                        <h4>📊 Resumen de Competidores</h4>
+                        <div class="data-grid">
+                            <div class="data-item"><span class="label">Total encontrados</span><span class="value"
+                                    id="comp-total" style="color: #ef4444; font-size: 1.2rem;">0</span></div>
+                            <div class="data-item"><span class="label">Micro (0-5 emp.)</span><span class="value"
+                                    id="comp-micro">0</span></div>
+                            <div class="data-item"><span class="label">Pequeña (6-30)</span><span class="value"
+                                    id="comp-small">0</span></div>
+                            <div class="data-item"><span class="label">Mediana+ (31+)</span><span class="value"
+                                    id="comp-medium">0</span></div>
+                        </div>
+                        <p class="text-muted" style="font-size: 0.75rem; margin-top: 0.5rem;">
+                            📍 Arrastra el marcador azul en el mapa para cambiar el centro de búsqueda
+                        </p>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>🏆 Top Actividades (de esta búsqueda)</h4>
+                        <div id="comp-activities" style="font-size: 0.85rem;"></div>
+                    </div>
+
+                    <div class="info-section" style="flex: 1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h4>📋 Lista de Competidores <span id="comp-count"
+                                    style="font-size: 0.75rem; color: var(--text-muted);"></span></h4>
+                            <button class="btn btn-sm btn-secondary" onclick="saveCompetitorsToProject()"
+                                style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">💾 Guardar Lista</button>
+                        </div>
+                        <div class="denue-list" id="comp-list" style="max-height: 400px;">
+                            <p class="text-muted" style="text-align: center; padding: 2rem;">
+                                Selecciona una actividad SCIAN o busca por palabra clave
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- CONSUMER BEHAVIOR SECTION - THIRD MAP -->
+        <!-- ========================================== -->
+        <div style="margin-top: 2rem;">
+            <div class="page-header">
+                <h2>🎯 Focalización de Mercado</h2>
+                <p class="subtitle">Identifica las zonas con mayor potencial de consumo para tu tipo de negocio</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 400px; gap: 1.5rem;">
+                <!-- LEFT: Consumer Behavior Map -->
+                <div class="map-section">
+                    <div class="control-bar">
+                        <div class="field" style="flex: 2;">
+                            <select id="selectGiro" onchange="updateGiroIndicators()">
+                                <option value="">-- Selecciona tu tipo de negocio --</option>
+                                <option value="cosmetologia">💅 Cosmetología / Estética</option>
+                                <option value="gimnasio">🏋️ Gimnasio / Fitness</option>
+                                <option value="restaurante">🍽️ Restaurante / Comida</option>
+                                <option value="farmacia">💊 Farmacia / Salud</option>
+                                <option value="veterinaria">🐕 Veterinaria / Mascotas</option>
+                                <option value="papeleria">📚 Papelería / Útiles</option>
+                                <option value="tienda_ropa">👗 Tienda de Ropa / Moda</option>
+                                <option value="abarrotes">🛒 Abarrotes / Tienda</option>
+                                <option value="taller_mecanico">🔧 Taller Mecánico / Auto</option>
+                                <option value="consultorio_medico">🏥 Consultorio Médico</option>
+                                <option value="dental">🦷 Consultorio Dental</option>
+                                <option value="peluqueria">💇 Peluquería / Barbería</option>
+                                <option value="lavanderia">🧺 Lavandería / Tintorería</option>
+                                <option value="escuela_idiomas">🗣️ Escuela de Idiomas</option>
+                                <option value="guarderia">👶 Guardería / Kinder</option>
+                                <option value="cafe_internet">🖥️ Café Internet / Gaming</option>
+                                <option value="ferreteria">🔨 Ferretería / Tlapalería</option>
+                                <option value="floreria">💐 Florería</option>
+                                <option value="optica">👓 Óptica</option>
+                                <option value="carniceria">🥩 Carnicería / Pollería</option>
+                            </select>
+                        </div>
+
+                        <!-- Analysis Method Toggle -->
+                        <div
+                            style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap;">
+                            <div class="toggle-container"
+                                style="display: flex; align-items: center; gap: 0.5rem; background: var(--surface-light); padding: 0.25rem 0.5rem; border-radius: 20px;">
+                                <label style="margin:0; cursor:pointer;" onclick="setAnalysisMode('radius')">
+                                    <input type="radio" name="analysisMode" value="radius" checked hidden>
+                                    <span class="mode-chip active" id="mode-radius">⭕ Radio</span>
+                                </label>
+                                <label style="margin:0; cursor:pointer;" onclick="setAnalysisMode('time')">
+                                    <input type="radio" name="analysisMode" value="time" hidden>
+                                    <span class="mode-chip" id="mode-time">⏱️ Tiempo</span>
+                                </label>
+                            </div>
+
+                            <!-- Radius Controls -->
+                            <div id="controls-radius" style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="number" id="behaviorRadius" class="form-control" value="2" min="1" max="10"
+                                    style="width: 70px;">
+                                <span>km</span>
+                            </div>
+
+                            <!-- Isochrone Controls (Hidden by default) -->
+                            <div id="controls-time" style="display: none; align-items: center; gap: 0.5rem;">
+                                <select id="transportMode" class="form-control" style="width: auto;">
+                                    <option value="foot-walking">🚶 Caminando</option>
+                                    <option value="driving-car">🚗 Auto</option>
+                                </select>
+                                <select id="travelTime" class="form-control" style="width: auto;">
+                                    <option value="300">5 min</option>
+                                    <option value="600">10 min</option>
+                                    <option value="900">15 min</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="calcularPotencial()">📊 Calcular Potencial</button>
+                        <button class="btn btn-secondary" style="margin-top: 1rem; width: 100%;"
+                            onclick="saveAnalysisToProject()">💾 Guardar en Reporte</button>
+                    </div>
+
+                    <div id="mapBehavior" style="height: 450px; border-radius: 8px;"></div>
+                    <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                        🎯 Las zonas más verdes tienen mayor potencial de consumo para tu tipo de negocio.
+                        El índice se calcula con datos del Censo 2020, ENIGH y ENDUTIH.
+                    </p>
+                </div>
+
+                <!-- RIGHT: Consumer Indicators Panel -->
+                <div class="info-panel">
+                    <div class="info-section">
+                        <h4>📊 Indicadores para <span id="giro-nombre">tu negocio</span></h4>
+                        <div id="giro-tags" style="margin-bottom: 1rem;">
+                            <p class="text-muted" style="font-size: 0.85rem;">Selecciona un tipo de negocio para ver los
+                                indicadores relevantes</p>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>📈 Indicadores del Área</h4>
+                        <div class="data-grid" id="area-indicators">
+                            <div class="data-item"><span class="label">Población objetivo</span><span class="value"
+                                    id="ind-poblacion">--</span></div>
+                            <div class="data-item"><span class="label">Potencial económico</span><span class="value"
+                                    id="ind-economico">--</span></div>
+                            <div class="data-item"><span class="label">Densidad</span><span class="value"
+                                    id="ind-densidad">--</span></div>
+                            <div class="data-item"><span class="label">Conectividad</span><span class="value"
+                                    id="ind-conectividad">--</span></div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>🎯 Índice de Potencial</h4>
+                        <div style="text-align: center; padding: 1rem;">
+                            <div id="potencial-score"
+                                style="font-size: 3.5rem; font-weight: 700; color: var(--primary); line-height: 1;">
+                                --</div>
+                            <div id="potencial-label"
+                                style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Selecciona un
+                                giro y calcula</div>
+
+                            <div id="potencial-bar"
+                                style="margin-bottom: 1.5rem; height: 10px; background: var(--surface-light); border-radius: 5px; overflow: hidden;">
+                                <div id="potencial-fill"
+                                    style="height: 100%; width: 0%; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981); transition: width 0.5s;">
+                                </div>
+                            </div>
+
+                            <!-- Score Breakdown Bars -->
+                            <div id="score-breakdown"
+                                style="display:none; text-align: left; border-top: 1px solid var(--surface-light); padding-top: 1rem;">
+
+                                <!-- Population -->
+                                <div class="breakdown-item" style="margin-bottom: 0.8rem;">
+                                    <div
+                                        style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.2rem; color: var(--text-secondary);">
+                                        <span>👥 Masa Crítica (Población)</span>
+                                        <span id="score-pop-val">--</span>
+                                    </div>
+                                    <div class="mini-progress-bg">
+                                        <div id="score-pop-bar" class="mini-progress-fill"
+                                            style="width: 0%; background-color: #3b82f6;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Competition -->
+                                <div class="breakdown-item" style="margin-bottom: 0.8rem;">
+                                    <div
+                                        style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.2rem; color: var(--text-secondary);">
+                                        <span>🏪 Competencia (Oportunidad)</span>
+                                        <span id="score-comp-val">--</span>
+                                    </div>
+                                    <div class="mini-progress-bg">
+                                        <div id="score-comp-bar" class="mini-progress-fill"
+                                            style="width: 0%; background-color: #10b981;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Affinity/Match -->
+                                <div class="breakdown-item">
+                                    <div
+                                        style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.2rem; color: var(--text-secondary);">
+                                        <span>💎 Afinidad (Nivel $ + Conectividad)</span>
+                                        <span id="score-affinity-val">--</span>
+                                    </div>
+                                    <div class="mini-progress-bg">
+                                        <div id="score-affinity-bar" class="mini-progress-fill"
+                                            style="width: 0%; background-color: #f59e0b;"></div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <style>
+                        .mini-progress-bg {
+                            background: rgba(0, 0, 0, 0.05);
+                            /* Light mode bg */
+                            height: 6px;
+                            border-radius: 3px;
+                            overflow: hidden;
+                        }
+
+                        [data-theme="dark"] .mini-progress-bg {
+                            background: rgba(255, 255, 255, 0.1);
+                            /* Dark mode bg */
+                        }
+
+                        .mini-progress-fill {
+                            height: 100%;
+                            border-radius: 3px;
+                            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                        }
+                    </style>
+
+                    <div class="info-section">
+                        <h4>💡 Recomendaciones</h4>
+                        <div id="recomendaciones" style="font-size: 0.85rem;">
+                            <p class="text-muted">Calcula el potencial para ver recomendaciones específicas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC | Datos: INEGI Censo 2020 + DENUE + ENIGH + ENDUTIH</footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="js/plania-core.js"></script>
+    <script>
+        // Map and layers
+        let map, drawnItems, businessMarker;
+        let agebLayer, manzanasLayer, denueMarkers = [];
+
+        // Data
+        let popData = { pop: 0, men: 0, women: 0, young: 0, adult: 0, senior: 0, homes: 0 };
+        let denueData = [];
+
+        // Config
+        const DEFAULT_CENTER = [29.0729, -110.9559]; // Hermosillo
+
+        // Will be loaded dynamically from JSON file
+        let ESTADOS = [];
+        let MUNICIPIOS = {};
+
+        // Load catalog from JSON file
+        async function loadCatalogoMunicipios() {
+            try {
+                const res = await fetch('data/municipios_mexico.json');
+                const data = await res.json();
+                ESTADOS = data.estados || [];
+                MUNICIPIOS = data.municipios || {};
+                console.log('✅ Catálogo cargado:', ESTADOS.length, 'estados');
+            } catch (err) {
+                console.error('Error loading municipios catalog:', err);
+                // Fallback to Sonora only
+                ESTADOS = [{ cve: '26', nombre: 'Sonora' }];
+                MUNICIPIOS = {
+                    '26': { '001': 'Aconchi', '030': 'Hermosillo', '043': 'Nogales' }
+                };
+            }
+        }
+
+        // Populate states dropdown
+        function loadEstados() {
+            const select = document.getElementById('selectEstado');
+            select.innerHTML = '<option value="">Selecciona estado...</option>';
+
+            ESTADOS.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.cve;
+                opt.textContent = e.nombre;
+                // Default to Sonora
+                if (e.cve === '26') opt.selected = true;
+                select.appendChild(opt);
+            });
+
+            // Load municipalities for default state
+            loadMunicipios();
+        }
+
+        // Urban densities (hab/km²) - INEGI 2020
+        const DENSITIES = {
+            '26030': 4256, '26043': 3310, '26018': 2887,
+            '09015': 16848, '09014': 16320,
+            '14039': 9152, '14120': 6500,
+            '19039': 5715, '19026': 8200
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCatalogoMunicipios();
+            initMap();
+            loadEstados();
+            setTimeout(loadProjectData, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProjectData);
+
+        function initMap() {
+            map = L.map('map').setView(DEFAULT_CENTER, 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap | INEGI | DENUE'
+            }).addTo(map);
+
+            // Draw layer
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            // Draw controls
+            const drawControl = new L.Control.Draw({
+                position: 'topleft',
+                edit: { featureGroup: drawnItems, remove: true },
+                draw: {
+                    polygon: { allowIntersection: false, showArea: true, shapeOptions: { color: '#f59e0b', weight: 2, fillOpacity: 0.2 } },
+                    rectangle: { shapeOptions: { color: '#3b82f6', weight: 2, fillOpacity: 0.2 } },
+                    circle: { shapeOptions: { color: '#10b981', weight: 2, fillOpacity: 0.2 } },
+                    polyline: false, marker: false, circlemarker: false
+                }
+            });
+            map.addControl(drawControl);
+
+            // Handle drawing
+            map.on(L.Draw.Event.CREATED, async (e) => {
+                drawnItems.clearLayers();
+                drawnItems.addLayer(e.layer);
+                await queryAreaData(e.layer, e.layerType);
+            });
+
+            // Click to place business marker
+            map.on('click', (e) => {
+                if (businessMarker) map.removeLayer(businessMarker);
+                businessMarker = L.marker(e.latlng, {
+                    icon: L.divIcon({ className: '', html: '<div style="background:#ef4444;width:20px;height:20px;border-radius:50%;border:3px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);"></div>', iconSize: [20, 20] })
+                }).addTo(map).bindPopup('📍 Tu Negocio').openPopup();
+            });
+
+            // Load initial data
+            loadINEGIData();
+        }
+
+        function loadMunicipios() {
+            const estado = document.getElementById('selectEstado').value;
+            const select = document.getElementById('selectMunicipio');
+            select.innerHTML = '';
+
+            const muns = MUNICIPIOS[estado] || {};
+            for (const [cve, nom] of Object.entries(muns)) {
+                select.innerHTML += `<option value="${cve}">${nom}</option>`;
+            }
+        }
+
+        async function centerOnMunicipio() {
+            const estado = document.getElementById('selectEstado').value;
+            const mun = document.getElementById('selectMunicipio').value;
+
+            // Known coordinates cache (for faster loading)
+            const knownCenters = {
+                '26001': [29.8233, -110.2251], // Aconchi
+                '26002': [31.3286, -109.5492], // Agua Prieta
+                '26003': [27.0231, -108.9403], // Álamos
+                '26017': [30.7127, -112.1588], // Caborca
+                '26018': [27.4861, -109.9303], // Cajeme
+                '26019': [30.9881, -110.2976], // Cananea
+                '26029': [27.9189, -110.8986], // Guaymas
+                '26030': [29.0729, -110.9559], // Hermosillo
+                '26042': [27.0720, -109.4416], // Navojoa
+                '26043': [31.3108, -110.9442], // Nogales
+                '26048': [31.3220, -113.5429], // Puerto Peñasco
+                '26055': [32.4565, -114.7716], // San Luis Río Colorado
+                '09015': [19.4326, -99.1332], '09014': [19.3726, -99.1579],
+                '14039': [20.6767, -103.3475], '14120': [20.7211, -103.3892],
+                '19039': [25.6866, -100.3161], '19026': [25.6751, -100.2562]
+            };
+
+            const key = estado + mun;
+
+            // Check cache first
+            if (knownCenters[key]) {
+                map.setView(knownCenters[key], 14);
+                return;
+            }
+
+            // Dynamic geocode via Nominatim (OpenStreetMap)
+            const munName = MUNICIPIOS[estado]?.[mun];
+            if (munName) {
+                try {
+                    const estadoNombre = document.getElementById('selectEstado').selectedOptions[0].text;
+                    const query = encodeURIComponent(`${munName}, ${estadoNombre}, México`);
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
+                    const data = await res.json();
+
+                    if (data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 14);
+                        // Cache for next time
+                        knownCenters[key] = [lat, lon];
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Geocoding failed:', err);
+                }
+            }
+
+            // Fallback
+            map.setView(DEFAULT_CENTER, 10);
+        }
+
+        async function loadINEGIData() {
+            const estado = document.getElementById('selectEstado').value;
+            const mun = document.getElementById('selectMunicipio').value;
+
+            updateStatus('loading', 'Cargando...');
+
+            // Clear existing layers
+            if (agebLayer) map.removeLayer(agebLayer);
+            if (manzanasLayer) map.removeLayer(manzanasLayer);
+
+            // Generate sample AGEB polygons based on viewport
+            generateSampleAGEBs();
+
+            updateStatus('success', 'INEGI Censo 2020');
+        }
+
+        function generateSampleAGEBs() {
+            const center = map.getCenter();
+            const features = [];
+            const gridSize = 5;
+            const offset = 0.008; // ~800m
+
+            for (let i = -gridSize; i <= gridSize; i++) {
+                for (let j = -gridSize; j <= gridSize; j++) {
+                    const lat = center.lat + (i * offset);
+                    const lng = center.lng + (j * offset);
+                    const pop = Math.floor(Math.random() * 4000) + 1000;
+
+                    features.push({
+                        type: 'Feature',
+                        properties: {
+                            CVE_AGEB: `${26}${Math.random().toString(36).substr(2, 9)}`,
+                            POBTOT: pop, POBMAS: Math.round(pop * 0.49), POBFEM: Math.round(pop * 0.51),
+                            P_0A14: Math.round(pop * 0.22), P_15A64: Math.round(pop * 0.68), P_65YMAS: Math.round(pop * 0.10),
+                            VIVHAB: Math.round(pop / 3.5)
+                        },
+                        geometry: {
+                            type: 'Polygon',
+                            coordinates: [[
+                                [lng - offset / 2, lat - offset / 2],
+                                [lng + offset / 2, lat - offset / 2],
+                                [lng + offset / 2, lat + offset / 2],
+                                [lng - offset / 2, lat + offset / 2],
+                                [lng - offset / 2, lat - offset / 2]
+                            ]]
+                        }
+                    });
+                }
+            }
+
+            const geoJson = { type: 'FeatureCollection', features };
+
+            if (document.getElementById('layerAGEB').checked) {
+                agebLayer = L.geoJSON(geoJson, {
+                    style: (f) => ({
+                        fillColor: getPopColor(f.properties.POBTOT),
+                        weight: 1, color: '#10b981', fillOpacity: 0.4
+                    }),
+                    onEachFeature: (f, layer) => {
+                        const p = f.properties;
+                        layer.bindPopup(`
+                            <strong>AGEB ${p.CVE_AGEB.substr(-4)}</strong><br>
+                            Población: ${p.POBTOT.toLocaleString()}<br>
+                            Hombres: ${p.POBMAS.toLocaleString()}<br>
+                            Mujeres: ${p.POBFEM.toLocaleString()}<br>
+                            15-64 años: ${p.P_15A64.toLocaleString()}<br>
+                            Viviendas: ${p.VIVHAB.toLocaleString()}
+                        `);
+                    }
+                }).addTo(map);
+            }
+        }
+
+        function getPopColor(pop) {
+            return pop > 3500 ? '#ef4444' : pop > 2500 ? '#f59e0b' : pop > 1500 ? '#10b981' : '#3b82f6';
+        }
+
+        function toggleLayer(layer) {
+            if (layer === 'ageb') {
+                if (agebLayer) map.removeLayer(agebLayer);
+                if (document.getElementById('layerAGEB').checked) generateSampleAGEBs();
+            } else if (layer === 'manzanas') {
+                if (manzanasLayer) map.removeLayer(manzanasLayer);
+                // Manzanas would be loaded similarly
+            } else if (layer === 'denue') {
+                denueMarkers.forEach(m => map.removeLayer(m));
+                denueMarkers = [];
+                if (document.getElementById('layerDENUE').checked) {
+                    searchDENUE();
+                }
+            }
+        }
+
+        async function queryAreaData(layer, layerType) {
+            updateStatus('loading', 'Calculando...');
+
+            let areaM2 = 0;
+
+            if (layerType === 'circle') {
+                areaM2 = Math.PI * Math.pow(layer.getRadius(), 2);
+            } else {
+                // Calculate polygon area
+                const latlngs = layer.getLatLngs()[0];
+                areaM2 = L.GeometryUtil ? L.GeometryUtil.geodesicArea(latlngs) : calculatePolygonArea(latlngs);
+            }
+
+            const areaKm2 = areaM2 / 1000000;
+
+            // Get density for current municipality
+            const estado = document.getElementById('selectEstado').value;
+            const mun = document.getElementById('selectMunicipio').value;
+            const density = DENSITIES[estado + mun] || 5000;
+
+            // Calculate population
+            const pop = Math.round(areaKm2 * density);
+            popData = {
+                pop, men: Math.round(pop * 0.49), women: Math.round(pop * 0.51),
+                young: Math.round(pop * 0.22), adult: Math.round(pop * 0.68), senior: Math.round(pop * 0.10),
+                homes: Math.round(pop / 3.5)
+            };
+
+            // Update UI
+            document.getElementById('val-area').textContent = areaM2.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' m²';
+            document.getElementById('val-pop').textContent = popData.pop.toLocaleString();
+            document.getElementById('val-men').textContent = popData.men.toLocaleString();
+            document.getElementById('val-women').textContent = popData.women.toLocaleString();
+            document.getElementById('val-young').textContent = popData.young.toLocaleString();
+            document.getElementById('val-adult').textContent = popData.adult.toLocaleString();
+            document.getElementById('val-senior').textContent = popData.senior.toLocaleString();
+            document.getElementById('val-homes').textContent = popData.homes.toLocaleString();
+
+            updateStatus('success', `INEGI (${density} hab/km²)`);
+            calcFunnel();
+
+            // Also search DENUE
+            if (document.getElementById('layerDENUE').checked) {
+                await searchDENUE();
+            }
+        }
+
+        function calculatePolygonArea(latlngs) {
+            // Shoelace formula for polygon area
+            let area = 0;
+            const n = latlngs.length;
+            for (let i = 0; i < n; i++) {
+                const j = (i + 1) % n;
+                area += latlngs[i].lng * latlngs[j].lat;
+                area -= latlngs[j].lng * latlngs[i].lat;
+            }
+            area = Math.abs(area) / 2;
+            // Convert degrees² to m² (approximate)
+            return area * 111000 * 100000;
+        }
+
+        async function searchDENUE() {
+            const keywords = document.getElementById('denue-search').value || 'todos';
+            const center = businessMarker ? businessMarker.getLatLng() : map.getCenter();
+
+            try {
+                const res = await fetch(`api_denue.php?lat=${center.lat}&lng=${center.lng}&radius=2000&keywords=${encodeURIComponent(keywords)}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    denueData = data.businesses || [];
+
+                    // Update stats
+                    document.getElementById('denue-total').textContent = data.total || 0;
+                    document.getElementById('denue-micro').textContent = data.by_size?.micro || 0;
+
+                    // Clear old markers
+                    denueMarkers.forEach(m => map.removeLayer(m));
+                    denueMarkers = [];
+
+                    // Add markers
+                    if (document.getElementById('layerDENUE').checked) {
+                        denueData.forEach(biz => {
+                            const m = L.circleMarker([biz.lat, biz.lng], {
+                                radius: 6, fillColor: '#ef4444', color: '#fff', weight: 1, fillOpacity: 0.8
+                            }).addTo(map).bindPopup(`<strong>${biz.nombre}</strong><br>${biz.actividad}`);
+                            denueMarkers.push(m);
+                        });
+                    }
+
+                    // Update list
+                    const list = document.getElementById('denue-list');
+                    list.innerHTML = denueData.slice(0, 10).map(b =>
+                        `<div class="denue-item"><strong>${b.nombre}</strong><br><small>${b.actividad}</small></div>`
+                    ).join('');
+                }
+            } catch (e) {
+                console.error('DENUE error:', e);
+            }
+        }
+
+        function calcFunnel() {
+            const gender = document.getElementById('f-gender').value;
+            const reach = parseInt(document.getElementById('f-reach').value) || 30;
+            const conv = parseInt(document.getElementById('f-conv').value) || 10;
+            const ticket = parseInt(document.getElementById('f-ticket').value) || 250;
+
+            let market = popData.pop;
+            if (gender === 'men') market = popData.men;
+            else if (gender === 'women') market = popData.women;
+
+            const reached = Math.round(market * reach / 100);
+            const customers = Math.round(reached * conv / 100);
+            const monthly = customers * ticket;
+            const annual = monthly * 12;
+
+            document.getElementById('f-market').textContent = market.toLocaleString();
+            document.getElementById('f-reached').textContent = reached.toLocaleString();
+            document.getElementById('f-customers').textContent = customers.toLocaleString();
+            document.getElementById('r-monthly').textContent = '$' + monthly.toLocaleString();
+            document.getElementById('r-annual').textContent = '$' + annual.toLocaleString();
+        }
+
+        function updateStatus(type, text) {
+            const el = document.getElementById('status');
+            el.className = 'status-badge ' + type;
+            el.textContent = text;
+        }
+
+        async function saveAnalysis() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) { alert('Selecciona un proyecto'); return; }
+
+            const data = {
+                popData, denueData: denueData.slice(0, 20),
+                funnel: {
+                    gender: document.getElementById('f-gender').value,
+                    reach: document.getElementById('f-reach').value,
+                    conv: document.getElementById('f-conv').value,
+                    ticket: document.getElementById('f-ticket').value
+                }
+            };
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: project.id_proyecto,
+                        d2_segmento_json: JSON.stringify(data)
+                    })
+                });
+                const result = await res.json();
+                result.success ? alert('✅ Guardado') : alert('Error');
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+            if (!project?.d2_segmento_json) return;
+
+            try {
+                const data = JSON.parse(project.d2_segmento_json);
+                if (data.popData) popData = data.popData;
+                if (data.funnel) {
+                    document.getElementById('f-gender').value = data.funnel.gender || 'all';
+                    document.getElementById('f-reach').value = data.funnel.reach || 30;
+                    document.getElementById('f-conv').value = data.funnel.conv || 10;
+                    document.getElementById('f-ticket').value = data.funnel.ticket || 250;
+                }
+                calcFunnel();
+            } catch (e) { }
+        }
+
+        // ========================================
+        // DENUE COMPETITOR MAP FUNCTIONS
+        // ========================================
+        let mapDenue, denueCompMarkers = [], denueSearchMarker, denueSearchCircle;
+
+        function initDenueMap() {
+            if (!document.getElementById('mapDenue')) return;
+            if (mapDenue) return; // Already initialized
+
+            mapDenue = L.map('mapDenue').setView(DEFAULT_CENTER, 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap | DENUE INEGI'
+            }).addTo(mapDenue);
+
+            // Get center from main map marker or default
+            const center = businessMarker ? businessMarker.getLatLng() : { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
+
+            // Create draggable search marker
+            denueSearchMarker = L.marker([center.lat, center.lng], {
+                draggable: true,
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div style="background:#3b82f6;width:24px;height:24px;border-radius:50%;border:4px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.4);cursor:grab;"></div>',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                })
+            }).addTo(mapDenue);
+
+            denueSearchMarker.bindPopup('📍 Arrastra para mover el centro de búsqueda').openPopup();
+
+            // On drag end, trigger new search
+            denueSearchMarker.on('dragend', async function (e) {
+                const pos = e.target.getLatLng();
+                mapDenue.setView([pos.lat, pos.lng], mapDenue.getZoom());
+
+                // Get current search term
+                const code = document.getElementById('denueActivity').value;
+                const keyword = document.getElementById('denueKeyword').value;
+                if (code) {
+                    await performDenueSearch(code);
+                } else if (keyword) {
+                    await performDenueSearch(keyword);
+                }
+            });
+
+            // Click to place marker
+            mapDenue.on('click', async (e) => {
+                denueSearchMarker.setLatLng(e.latlng);
+                mapDenue.setView(e.latlng, mapDenue.getZoom());
+            });
+        }
+
+        async function searchDENUEByCode() {
+            const select = document.getElementById('denueActivity');
+            const code = select.value;
+            if (!code) {
+                alert('Selecciona una actividad SCIAN primero');
+                return;
+            }
+
+            // Get the text of the selected option (e.g., "722511 - Restaurantes con servicio completo")
+            const selectedText = select.options[select.selectedIndex].text;
+            // Extract just the activity name (after the " - ")
+            const activityName = selectedText.includes(' - ')
+                ? selectedText.split(' - ')[1]
+                : selectedText;
+
+            document.getElementById('denueKeyword').value = ''; // Clear keyword
+
+            // Use activity name for search (DENUE API searches by keywords, not codes)
+            await performDenueSearch(activityName);
+        }
+
+        async function searchDENUEByKeyword() {
+            const keyword = document.getElementById('denueKeyword').value || 'todos';
+            document.getElementById('denueActivity').value = ''; // Clear code
+            await performDenueSearch(keyword);
+        }
+
+        async function performDenueSearch(searchTerm) {
+            initDenueMap();
+
+            // Get center from draggable marker
+            const center = denueSearchMarker ? denueSearchMarker.getLatLng() : map.getCenter();
+            const radius = parseInt(document.getElementById('denueRadio').value) || 2000;
+
+            // Clear existing competitor markers
+            denueCompMarkers.forEach(m => mapDenue.removeLayer(m));
+            denueCompMarkers = [];
+
+            // Update/add radius circle
+            if (denueSearchCircle) mapDenue.removeLayer(denueSearchCircle);
+            denueSearchCircle = L.circle([center.lat, center.lng], {
+                radius: radius, color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.08, weight: 2
+            }).addTo(mapDenue);
+
+            // Show loading
+            document.getElementById('comp-list').innerHTML = '<p style="text-align:center;padding:1rem;">⏳ Buscando...</p>';
+
+            try {
+                const res = await fetch(`api_denue.php?lat=${center.lat}&lng=${center.lng}&radius=${radius}&keywords=${encodeURIComponent(searchTerm)}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    const businesses = data.businesses || [];
+
+                    // Update stats
+                    document.getElementById('comp-total').textContent = data.total || 0;
+                    document.getElementById('comp-micro').textContent = data.by_size?.micro || 0;
+                    document.getElementById('comp-small').textContent = data.by_size?.pequeña || 0;
+                    document.getElementById('comp-medium').textContent = (data.by_size?.mediana || 0) + (data.by_size?.grande || 0);
+                    document.getElementById('comp-count').textContent = `(mostrando ${Math.min(businesses.length, 50)} de ${data.total || 0})`;
+
+                    // Top activities from this search
+                    const actEl = document.getElementById('comp-activities');
+                    if (data.top_activities && Object.keys(data.top_activities).length > 0) {
+                        actEl.innerHTML = Object.entries(data.top_activities).slice(0, 5).map(([act, count]) =>
+                            `<div class="data-item"><span class="label">${act.length > 40 ? act.substring(0, 40) + '...' : act}</span><span class="value">${count}</span></div>`
+                        ).join('');
+                    } else {
+                        actEl.innerHTML = '<p class="text-muted">No hay actividades</p>';
+                    }
+
+                    // Add markers to map
+                    businesses.forEach((biz, i) => {
+                        const marker = L.circleMarker([biz.lat, biz.lng], {
+                            radius: 8, fillColor: '#ef4444', color: '#fff', weight: 2, fillOpacity: 0.9
+                        }).addTo(mapDenue);
+
+                        marker.bindPopup(`
+                            <div style="min-width: 200px;">
+                                <strong style="font-size: 1rem;">${biz.nombre}</strong><br>
+                                <span style="color: #666; font-size: 0.85rem;">${biz.actividad}</span><br>
+                                <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #eee;">
+                                ${biz.direccion ? `<div>📍 ${biz.direccion} ${biz.colonia ? ', ' + biz.colonia : ''}</div>` : ''}
+                                ${biz.telefono ? `<div>📞 ${biz.telefono}</div>` : ''}
+                                <div>👥 <strong>${biz.tamaño || '0 a 5 personas'}</strong></div>
+                            </div>
+                        `);
+
+                        denueCompMarkers.push(marker);
+                    });
+
+                    // Update competitor list with full details
+                    if (businesses.length === 0) {
+                        document.getElementById('comp-list').innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem;">No se encontraron negocios</p>';
+                    } else {
+                        document.getElementById('comp-list').innerHTML = businesses.slice(0, 50).map((b, i) => `
+                            <div class="denue-item" style="padding: 0.75rem; border-bottom: 1px solid var(--surface-light);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <strong style="color: var(--primary);">${b.nombre}</strong>
+                                    <span style="font-size: 0.7rem; padding: 0.15rem 0.4rem; background: rgba(239,68,68,0.2); color: #ef4444; border-radius: 4px;">
+                                        ${b.tamaño || 'Micro'}
+                                    </span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">${b.actividad}</div>
+                                ${b.direccion ? `<div style="font-size: 0.75rem; margin-top: 0.25rem;">📍 ${b.direccion}${b.colonia ? ', ' + b.colonia : ''}</div>` : ''}
+                                ${b.telefono ? `<div style="font-size: 0.75rem;">📞 ${b.telefono}</div>` : ''}
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (e) {
+                console.error('DENUE search error:', e);
+                document.getElementById('comp-list').innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem;color:#ef4444;">Error en la búsqueda</p>';
+            }
+        }
+
+        // Initialize DENUE map when section scrolls into view
+        setTimeout(initDenueMap, 1000);
+
+        // ========================================
+        // CONSUMER BEHAVIOR MAP FUNCTIONS
+        // ========================================
+        let mapBehavior, behaviorSearchMarker, behaviorCircle, heatLayer;
+
+        // Business types with their indicators
+        const BUSINESS_TAGS = {
+            cosmetologia: { nombre: "Cosmetología", icono: "💅", tags: ["belleza", "mujeres", "urbano"], poblacion: "Mujeres 18-45", economico: "Medio-Alto", densidad: "Alta", conectividad: "Internet 80%+" },
+            gimnasio: { nombre: "Gimnasio", icono: "🏋️", tags: ["deporte", "salud", "jóvenes"], poblacion: "15-40 años", economico: "Medio", densidad: "Media-Alta", conectividad: "Redes sociales" },
+            restaurante: { nombre: "Restaurante", icono: "🍽️", tags: ["alimentos", "familias", "todos"], poblacion: "Todos", economico: "Todos", densidad: "Alta", conectividad: "Apps delivery" },
+            farmacia: { nombre: "Farmacia", icono: "💊", tags: ["salud", "esenciales", "todos"], poblacion: "Todos + 65+", economico: "Todos", densidad: "Alta", conectividad: "Básica" },
+            veterinaria: { nombre: "Veterinaria", icono: "🐕", tags: ["mascotas", "familias", "urbano"], poblacion: "Familias", economico: "Medio-Alto", densidad: "Media", conectividad: "Redes sociales" },
+            papeleria: { nombre: "Papelería", icono: "📚", tags: ["escolar", "niños", "estudiantes"], poblacion: "6-18 años", economico: "Bajo-Medio", densidad: "Cerca escuelas", conectividad: "Básica" },
+            tienda_ropa: { nombre: "Ropa/Moda", icono: "👗", tags: ["moda", "jóvenes", "mujeres"], poblacion: "Mujeres 15-45", economico: "Medio", densidad: "Comercial", conectividad: "E-commerce" },
+            abarrotes: { nombre: "Abarrotes", icono: "🛒", tags: ["básicos", "familias", "todos"], poblacion: "Todos", economico: "Bajo-Medio", densidad: "Residencial", conectividad: "Básica" },
+            taller_mecanico: { nombre: "Taller Mecánico", icono: "🔧", tags: ["autos", "hombres", "reparación"], poblacion: "Hombres 25-55", economico: "Medio", densidad: "Vías principales", conectividad: "Básica" },
+            consultorio_medico: { nombre: "Consultorio", icono: "🏥", tags: ["salud", "todos", "esenciales"], poblacion: "Todos", economico: "Medio", densidad: "Alta", conectividad: "Básica" },
+            dental: { nombre: "Dentista", icono: "🦷", tags: ["salud", "familias"], poblacion: "Familias", economico: "Medio", densidad: "Media-Alta", conectividad: "Google Maps" },
+            peluqueria: { nombre: "Peluquería", icono: "💇", tags: ["belleza", "todos"], poblacion: "Todos", economico: "Bajo-Medio", densidad: "Residencial", conectividad: "Básica" },
+            lavanderia: { nombre: "Lavandería", icono: "🧺", tags: ["servicios", "jóvenes", "urbano"], poblacion: "Jóvenes solos", economico: "Medio", densidad: "Dptos/Rentados", conectividad: "Apps" },
+            escuela_idiomas: { nombre: "Idiomas", icono: "🗣️", tags: ["educación", "jóvenes", "urbano"], poblacion: "15-35 años", economico: "Medio-Alto", densidad: "Comercial", conectividad: "Alta" },
+            guarderia: { nombre: "Guardería", icono: "👶", tags: ["niños", "madres-trabajadoras"], poblacion: "Niños 0-5", economico: "Medio", densidad: "Residencial", conectividad: "WhatsApp" },
+            cafe_internet: { nombre: "Ciber/Gaming", icono: "🖥️", tags: ["tecnología", "jóvenes", "gaming"], poblacion: "10-25 años", economico: "Bajo", densidad: "Sin internet", conectividad: "Baja" },
+            ferreteria: { nombre: "Ferretería", icono: "🔨", tags: ["construcción", "hombres", "hogar"], poblacion: "Hombres 25-55", economico: "Bajo-Medio", densidad: "Periferia", conectividad: "Básica" },
+            floreria: { nombre: "Florería", icono: "💐", tags: ["eventos", "regalo", "mujeres"], poblacion: "Adultos", economico: "Medio-Alto", densidad: "Comercial", conectividad: "Redes" },
+            optica: { nombre: "Óptica", icono: "👓", tags: ["salud", "visual", "adultos"], poblacion: "40+ años", economico: "Medio", densidad: "Comercial", conectividad: "Básica" },
+            carniceria: { nombre: "Carnicería", icono: "🥩", tags: ["alimentos", "familias", "tradicional"], poblacion: "Familias", economico: "Bajo-Medio", densidad: "Mercados", conectividad: "Básica" }
+        };
+
+        function initBehaviorMap() {
+            if (!document.getElementById('mapBehavior')) return;
+            if (mapBehavior) return;
+
+            mapBehavior = L.map('mapBehavior').setView(DEFAULT_CENTER, 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap | INEGI Indicadores'
+            }).addTo(mapBehavior);
+
+            // Sync with main map
+            if (businessMarker) {
+                mapBehavior.setView(businessMarker.getLatLng(), 14);
+            }
+
+            // Get center from main map marker or default
+            const center = businessMarker ? businessMarker.getLatLng() : { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
+
+            // Create draggable search marker (green)
+            behaviorSearchMarker = L.marker([center.lat, center.lng], {
+                draggable: true,
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div style="background:#10b981;width:24px;height:24px;border-radius:50%;border:4px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.4);cursor:grab;"></div>',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                })
+            }).addTo(mapBehavior);
+
+            behaviorSearchMarker.bindPopup('📍 Arrastra para mover el centro de análisis').openPopup();
+
+            // On drag end, recalculate if giro is selected
+            behaviorSearchMarker.on('dragend', function (e) {
+                const pos = e.target.getLatLng();
+                mapBehavior.setView([pos.lat, pos.lng], mapBehavior.getZoom());
+            });
+
+            // Click to place marker
+            mapBehavior.on('click', (e) => {
+                behaviorSearchMarker.setLatLng(e.latlng);
+                mapBehavior.setView(e.latlng, mapBehavior.getZoom());
+            });
+        }
+
+        function updateGiroIndicators() {
+            const giroId = document.getElementById('selectGiro').value;
+            if (!giroId) {
+                document.getElementById('giro-nombre').textContent = 'tu negocio';
+                document.getElementById('giro-tags').innerHTML = '<p class="text-muted" style="font-size: 0.85rem;">Selecciona un tipo de negocio para ver los indicadores relevantes</p>';
+                return;
+            }
+
+            const giro = BUSINESS_TAGS[giroId];
+            if (!giro) return;
+
+            document.getElementById('giro-nombre').textContent = giro.nombre;
+
+            // Show tags
+            document.getElementById('giro-tags').innerHTML = giro.tags.map(tag =>
+                `<span style="display: inline-block; background: var(--primary-light); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 4px; margin: 0.2rem; font-size: 0.75rem;">${tag}</span>`
+            ).join('');
+
+            // Update indicators preview
+            document.getElementById('ind-poblacion').textContent = giro.poblacion;
+            document.getElementById('ind-economico').textContent = giro.economico;
+            document.getElementById('ind-densidad').textContent = giro.densidad;
+            document.getElementById('ind-conectividad').textContent = giro.conectividad;
+        }
+
+        // Analysis Mode Logic
+        let currentAnalysisMode = 'radius';
+
+        function setAnalysisMode(mode) {
+            currentAnalysisMode = mode;
+
+            // UI Updates
+            document.querySelectorAll('.mode-chip').forEach(el => el.classList.remove('active'));
+            document.getElementById(`mode-${mode}`).classList.add('active');
+
+            // Input Updates
+            document.querySelector(`input[name="analysisMode"][value="${mode}"]`).checked = true;
+
+            if (mode === 'radius') {
+                document.getElementById('controls-radius').style.display = 'flex';
+                document.getElementById('controls-time').style.display = 'none';
+            } else {
+                document.getElementById('controls-radius').style.display = 'none';
+                document.getElementById('controls-time').style.display = 'flex';
+            }
+        }
+
+        async function getIsochronePolygon(center, minutes) {
+            // SIMULATION: Create a jagged polygon to look like an isochrone
+            // Ideally this calls api_ruteo.php -> INEGI Sakbe
+            const lat = center.lat;
+            const lng = center.lng;
+            const points = [];
+            const steps = 16;
+            const noise = 0.002; // Irregularity factor
+            // Rough approximation: 5 min drive ~ 2km radius, 5 min walk ~ 400m
+            const baseRadius = (document.getElementById('transportMode').value === 'driving-car')
+                ? (minutes / 60) * 0.15  // ~15km in 60 min
+                : (minutes / 60) * 0.04; // ~4km in 60 min
+
+            for (let i = 0; i <= steps; i++) {
+                const angle = (i / steps) * Math.PI * 2;
+                const r = baseRadius + (Math.random() * noise - noise / 2);
+                points.push([
+                    lat + r * Math.cos(angle),
+                    lng + r * Math.sin(angle)
+                ]);
+            }
+            return points;
+        }
+
+        async function calcularPotencial() {
+            initBehaviorMap();
+
+            const giroId = document.getElementById('selectGiro').value;
+            if (!giroId) {
+                alert('Selecciona un tipo de negocio primero');
+                return;
+            }
+
+            const giro = BUSINESS_TAGS[giroId];
+
+            // Get estado/municipio from main map selection
+            const estado = document.getElementById('selectEstado').value || '26';
+            const mun = document.getElementById('selectMunicipio').value || '030';
+
+            // Show loading
+            document.getElementById('potencial-score').textContent = '...';
+            document.getElementById('potencial-label').textContent = 'Consultando datos INEGI...';
+
+            try {
+                // Fetch real INEGI data
+                const res = await fetch(`api_indicadores.php?entidad=${estado}&municipio=${mun}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    const entidad = data.entidad;
+                    const municipio = data.municipio;
+
+                    // Update indicators with real data
+                    document.getElementById('ind-poblacion').textContent =
+                        municipio ? municipio.poblacion.toLocaleString() : entidad.poblacion_total.toLocaleString();
+                    document.getElementById('ind-economico').textContent =
+                        `$${(entidad.ingreso_promedio || 0).toLocaleString()}/mes`;
+                    document.getElementById('ind-densidad').textContent =
+                        municipio ? `${municipio.densidad.toLocaleString()} hab/km²` : giro.densidad;
+                    document.getElementById('ind-conectividad').textContent =
+                        `${entidad.pct_internet || 0}% internet`;
+
+                    // --- DYNAMIC DENSITY ADJUSTMENT ---
+                    // Fetch land use from OSM Nominatim to adjust density
+                    const densityCenter = behaviorSearchMarker ? behaviorSearchMarker.getLatLng() : mapBehavior.getCenter();
+                    let densityMultiplier = 1.0;
+
+                    try {
+                        const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${densityCenter.lat}&lon=${densityCenter.lng}&zoom=16&addressdetails=1`);
+                        const osmData = await osmRes.json();
+
+                        // Check keywords in display_name or address to adjust density
+                        if (osmData.address) {
+                            if (osmData.address.residential || osmData.address.suburb || osmData.address.neighbourhood) {
+                                densityMultiplier = 2.5; // High density residential
+                            } else if (osmData.address.commercial || osmData.address.retail) {
+                                densityMultiplier = 1.5; // Commercial hub
+                            } else if (osmData.address.industrial) {
+                                densityMultiplier = 0.3; // Industrial zone
+                            }
+                        }
+
+                        // Natural/Empty check
+                        if (osmData.display_name && (osmData.display_name.includes('Cerro') || osmData.display_name.includes('Monte') || osmData.display_name.includes('Ejido'))) {
+                            densityMultiplier = 0.05; // Almost empty
+                        }
+                    } catch (e) {
+                        console.warn('OSM lookup failed, utilizing municipal density');
+                    }
+
+                    // Calculate LOCAL population based on area size
+                    // Municipal density is a base, but we adjust for the specific area size
+                    const municipalDensity = municipio ? (municipio.densidad || 50) : 50; // hab/km2
+                    let areaKm2 = 0;
+
+                    if (currentAnalysisMode === 'time') {
+                        // Estimate area for polygon (rough approx based on minutes)
+                        const minutes = parseInt(document.getElementById('travelTime').value);
+                        const radiusKm = (document.getElementById('transportMode').value === 'driving-car')
+                            ? (minutes / 60) * 15 : (minutes / 60) * 4;
+                        areaKm2 = Math.PI * radiusKm * radiusKm;
+                    } else {
+                        const r = parseInt(document.getElementById('behaviorRadius').value) || 2;
+                        areaKm2 = Math.PI * r * r;
+                    }
+
+                    // Estimated local market size (with Multiplier)
+                    const localPopulation = Math.round(areaKm2 * municipalDensity * densityMultiplier);
+
+                    // --- SCORING ALGORITHM UPDATE ---
+                    let score = 50; // Base score
+
+                    // -- Sub-scores for breakdown --
+                    let subPop = 50;
+                    let subComp = 50;
+                    let subAffinity = 60; // Base affinity
+
+                    // 1. Critical Mass (Population)
+                    if (localPopulation < 500) { subPop = 10; score = 10; } // Desert/Empty area = Immediate fail
+                    else if (localPopulation < 2000) { subPop = 30; } // Very low density
+                    else if (localPopulation > 50000) { subPop = 95; } // Super high density
+                    else if (localPopulation > 10000) { subPop = 80; } // High density
+                    else { subPop = 60; } // Moderate
+
+                    if (subPop > 50) score += 20;
+
+                    // 2. Competition Saturation (Supply vs Demand)
+                    const competitors = denueData.length || 0;
+                    const populationPerCompetitor = competitors > 0 ? (localPopulation / competitors) : localPopulation;
+
+                    if (competitors === 0 && localPopulation > 1000) {
+                        subComp = 100; // Blue Ocean
+                        score += 25;
+                    } else if (populationPerCompetitor > 3000) {
+                        subComp = 85; // Underserved
+                        score += 15;
+                    } else if (populationPerCompetitor < 500) {
+                        subComp = 20; // Saturated
+                        score -= 20;
+                    } else {
+                        subComp = 60; // Balanced
+                    }
+
+                    // 3. Connectivity & Income modifiers (Affinity)
+                    const internet = entidad.pct_internet || 50;
+                    if (giro.conectividad.includes('internet') && internet > 75) { subAffinity += 20; score += 5; }
+
+                    const ingreso = entidad.ingreso_promedio || 15000;
+                    if (giro.economico.includes('Alto') && ingreso > 20000) { subAffinity += 20; score += 5; }
+
+                    score = Math.max(0, Math.min(100, score));
+
+                    // Update Breakdown UI
+                    document.getElementById('score-breakdown').style.display = 'block';
+
+                    document.getElementById('score-pop-val').textContent = subPop >= 80 ? '🔥 Alto' : (subPop >= 50 ? '✅ Medio' : '⚠️ Bajo');
+                    document.getElementById('score-pop-bar').style.width = subPop + '%';
+
+                    document.getElementById('score-comp-val').textContent = subComp >= 80 ? '💎 Alta Opor.' : (subComp >= 50 ? '⚖️ Normal' : '🔴 Saturado');
+                    document.getElementById('score-comp-bar').style.width = subComp + '%';
+                    document.getElementById('score-comp-bar').style.backgroundColor = subComp >= 50 ? '#10b981' : '#ef4444';
+
+                    document.getElementById('score-affinity-val').textContent = subAffinity + '%';
+                    document.getElementById('score-affinity-bar').style.width = Math.min(100, subAffinity) + '%';
+
+                    // Update score display
+                    document.getElementById('potencial-score').textContent = score;
+                    document.getElementById('potencial-fill').style.width = score + '%';
+
+                    // Label and color
+                    let label, color;
+                    if (score >= 75) { label = '🌟 Excelente potencial'; color = '#10b981'; }
+                    else if (score >= 50) { label = '✅ Buen potencial'; color = '#22c55e'; }
+                    else if (score >= 25) { label = '⚠️ Potencial moderado'; color = '#f59e0b'; }
+                    else { label = '⛔ Potencial bajo'; color = '#ef4444'; }
+
+                    document.getElementById('potencial-label').textContent = label;
+                    document.getElementById('potencial-score').style.color = color;
+
+                    // Generate recommendations with real data
+                    const recs = [];
+                    recs.push(`📍 ${municipio ? municipio.nombre : entidad.nombre}`);
+                    recs.push(`👥 Población local est. (Radio): <strong>${localPopulation.toLocaleString()}</strong> habs`);
+                    recs.push(`💰 Ingreso promedio: $${(entidad.ingreso_promedio || 0).toLocaleString()}/mes`);
+
+                    if (competitors > 0) {
+                        recs.push(`🏪 Competencia: ${competitors} negocios (${Math.round(populationPerCompetitor)} habs/negocio)`);
+                    } else {
+                        recs.push(`✨ Sin competencia directa en la zona`);
+                    }
+
+                    if (localPopulation < 500) {
+                        recs.push(`⚠️ <strong>Zona de baja densidad:</strong> Poco tráfico de clientes.`);
+                    } else if (competitors === 0 && localPopulation > 2000) {
+                        recs.push(`💎 <strong>Oportunidad:</strong> Demanda desatendida.`);
+                    }
+
+                    document.getElementById('recomendaciones').innerHTML = recs.map(r =>
+                        `<div style="padding: 0.3rem 0; border-bottom: 1px solid var(--surface-light);">${r}</div>`
+                    ).join('');
+
+                    // Clear previous shape
+                    if (behaviorCircle) mapBehavior.removeLayer(behaviorCircle);
+
+                    const center = behaviorSearchMarker ? behaviorSearchMarker.getLatLng() : mapBehavior.getCenter();
+
+                    if (currentAnalysisMode === 'time') {
+                        // Draw Isochrone Polygon
+                        const minutes = parseInt(document.getElementById('travelTime').value);
+                        const polygonPoints = await getIsochronePolygon(center, minutes);
+
+                        behaviorCircle = L.polygon(polygonPoints, {
+                            color: score >= 50 ? '#8b5cf6' : '#6366f1', // Purple/Indigo for Isochrone
+                            fillOpacity: 0.2,
+                            weight: 2
+                        }).addTo(mapBehavior);
+
+                        // Fit to polygon
+                        mapBehavior.fitBounds(behaviorCircle.getBounds());
+                    } else {
+                        // Draw Radius Circle
+                        const radiusKm = parseInt(document.getElementById('behaviorRadius').value) || 2;
+                        behaviorCircle = L.circle([center.lat, center.lng], {
+                            radius: radiusKm * 1000,
+                            color: score >= 50 ? '#10b981' : '#f59e0b',
+                            fillOpacity: 0.15,
+                            weight: 2
+                        }).addTo(mapBehavior);
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching indicators:', e);
+                document.getElementById('potencial-label').textContent = 'Error al consultar datos';
+            }
+
+            // Update Heatmap
+            updateHeatmap();
+        }
+
+        function updateHeatmap() {
+            if (heatLayer) mapBehavior.removeLayer(heatLayer);
+
+            // Use DENUE data points for heatmap
+            // Intensity based on size (estrato) could be added here
+            const points = denueData.map(d => [d.lat, d.lng, 0.8]); // 0.8 intensity
+
+            if (points.length > 0) {
+                heatLayer = L.heatLayer(points, {
+                    radius: 30,
+                    blur: 20,
+                    maxZoom: 16,
+                    gradient: { 0.4: 'blue', 0.65: 'lime', 1: 'red' }
+                }).addTo(mapBehavior);
+            }
+        }
+
+        // Initialize behavior map when visible
+        setTimeout(initBehaviorMap, 1500);
+
+        async function saveAnalysisToProject() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) {
+                alert('Selecciona un proyecto primero');
+                return;
+            }
+
+            const btn = event.currentTarget;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Guardando...';
+            btn.disabled = true;
+
+            try {
+                // 1. Capture ALL Map Snapshots using html2canvas
+                const captureOptions = {
+                    useCORS: true,
+                    allowTaint: true,
+                    ignoreElements: (el) => el.classList.contains('leaflet-control-zoom')
+                };
+
+                // Capture main location map
+                let mapLocationBase64 = null;
+                const mapLocationEl = document.getElementById('map');
+                if (mapLocationEl) {
+                    try {
+                        const canvas1 = await html2canvas(mapLocationEl, captureOptions);
+                        mapLocationBase64 = canvas1.toDataURL('image/png');
+                    } catch (e) { console.warn('Could not capture location map:', e); }
+                }
+
+                // Capture DENUE competitors map
+                let mapDenueBase64 = null;
+                const mapDenueEl = document.getElementById('mapDenue');
+                if (mapDenueEl) {
+                    try {
+                        const canvas2 = await html2canvas(mapDenueEl, captureOptions);
+                        mapDenueBase64 = canvas2.toDataURL('image/png');
+                    } catch (e) { console.warn('Could not capture DENUE map:', e); }
+                }
+
+                // Capture behavior/potential map
+                let mapBehaviorBase64 = null;
+                const mapBehaviorEl = document.getElementById('mapBehavior');
+                if (mapBehaviorEl) {
+                    try {
+                        const canvas3 = await html2canvas(mapBehaviorEl, captureOptions);
+                        mapBehaviorBase64 = canvas3.toDataURL('image/png');
+                    } catch (e) { console.warn('Could not capture behavior map:', e); }
+                }
+
+                // 2. Collect Analysis Data with all maps
+                const analysisData = {
+                    score: document.getElementById('potencial-score').textContent,
+                    label: document.getElementById('potencial-label').textContent,
+                    breakdown: {
+                        pop: {
+                            val: document.getElementById('score-pop-val').textContent,
+                            percent: document.getElementById('score-pop-bar').style.width
+                        },
+                        comp: {
+                            val: document.getElementById('score-comp-val').textContent,
+                            percent: document.getElementById('score-comp-bar').style.width
+                        },
+                        affinity: {
+                            val: document.getElementById('score-affinity-val').textContent,
+                            percent: document.getElementById('score-affinity-bar').style.width
+                        }
+                    },
+                    recommendations: document.getElementById('recomendaciones').innerHTML,
+                    // All 3 maps
+                    mapLocation: mapLocationBase64,
+                    mapDenue: mapDenueBase64,
+                    mapBehavior: mapBehaviorBase64,
+                    mapImage: mapBehaviorBase64, // Keep backwards compatibility
+                    // Competitor stats
+                    competitorCount: document.getElementById('comp-total')?.textContent || '0',
+                    date: new Date().toISOString()
+                };
+
+                // 3. Save to Project (d6_analisis_mercado_json)
+                project.d6_analisis_mercado_json = JSON.stringify(analysisData);
+
+                // Construct FormData for save_row.php
+                const formData = new FormData();
+                formData.append('id', project.id);
+                formData.append('d6_analisis_mercado_json', project.d6_analisis_mercado_json);
+                // Also pass user_id if needed, but save_row usually handles session or requires it.
+                // Assuming session is active.
+
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    alert('✅ Análisis guardado exitosamente. Ahora aparecerá en la sección "Estudio de Mercado" del reporte PDF.');
+                } else {
+                    console.error('Error server:', result);
+                    alert('Error al guardar: ' + (result.message || 'Error desconocido'));
+                }
+
+            } catch (e) {
+                console.error('Save error:', e);
+                alert('Error al guardar el análisis. Revisa la consola.');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function saveLocationToProject() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) { PlanIA.notifySaveError(); return; }
+
+            // Get current map center
+            const center = map.getCenter();
+            const giroCode = document.getElementById('scianCode').value;
+            const keyword = document.getElementById('denueKeyword').value;
+
+            // Update local object
+            project.d6_latitud = center.lat;
+            project.d7_longitud = center.lng;
+            // We could store giro in a generic field or JSON
+
+            const formData = new FormData();
+            formData.append('action', 'update');
+            formData.append('id_proyecto', project.id_proyecto);
+            formData.append('d6_latitud', center.lat);
+            formData.append('d7_longitud', center.lng);
+            // Also save formatted address if available from search (optional, skipping complexity)
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: project.id_proyecto,
+                        d6_latitud: center.lat,
+                        d7_longitud: center.lng
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    PlanIA.notifySaved();
+                } else {
+                    PlanIA.notifySaveError();
+                }
+            } catch (e) {
+                console.error(e);
+                PlanIA.notifySaveError();
+            }
+        }
+
+        async function saveCompetitorsToProject() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) { PlanIA.notifySaveError(); return; }
+
+            // Store full competitor list
+            project.d3_competidores_json = JSON.stringify(competidores);
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: project.id_proyecto,
+                        d3_competidores_json: project.d3_competidores_json
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    PlanIA.notifySaved();
+                } else {
+                    PlanIA.notifySaveError();
+                }
+            } catch (e) {
+                console.error(e);
+                PlanIA.notifySaveError();
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -133,6 +133,29 @@ services:
       - ai-network
 
   # ============================================
+  # CAFES WEB - Frontend PlanIA-CAFES
+  # ============================================
+  cafes-web:
+    build:
+      context: ./services/cafes
+      dockerfile: Dockerfile
+    container_name: cafes-web
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      - DB_HOST=mysql-db
+      - DB_USER=plania_user
+      - DB_PASS=plania_pass
+      - DB_NAME=plania
+      - IA_GATEWAY=http://api-gateway:3002
+    depends_on:
+      - mysql-db
+      - api-gateway
+    networks:
+      - ai-network
+
+  # ============================================
   # TELEGRAM BOT - Bob (Asistente Multi-rol)
   # ============================================
   telegram-bot:

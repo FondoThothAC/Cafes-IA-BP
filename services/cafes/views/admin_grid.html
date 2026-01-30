@@ -1,0 +1,415 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend - Admin View)
+ARCHIVO: views/admin_grid.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT (Interfaz de usuario).
+DESCRIPCIÓN: Vista de administración tipo hoja de cálculo para proyectos.
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Admin Grid</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .grid-container {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .grid-scroll {
+            overflow-x: auto;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--surface-light);
+            white-space: nowrap;
+        }
+
+        th {
+            background: var(--surface-light);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        td.editable {
+            cursor: pointer;
+        }
+
+        td.editable:hover {
+            background: var(--surface-light);
+        }
+
+        .json-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .json-cell:hover {
+            text-decoration: underline;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-borrador {
+            background: var(--warning);
+            color: #000;
+        }
+
+        .status-revision_ia {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .status-completo {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .status-publicado {
+            background: #8b5cf6;
+            color: #fff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 1rem;
+            border: 1px solid var(--surface-light);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 PlanIA Admin Grid</h1>
+            <div class="controls">
+                <button class="btn-secondary" onclick="loadProjects()">🔄 Refrescar</button>
+                <button class="btn-primary" onclick="window.location.href='wizard.html'">+ Nuevo Proyecto</button>
+            </div>
+        </header>
+
+        <div class="grid-container">
+            <div class="grid-scroll">
+                <table id="projectsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Emprendedor</th>
+                            <th>Estatus</th>
+                            <th>Monto</th>
+                            <th>Lat/Long</th>
+                            <th>BOM (JSON)</th>
+                            <th>Competidores</th>
+                            <th>USD</th>
+                            <th>TIIE</th>
+                            <th>ROI</th>
+                            <th>Última Actualización</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="12" class="loading">Cargando proyectos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            © 2026 Fondo Thoth AC. Licencia MIT.
+        </footer>
+    </div>
+
+    <!-- JSON Editor Modal -->
+    <div class="modal" id="jsonModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Editar JSON</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <textarea id="jsonEditor"></textarea>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveJson()" style="margin-left: 0.5rem;">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '../public/save_row.php';
+        let currentProjects = [];
+        let editingCell = null;
+
+        async function loadProjects() {
+            const uuid = localStorage.getItem('uuid_usuario') || 'demo-user';
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'list', uuid_usuario: uuid })
+                });
+                const data = await res.json();
+                currentProjects = data.projects || [];
+                renderTable();
+            } catch (err) {
+                console.error('Error loading projects:', err);
+                document.getElementById('tableBody').innerHTML =
+                    '<tr><td colspan="12" class="loading">Error al cargar proyectos</td></tr>';
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            if (currentProjects.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="loading">No hay proyectos. Crea uno nuevo.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = currentProjects.map(p => `
+                <tr data-id="${p.id_proyecto}">
+                    <td>${p.id_proyecto}</td>
+                    <td class="editable" data-field="a1_nombre_negocio">${p.a1_nombre_negocio || '-'}</td>
+                    <td class="editable" data-field="a2_nombre_emprendedor">${p.a2_nombre_emprendedor || '-'}</td>
+                    <td><span class="status-badge status-${p.estatus_proyecto}">${p.estatus_proyecto}</span></td>
+                    <td>$${parseFloat(p.b5_monto_solicitado || 0).toLocaleString()}</td>
+                    <td>${p.d6_latitud ? `${p.d6_latitud}, ${p.d7_longitud}` : '-'}</td>
+                    <td class="json-cell" onclick="openJsonEditor(${p.id_proyecto}, 'e3_productos_bom_json')">${p.e3_productos_bom_json ? '📦 Ver BOM' : '-'}</td>
+                    <td class="json-cell" onclick="openJsonEditor(${p.id_proyecto}, 'd3_competidores_json')">${p.d3_competidores_json ? '🏪 Ver' : '-'}</td>
+                    <td>${p.g1_tipo_cambio_usd || '-'}</td>
+                    <td>${p.g2_tasa_interes_tiie || '-'}</td>
+                    <td>${p.g10_rentabilidad_roi || '-'}</td>
+                    <td>${new Date(p.fecha_actualizacion).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function openJsonEditor(projectId, field) {
+            const project = currentProjects.find(p => p.id_proyecto == projectId);
+            if (!project) return;
+
+            editingCell = { projectId, field };
+            const jsonData = project[field];
+
+            document.getElementById('modalTitle').textContent = `Editar ${field}`;
+            document.getElementById('jsonEditor').value = jsonData
+                ? JSON.stringify(JSON.parse(jsonData), null, 2)
+                : '[]';
+            document.getElementById('jsonModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('jsonModal').classList.remove('active');
+            editingCell = null;
+        }
+
+        async function saveJson() {
+            if (!editingCell) return;
+
+            const textarea = document.getElementById('jsonEditor');
+            try {
+                const jsonValue = JSON.parse(textarea.value);
+
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: editingCell.projectId,
+                        [editingCell.field]: JSON.stringify(jsonValue)
+                    })
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    loadProjects();
+                }
+            } catch (err) {
+                alert('JSON inválido: ' + err.message);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadProjects);
+    </script>
+</body>
+
+</html>

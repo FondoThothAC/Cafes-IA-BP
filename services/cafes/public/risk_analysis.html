@@ -1,0 +1,807 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA - Análisis de Riesgos
+ARCHIVO: public/risk_analysis.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Análisis de riesgos con matriz de probabilidad/impacto y planes
+             de mitigación. Basado en estándares Harvard Business School.
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Riesgos - PlanIA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/plania-core.css">
+    <style>
+        .risk-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .risk-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .risk-category {
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .risk-category h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 0 1rem;
+            font-size: 1.1rem;
+        }
+
+        .risk-item {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--surface-light);
+        }
+
+        .risk-item.high {
+            border-left-color: #ef4444;
+        }
+
+        .risk-item.medium {
+            border-left-color: #f59e0b;
+        }
+
+        .risk-item.low {
+            border-left-color: #10b981;
+        }
+
+        .risk-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .risk-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .risk-score {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .risk-score.high {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .risk-score.medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .risk-score.low {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .risk-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .risk-field label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .risk-field select,
+        .risk-field input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+
+        .mitigation {
+            margin-top: 0.75rem;
+        }
+
+        .mitigation label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .mitigation textarea {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.85rem;
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        /* Risk Matrix */
+        .matrix-container {
+            grid-column: span 2;
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        @media (max-width: 1024px) {
+            .matrix-container {
+                grid-column: span 1;
+            }
+        }
+
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: auto repeat(5, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 4px;
+            max-width: 600px;
+            margin: 1rem auto;
+        }
+
+        .matrix-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            min-height: 40px;
+        }
+
+        .matrix-header {
+            background: var(--surface-light);
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .matrix-label {
+            background: var(--surface-light);
+            font-weight: 600;
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+        }
+
+        .matrix-green {
+            background: rgba(16, 185, 129, 0.3);
+        }
+
+        .matrix-yellow {
+            background: rgba(245, 158, 11, 0.3);
+        }
+
+        .matrix-orange {
+            background: rgba(249, 115, 22, 0.3);
+        }
+
+        .matrix-red {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .risk-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .add-risk-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 2px dashed var(--surface-light);
+            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-risk-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 10px;
+        }
+
+        .stat-box .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-box .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <h1 style="padding: 1.5rem 1.5rem 0;">⚠️ Análisis de Riesgos</h1>
+        <p style="padding: 0 1.5rem; color: var(--text-muted);">
+            Identifica riesgos potenciales y define estrategias de mitigación. Estándar Harvard Business School.
+        </p>
+
+        <div class="risk-container">
+            <!-- Riesgos de Mercado -->
+            <div class="risk-category">
+                <h3>📊 Riesgos de Mercado</h3>
+
+                <div class="risk-item" id="risk-market-1">
+                    <div class="risk-header">
+                        <span class="risk-title">Cambio en demanda</span>
+                        <span class="risk-score medium" id="score-market-1">Medio</span>
+                    </div>
+                    <div class="risk-fields">
+                        <div class="risk-field">
+                            <label>Probabilidad</label>
+                            <select data-risk="r1_mercado_prob" onchange="updateRiskScore('market-1')">
+                                <option value="1">Muy baja</option>
+                                <option value="2">Baja</option>
+                                <option value="3" selected>Media</option>
+                                <option value="4">Alta</option>
+                                <option value="5">Muy alta</option>
+                            </select>
+                        </div>
+                        <div class="risk-field">
+                            <label>Impacto</label>
+                            <select data-risk="r1_mercado_impacto" onchange="updateRiskScore('market-1')">
+                                <option value="1">Mínimo</option>
+                                <option value="2">Menor</option>
+                                <option value="3" selected>Moderado</option>
+                                <option value="4">Mayor</option>
+                                <option value="5">Crítico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mitigation">
+                        <label>Plan de mitigación</label>
+                        <textarea data-risk="r1_mercado_mitigacion"
+                            placeholder="¿Cómo reducirás o evitarás este riesgo?"></textarea>
+                    </div>
+                </div>
+
+                <div class="risk-item" id="risk-market-2">
+                    <div class="risk-header">
+                        <span class="risk-title">Nuevos competidores</span>
+                        <span class="risk-score medium" id="score-market-2">Medio</span>
+                    </div>
+                    <div class="risk-fields">
+                        <div class="risk-field">
+                            <label>Probabilidad</label>
+                            <select data-risk="r2_competencia_prob" onchange="updateRiskScore('market-2')">
+                                <option value="1">Muy baja</option>
+                                <option value="2">Baja</option>
+                                <option value="3" selected>Media</option>
+                                <option value="4">Alta</option>
+                                <option value="5">Muy alta</option>
+                            </select>
+                        </div>
+                        <div class="risk-field">
+                            <label>Impacto</label>
+                            <select data-risk="r2_competencia_impacto" onchange="updateRiskScore('market-2')">
+                                <option value="1">Mínimo</option>
+                                <option value="2">Menor</option>
+                                <option value="3" selected>Moderado</option>
+                                <option value="4">Mayor</option>
+                                <option value="5">Crítico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mitigation">
+                        <label>Plan de mitigación</label>
+                        <textarea data-risk="r2_competencia_mitigacion"
+                            placeholder="¿Cómo te diferenciarás?"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Riesgos Operativos -->
+            <div class="risk-category">
+                <h3>⚙️ Riesgos Operativos</h3>
+
+                <div class="risk-item" id="risk-ops-1">
+                    <div class="risk-header">
+                        <span class="risk-title">Falla de proveedores</span>
+                        <span class="risk-score low" id="score-ops-1">Bajo</span>
+                    </div>
+                    <div class="risk-fields">
+                        <div class="risk-field">
+                            <label>Probabilidad</label>
+                            <select data-risk="r3_proveedor_prob" onchange="updateRiskScore('ops-1')">
+                                <option value="1">Muy baja</option>
+                                <option value="2" selected>Baja</option>
+                                <option value="3">Media</option>
+                                <option value="4">Alta</option>
+                                <option value="5">Muy alta</option>
+                            </select>
+                        </div>
+                        <div class="risk-field">
+                            <label>Impacto</label>
+                            <select data-risk="r3_proveedor_impacto" onchange="updateRiskScore('ops-1')">
+                                <option value="1">Mínimo</option>
+                                <option value="2">Menor</option>
+                                <option value="3" selected>Moderado</option>
+                                <option value="4">Mayor</option>
+                                <option value="5">Crítico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mitigation">
+                        <label>Plan de mitigación</label>
+                        <textarea data-risk="r3_proveedor_mitigacion"
+                            placeholder="¿Tienes proveedores alternativos?"></textarea>
+                    </div>
+                </div>
+
+                <div class="risk-item" id="risk-ops-2">
+                    <div class="risk-header">
+                        <span class="risk-title">Rotación de personal</span>
+                        <span class="risk-score medium" id="score-ops-2">Medio</span>
+                    </div>
+                    <div class="risk-fields">
+                        <div class="risk-field">
+                            <label>Probabilidad</label>
+                            <select data-risk="r4_personal_prob" onchange="updateRiskScore('ops-2')">
+                                <option value="1">Muy baja</option>
+                                <option value="2">Baja</option>
+                                <option value="3" selected>Media</option>
+                                <option value="4">Alta</option>
+                                <option value="5">Muy alta</option>
+                            </select>
+                        </div>
+                        <div class="risk-field">
+                            <label>Impacto</label>
+                            <select data-risk="r4_personal_impacto" onchange="updateRiskScore('ops-2')">
+                                <option value="1">Mínimo</option>
+                                <option value="2">Menor</option>
+                                <option value="3" selected>Moderado</option>
+                                <option value="4">Mayor</option>
+                                <option value="5">Crítico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mitigation">
+                        <label>Plan de mitigación</label>
+                        <textarea data-risk="r4_personal_mitigacion" placeholder="¿Cómo retendrás talento?"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Riesgos Financieros -->
+            <div class="risk-category">
+                <h3>💰 Riesgos Financieros</h3>
+
+                <div class="risk-item" id="risk-fin-1">
+                    <div class="risk-header">
+                        <span class="risk-title">Falta de liquidez</span>
+                        <span class="risk-score high" id="score-fin-1">Alto</span>
+                    </div>
+                    <div class="risk-fields">
+                        <div class="risk-field">
+                            <label>Probabilidad</label>
+                            <select data-risk="r5_liquidez_prob" onchange="updateRiskScore('fin-1')">
+                                <option value="1">Muy baja</option>
+                                <option value="2">Baja</option>
+                                <option value="3">Media</option>
+                                <option value="4" selected>Alta</option>
+                                <option value="5">Muy alta</option>
+                            </select>
+                        </div>
+                        <div class="risk-field">
+                            <label>Impacto</label>
+                            <select data-risk="r5_liquidez_impacto" onchange="updateRiskScore('fin-1')">
+                                <option value="1">Mínimo</option>
+                                <option value="2">Menor</option>
+                                <option value="3">Moderado</option>
+                                <option value="4" selected>Mayor</option>
+                                <option value="5">Crítico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mitigation">
+                        <label>Plan de mitigación</label>
+                        <textarea data-risk="r5_liquidez_mitigacion"
+                            placeholder="¿Tienes reservas o líneas de crédito?"></textarea>
+                    </div>
+                </div>
+
+                <div class="risk-item" id="risk-fin-2">
+                    <div class="risk-header">
+                        <span class="risk-title">Inflación / Tipo de cambio</span>
+                        <span class="risk-score medium" id="score-fin-2">Medio</span>
+                    </div>
+                    <div class="risk-fields">
+                        <div class="risk-field">
+                            <label>Probabilidad</label>
+                            <select data-risk="r6_inflacion_prob" onchange="updateRiskScore('fin-2')">
+                                <option value="1">Muy baja</option>
+                                <option value="2">Baja</option>
+                                <option value="3" selected>Media</option>
+                                <option value="4">Alta</option>
+                                <option value="5">Muy alta</option>
+                            </select>
+                        </div>
+                        <div class="risk-field">
+                            <label>Impacto</label>
+                            <select data-risk="r6_inflacion_impacto" onchange="updateRiskScore('fin-2')">
+                                <option value="1">Mínimo</option>
+                                <option value="2">Menor</option>
+                                <option value="3" selected>Moderado</option>
+                                <option value="4">Mayor</option>
+                                <option value="5">Crítico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mitigation">
+                        <label>Plan de mitigación</label>
+                        <textarea data-risk="r6_inflacion_mitigacion" placeholder="¿Cómo ajustarás precios?"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Riesgos Regulatorios -->
+            <div class="risk-category">
+                <h3>📜 Riesgos Regulatorios</h3>
+
+                <div class="risk-item" id="risk-reg-1">
+                    <div class="risk-header">
+                        <span class="risk-title">Cambios en normativas</span>
+                        <span class="risk-score low" id="score-reg-1">Bajo</span>
+                    </div>
+                    <div class="risk-fields">
+                        <div class="risk-field">
+                            <label>Probabilidad</label>
+                            <select data-risk="r7_normativa_prob" onchange="updateRiskScore('reg-1')">
+                                <option value="1">Muy baja</option>
+                                <option value="2" selected>Baja</option>
+                                <option value="3">Media</option>
+                                <option value="4">Alta</option>
+                                <option value="5">Muy alta</option>
+                            </select>
+                        </div>
+                        <div class="risk-field">
+                            <label>Impacto</label>
+                            <select data-risk="r7_normativa_impacto" onchange="updateRiskScore('reg-1')">
+                                <option value="1">Mínimo</option>
+                                <option value="2" selected>Menor</option>
+                                <option value="3">Moderado</option>
+                                <option value="4">Mayor</option>
+                                <option value="5">Crítico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mitigation">
+                        <label>Plan de mitigación</label>
+                        <textarea data-risk="r7_normativa_mitigacion"
+                            placeholder="¿Cómo te mantienes informado?"></textarea>
+                    </div>
+                </div>
+
+                <div class="risk-item" id="risk-reg-2">
+                    <div class="risk-header">
+                        <span class="risk-title">Permisos / Licencias</span>
+                        <span class="risk-score low" id="score-reg-2">Bajo</span>
+                    </div>
+                    <div class="risk-fields">
+                        <div class="risk-field">
+                            <label>Probabilidad</label>
+                            <select data-risk="r8_permisos_prob" onchange="updateRiskScore('reg-2')">
+                                <option value="1" selected>Muy baja</option>
+                                <option value="2">Baja</option>
+                                <option value="3">Media</option>
+                                <option value="4">Alta</option>
+                                <option value="5">Muy alta</option>
+                            </select>
+                        </div>
+                        <div class="risk-field">
+                            <label>Impacto</label>
+                            <select data-risk="r8_permisos_impacto" onchange="updateRiskScore('reg-2')">
+                                <option value="1">Mínimo</option>
+                                <option value="2">Menor</option>
+                                <option value="3" selected>Moderado</option>
+                                <option value="4">Mayor</option>
+                                <option value="5">Crítico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mitigation">
+                        <label>Plan de mitigación</label>
+                        <textarea data-risk="r8_permisos_mitigacion"
+                            placeholder="¿Tienes todos los permisos al día?"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matriz de Riesgos -->
+            <div class="matrix-container">
+                <h3 style="margin: 0 0 1rem;">📈 Matriz de Probabilidad vs Impacto</h3>
+
+                <div class="summary-stats">
+                    <div class="stat-box">
+                        <div class="value" style="color: #ef4444;" id="count-high">0</div>
+                        <div class="label">Riesgos Altos</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" style="color: #f59e0b;" id="count-medium">0</div>
+                        <div class="label">Riesgos Medios</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" style="color: #10b981;" id="count-low">0</div>
+                        <div class="label">Riesgos Bajos</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="value" style="color: var(--primary);" id="risk-score-total">--</div>
+                        <div class="label">Puntuación Total</div>
+                    </div>
+                </div>
+
+                <div class="risk-matrix" id="riskMatrix">
+                    <!-- Header row -->
+                    <div class="matrix-cell"></div>
+                    <div class="matrix-cell matrix-header">Mínimo</div>
+                    <div class="matrix-cell matrix-header">Menor</div>
+                    <div class="matrix-cell matrix-header">Moderado</div>
+                    <div class="matrix-cell matrix-header">Mayor</div>
+                    <div class="matrix-cell matrix-header">Crítico</div>
+
+                    <!-- Probability rows -->
+                    <div class="matrix-cell matrix-label">Muy Alta</div>
+                    <div class="matrix-cell matrix-yellow" data-pos="5-1"></div>
+                    <div class="matrix-cell matrix-orange" data-pos="5-2"></div>
+                    <div class="matrix-cell matrix-red" data-pos="5-3"></div>
+                    <div class="matrix-cell matrix-red" data-pos="5-4"></div>
+                    <div class="matrix-cell matrix-red" data-pos="5-5"></div>
+
+                    <div class="matrix-cell matrix-label">Alta</div>
+                    <div class="matrix-cell matrix-yellow" data-pos="4-1"></div>
+                    <div class="matrix-cell matrix-yellow" data-pos="4-2"></div>
+                    <div class="matrix-cell matrix-orange" data-pos="4-3"></div>
+                    <div class="matrix-cell matrix-red" data-pos="4-4"></div>
+                    <div class="matrix-cell matrix-red" data-pos="4-5"></div>
+
+                    <div class="matrix-cell matrix-label">Media</div>
+                    <div class="matrix-cell matrix-green" data-pos="3-1"></div>
+                    <div class="matrix-cell matrix-yellow" data-pos="3-2"></div>
+                    <div class="matrix-cell matrix-yellow" data-pos="3-3"></div>
+                    <div class="matrix-cell matrix-orange" data-pos="3-4"></div>
+                    <div class="matrix-cell matrix-red" data-pos="3-5"></div>
+
+                    <div class="matrix-cell matrix-label">Baja</div>
+                    <div class="matrix-cell matrix-green" data-pos="2-1"></div>
+                    <div class="matrix-cell matrix-green" data-pos="2-2"></div>
+                    <div class="matrix-cell matrix-yellow" data-pos="2-3"></div>
+                    <div class="matrix-cell matrix-yellow" data-pos="2-4"></div>
+                    <div class="matrix-cell matrix-orange" data-pos="2-5"></div>
+
+                    <div class="matrix-cell matrix-label">Muy Baja</div>
+                    <div class="matrix-cell matrix-green" data-pos="1-1"></div>
+                    <div class="matrix-cell matrix-green" data-pos="1-2"></div>
+                    <div class="matrix-cell matrix-green" data-pos="1-3"></div>
+                    <div class="matrix-cell matrix-yellow" data-pos="1-4"></div>
+                    <div class="matrix-cell matrix-yellow" data-pos="1-5"></div>
+                </div>
+                <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                    ← Impacto →
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let projectData = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(() => {
+                projectData = PlanIA.getCurrentProject();
+                if (projectData) loadData();
+                setupListeners();
+                updateAllScores();
+            }, 500);
+        });
+
+        function loadData() {
+            document.querySelectorAll('[data-risk]').forEach(el => {
+                const field = el.dataset.risk;
+                if (projectData[field]) {
+                    el.value = projectData[field];
+                }
+            });
+        }
+
+        function setupListeners() {
+            document.querySelectorAll('[data-risk]').forEach(el => {
+                el.addEventListener('change', saveData);
+                el.addEventListener('input', debounce(saveData, 1000));
+            });
+            window.addEventListener('plania:save', saveData);
+        }
+
+        function updateRiskScore(riskId) {
+            const item = document.getElementById(`risk-${riskId}`);
+            if (!item) return;
+
+            const probSelect = item.querySelector('select[data-risk$="_prob"]');
+            const impactSelect = item.querySelector('select[data-risk$="_impacto"]');
+
+            const prob = parseInt(probSelect?.value) || 3;
+            const impact = parseInt(impactSelect?.value) || 3;
+            const score = prob * impact;
+
+            const scoreEl = document.getElementById(`score-${riskId}`);
+
+            let level, className;
+            if (score >= 15) {
+                level = 'Alto';
+                className = 'high';
+            } else if (score >= 8) {
+                level = 'Medio';
+                className = 'medium';
+            } else {
+                level = 'Bajo';
+                className = 'low';
+            }
+
+            if (scoreEl) {
+                scoreEl.textContent = level;
+                scoreEl.className = `risk-score ${className}`;
+            }
+
+            item.className = `risk-item ${className}`;
+
+            updateSummary();
+            updateMatrix();
+        }
+
+        function updateAllScores() {
+            ['market-1', 'market-2', 'ops-1', 'ops-2', 'fin-1', 'fin-2', 'reg-1', 'reg-2'].forEach(id => {
+                updateRiskScore(id);
+            });
+        }
+
+        function updateSummary() {
+            let high = 0, medium = 0, low = 0, total = 0;
+
+            document.querySelectorAll('.risk-score').forEach(el => {
+                const level = el.textContent;
+                if (level === 'Alto') { high++; total += 3; }
+                else if (level === 'Medio') { medium++; total += 2; }
+                else { low++; total += 1; }
+            });
+
+            document.getElementById('count-high').textContent = high;
+            document.getElementById('count-medium').textContent = medium;
+            document.getElementById('count-low').textContent = low;
+            document.getElementById('risk-score-total').textContent = total + '/24';
+        }
+
+        function updateMatrix() {
+            // Clear existing dots
+            document.querySelectorAll('.risk-dot').forEach(d => d.remove());
+
+            const risks = [
+                { id: 'market-1', label: 'M1', color: '#3b82f6' },
+                { id: 'market-2', label: 'M2', color: '#3b82f6' },
+                { id: 'ops-1', label: 'O1', color: '#8b5cf6' },
+                { id: 'ops-2', label: 'O2', color: '#8b5cf6' },
+                { id: 'fin-1', label: 'F1', color: '#f59e0b' },
+                { id: 'fin-2', label: 'F2', color: '#f59e0b' },
+                { id: 'reg-1', label: 'R1', color: '#10b981' },
+                { id: 'reg-2', label: 'R2', color: '#10b981' }
+            ];
+
+            risks.forEach(risk => {
+                const item = document.getElementById(`risk-${risk.id}`);
+                if (!item) return;
+
+                const probSelect = item.querySelector('select[data-risk$="_prob"]');
+                const impactSelect = item.querySelector('select[data-risk$="_impacto"]');
+
+                const prob = parseInt(probSelect?.value) || 3;
+                const impact = parseInt(impactSelect?.value) || 3;
+
+                const cell = document.querySelector(`[data-pos="${prob}-${impact}"]`);
+                if (cell) {
+                    const dot = document.createElement('div');
+                    dot.className = 'risk-dot';
+                    dot.style.background = risk.color;
+                    dot.textContent = risk.label;
+                    dot.title = `${risk.label}: Prob ${prob}, Impacto ${impact}`;
+                    cell.appendChild(dot);
+                }
+            });
+        }
+
+        async function saveData() {
+            if (!projectData) return;
+
+            const data = { id_proyecto: projectData.id_proyecto };
+
+            document.querySelectorAll('[data-risk]').forEach(el => {
+                data[el.dataset.risk] = el.value;
+            });
+
+            try {
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', ...data })
+                });
+                const result = await res.json();
+                if (result.success) PlanIA.notifySaved();
+            } catch (err) {
+                console.error('Save error:', err);
+                PlanIA.notifySaveError();
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+    </script>
+</body>
+
+</html>

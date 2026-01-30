@@ -1,0 +1,632 @@
+<!--
+================================================================================
+PROYECTO: CAFES - Sistema de Planes de Negocio
+ARCHIVO:  public/balance_general.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: GPL-2.0-or-later
+================================================================================
+-->
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/balance_general.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Balance General con estructura profesional - Activos, Pasivos, Capital
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Balance General</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        .balance-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .balance-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .balance-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .balance-section h3 {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--surface-light);
+        }
+
+        .account-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .account-group-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .account-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .account-item:last-child {
+            border-bottom: none;
+        }
+
+        .account-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .account-value {
+            font-weight: 500;
+            font-family: monospace;
+        }
+
+        .subtotal {
+            background: var(--bg);
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .total-row {
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .positive {
+            color: #10b981;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .summary-card {
+            background: var(--surface);
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .summary-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .t-accounts {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .t-accounts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .t-account {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .t-account-header {
+            background: var(--surface-light);
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .t-account-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .t-side {
+            padding: 0.75rem;
+        }
+
+        .t-side-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .t-entry {
+            font-size: 0.85rem;
+            padding: 0.25rem 0;
+        }
+
+        .t-debit {
+            border-right: 1px solid var(--surface-light);
+        }
+
+        .t-side-total {
+            font-weight: 600;
+            border-top: 2px solid var(--surface-light);
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        .data-inputs {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: var(--text);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <h1>📊 Balance General</h1>
+            <p class="subtitle">Estado de Situación Financiera - Activos, Pasivos y Capital</p>
+        </div>
+
+        <!-- Summary KPIs -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-value positive" id="totalActivos">$0</div>
+                <div class="summary-label">Total Activos</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value negative" id="totalPasivos">$0</div>
+                <div class="summary-label">Total Pasivos</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="capitalContable">$0</div>
+                <div class="summary-label">Capital Contable</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-value" id="razonLiquidez">0.0</div>
+                <div class="summary-label">Razón Circulante</div>
+            </div>
+        </div>
+
+        <!-- Data Inputs -->
+        <div class="data-inputs">
+            <h3 style="margin-bottom: 1rem;">📝 Datos del Periodo</h3>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Efectivo y Bancos</label>
+                    <input type="number" id="efectivo" value="50000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Cuentas por Cobrar</label>
+                    <input type="number" id="cuentasCobrar" value="25000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Inventarios</label>
+                    <input type="number" id="inventarios" value="30000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Activos Fijos</label>
+                    <input type="number" id="activosFijos" value="100000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Depreciación Acumulada</label>
+                    <input type="number" id="depreciacion" value="20000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Cuentas por Pagar</label>
+                    <input type="number" id="cuentasPagar" value="15000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Préstamos Corto Plazo</label>
+                    <input type="number" id="prestamosCP" value="10000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Préstamos Largo Plazo</label>
+                    <input type="number" id="prestamosLP" value="50000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Capital Social</label>
+                    <input type="number" id="capitalSocial" value="80000" onchange="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Utilidades Retenidas</label>
+                    <input type="number" id="utilidadesRetenidas" value="30000" onchange="calculate()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Balance Grid -->
+        <div class="balance-container">
+            <!-- ACTIVOS -->
+            <div class="balance-section">
+                <h3>📈 ACTIVOS</h3>
+
+                <div class="account-group">
+                    <div class="account-group-title">Activo Circulante</div>
+                    <div class="account-item">
+                        <span class="account-label">Efectivo y Bancos</span>
+                        <span class="account-value positive" id="dispEfectivo">$0</span>
+                    </div>
+                    <div class="account-item">
+                        <span class="account-label">Cuentas por Cobrar</span>
+                        <span class="account-value" id="dispCxC">$0</span>
+                    </div>
+                    <div class="account-item">
+                        <span class="account-label">Inventarios</span>
+                        <span class="account-value" id="dispInventarios">$0</span>
+                    </div>
+                    <div class="subtotal">
+                        <span>Total Activo Circulante</span>
+                        <span id="totalCirculante">$0</span>
+                    </div>
+                </div>
+
+                <div class="account-group">
+                    <div class="account-group-title">Activo Fijo</div>
+                    <div class="account-item">
+                        <span class="account-label">Equipo y Maquinaria</span>
+                        <span class="account-value" id="dispActivosFijos">$0</span>
+                    </div>
+                    <div class="account-item">
+                        <span class="account-label">(-) Depreciación Acumulada</span>
+                        <span class="account-value negative" id="dispDepreciacion">$0</span>
+                    </div>
+                    <div class="subtotal">
+                        <span>Total Activo Fijo Neto</span>
+                        <span id="totalFijoNeto">$0</span>
+                    </div>
+                </div>
+
+                <div class="total-row">
+                    <span>TOTAL ACTIVOS</span>
+                    <span id="dispTotalActivos">$0</span>
+                </div>
+            </div>
+
+            <!-- PASIVOS Y CAPITAL -->
+            <div class="balance-section">
+                <h3>📉 PASIVOS Y CAPITAL</h3>
+
+                <div class="account-group">
+                    <div class="account-group-title">Pasivo Circulante</div>
+                    <div class="account-item">
+                        <span class="account-label">Cuentas por Pagar</span>
+                        <span class="account-value negative" id="dispCxP">$0</span>
+                    </div>
+                    <div class="account-item">
+                        <span class="account-label">Préstamos Corto Plazo</span>
+                        <span class="account-value negative" id="dispPrestamosCP">$0</span>
+                    </div>
+                    <div class="subtotal">
+                        <span>Total Pasivo Circulante</span>
+                        <span id="totalPasivoCirculante">$0</span>
+                    </div>
+                </div>
+
+                <div class="account-group">
+                    <div class="account-group-title">Pasivo Largo Plazo</div>
+                    <div class="account-item">
+                        <span class="account-label">Préstamos Largo Plazo</span>
+                        <span class="account-value negative" id="dispPrestamosLP">$0</span>
+                    </div>
+                    <div class="subtotal">
+                        <span>Total Pasivo Largo Plazo</span>
+                        <span id="totalPasivoLP">$0</span>
+                    </div>
+                </div>
+
+                <div class="account-group">
+                    <div class="account-group-title">Capital Contable</div>
+                    <div class="account-item">
+                        <span class="account-label">Capital Social</span>
+                        <span class="account-value positive" id="dispCapitalSocial">$0</span>
+                    </div>
+                    <div class="account-item">
+                        <span class="account-label">Utilidades Retenidas</span>
+                        <span class="account-value positive" id="dispUtilidadesRet">$0</span>
+                    </div>
+                    <div class="subtotal">
+                        <span>Total Capital Contable</span>
+                        <span id="totalCapital">$0</span>
+                    </div>
+                </div>
+
+                <div class="total-row">
+                    <span>TOTAL PASIVO + CAPITAL</span>
+                    <span id="dispTotalPasivoCapital">$0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cuentas T -->
+        <h2 style="margin-bottom: 1rem;">📋 Cuentas T (Mayor)</h2>
+        <div class="t-accounts">
+            <div class="t-account">
+                <div class="t-account-header">💵 Caja / Bancos</div>
+                <div class="t-account-body">
+                    <div class="t-side t-debit">
+                        <div class="t-side-title">Debe (+)</div>
+                        <div class="t-entry">Ventas cobradas</div>
+                        <div class="t-entry">Préstamos recibidos</div>
+                        <div class="t-entry">Aportaciones capital</div>
+                        <div class="t-side-total" id="tCajaDebe">$0</div>
+                    </div>
+                    <div class="t-side">
+                        <div class="t-side-title">Haber (-)</div>
+                        <div class="t-entry">Pagos proveedores</div>
+                        <div class="t-entry">Gastos operativos</div>
+                        <div class="t-entry">Compras inventario</div>
+                        <div class="t-side-total" id="tCajaHaber">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="t-account">
+                <div class="t-account-header">📦 Inventarios</div>
+                <div class="t-account-body">
+                    <div class="t-side t-debit">
+                        <div class="t-side-title">Debe (+)</div>
+                        <div class="t-entry">Compras</div>
+                        <div class="t-entry">Devoluciones vta</div>
+                        <div class="t-side-total" id="tInvDebe">$0</div>
+                    </div>
+                    <div class="t-side">
+                        <div class="t-side-title">Haber (-)</div>
+                        <div class="t-entry">Costo de ventas</div>
+                        <div class="t-entry">Mermas</div>
+                        <div class="t-side-total" id="tInvHaber">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="t-account">
+                <div class="t-account-header">💰 Ventas</div>
+                <div class="t-account-body">
+                    <div class="t-side t-debit">
+                        <div class="t-side-title">Debe (-)</div>
+                        <div class="t-entry">Devoluciones</div>
+                        <div class="t-entry">Descuentos</div>
+                        <div class="t-side-total" id="tVentasDebe">$0</div>
+                    </div>
+                    <div class="t-side">
+                        <div class="t-side-title">Haber (+)</div>
+                        <div class="t-entry">Ventas brutas</div>
+                        <div class="t-entry">Ingresos servicios</div>
+                        <div class="t-side-total" id="tVentasHaber">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="t-account">
+                <div class="t-account-header">🏢 Gastos Operación</div>
+                <div class="t-account-body">
+                    <div class="t-side t-debit">
+                        <div class="t-side-title">Debe (+)</div>
+                        <div class="t-entry">G. Administración</div>
+                        <div class="t-entry">G. Ventas</div>
+                        <div class="t-entry">G. Financieros</div>
+                        <div class="t-side-total" id="tGastosDebe">$0</div>
+                    </div>
+                    <div class="t-side">
+                        <div class="t-side-title">Haber (-)</div>
+                        <div class="t-entry">Cierre periodo</div>
+                        <div class="t-side-total" id="tGastosHaber">$0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script>
+        let currentProjectId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadProjectData, 500);
+        });
+
+        window.addEventListener('plania:projectChanged', loadProjectData);
+        window.addEventListener('plania:save', saveProjectData);
+
+        function loadProjectData() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) { calculate(); return; }
+            currentProjectId = project.id_proyecto;
+
+            try {
+                const data = JSON.parse(project.i5_cuentas_json || '{}');
+                if (data.efectivo !== undefined) {
+                    document.getElementById('efectivo').value = data.efectivo;
+                    document.getElementById('cuentasCobrar').value = data.cuentasCobrar;
+                    document.getElementById('inventarios').value = data.inventarios;
+                    document.getElementById('activosFijos').value = data.activosFijos;
+                    document.getElementById('depreciacion').value = data.depreciacion;
+                    document.getElementById('cuentasPagar').value = data.cuentasPagar;
+                    document.getElementById('prestamosCP').value = data.prestamosCP;
+                    document.getElementById('prestamosLP').value = data.prestamosLP;
+                    document.getElementById('capitalSocial').value = data.capitalSocial;
+                    document.getElementById('utilidadesRetenidas').value = data.utilidadesRetenidas;
+                }
+            } catch (e) { }
+            calculate();
+        }
+
+        function calculate() {
+            const efectivo = parseFloat(document.getElementById('efectivo').value) || 0;
+            const cxc = parseFloat(document.getElementById('cuentasCobrar').value) || 0;
+            const inv = parseFloat(document.getElementById('inventarios').value) || 0;
+            const af = parseFloat(document.getElementById('activosFijos').value) || 0;
+            const dep = parseFloat(document.getElementById('depreciacion').value) || 0;
+            const cxp = parseFloat(document.getElementById('cuentasPagar').value) || 0;
+            const pcp = parseFloat(document.getElementById('prestamosCP').value) || 0;
+            const plp = parseFloat(document.getElementById('prestamosLP').value) || 0;
+            const cs = parseFloat(document.getElementById('capitalSocial').value) || 0;
+            const ur = parseFloat(document.getElementById('utilidadesRetenidas').value) || 0;
+
+            // Calculations
+            const activoCirculante = efectivo + cxc + inv;
+            const activoFijoNeto = af - dep;
+            const totalActivos = activoCirculante + activoFijoNeto;
+
+            const pasivoCirculante = cxp + pcp;
+            const pasivoLP = plp;
+            const totalPasivos = pasivoCirculante + pasivoLP;
+
+            const capital = cs + ur;
+            const totalPasivoCapital = totalPasivos + capital;
+
+            const razonCirculante = pasivoCirculante > 0 ? activoCirculante / pasivoCirculante : 0;
+
+            // Update displays
+            const f = (n) => '$' + n.toLocaleString('es-MX');
+
+            document.getElementById('dispEfectivo').textContent = f(efectivo);
+            document.getElementById('dispCxC').textContent = f(cxc);
+            document.getElementById('dispInventarios').textContent = f(inv);
+            document.getElementById('totalCirculante').textContent = f(activoCirculante);
+
+            document.getElementById('dispActivosFijos').textContent = f(af);
+            document.getElementById('dispDepreciacion').textContent = '-' + f(dep);
+            document.getElementById('totalFijoNeto').textContent = f(activoFijoNeto);
+
+            document.getElementById('dispTotalActivos').textContent = f(totalActivos);
+            document.getElementById('totalActivos').textContent = f(totalActivos);
+
+            document.getElementById('dispCxP').textContent = f(cxp);
+            document.getElementById('dispPrestamosCP').textContent = f(pcp);
+            document.getElementById('totalPasivoCirculante').textContent = f(pasivoCirculante);
+
+            document.getElementById('dispPrestamosLP').textContent = f(plp);
+            document.getElementById('totalPasivoLP').textContent = f(pasivoLP);
+
+            document.getElementById('dispCapitalSocial').textContent = f(cs);
+            document.getElementById('dispUtilidadesRet').textContent = f(ur);
+            document.getElementById('totalCapital').textContent = f(capital);
+
+            document.getElementById('dispTotalPasivoCapital').textContent = f(totalPasivoCapital);
+            document.getElementById('totalPasivos').textContent = f(totalPasivos);
+            document.getElementById('capitalContable').textContent = f(capital);
+            document.getElementById('razonLiquidez').textContent = razonCirculante.toFixed(2);
+
+            // Cuentas T (simulated)
+            document.getElementById('tCajaDebe').textContent = f(efectivo + plp + cs);
+            document.getElementById('tCajaHaber').textContent = f(cxp + pcp);
+            document.getElementById('tInvDebe').textContent = f(inv);
+            document.getElementById('tInvHaber').textContent = f(inv * 0.7);
+            document.getElementById('tVentasHaber').textContent = f(inv * 2);
+            document.getElementById('tVentasDebe').textContent = f(inv * 0.05);
+            document.getElementById('tGastosDebe').textContent = f(ur * 0.3);
+            document.getElementById('tGastosHaber').textContent = f(ur * 0.3);
+        }
+
+        async function saveProjectData() {
+            if (!currentProjectId) { PlanIA.notifySaveError(); return; }
+
+            const data = {
+                efectivo: parseFloat(document.getElementById('efectivo').value),
+                cuentasCobrar: parseFloat(document.getElementById('cuentasCobrar').value),
+                inventarios: parseFloat(document.getElementById('inventarios').value),
+                activosFijos: parseFloat(document.getElementById('activosFijos').value),
+                depreciacion: parseFloat(document.getElementById('depreciacion').value),
+                cuentasPagar: parseFloat(document.getElementById('cuentasPagar').value),
+                prestamosCP: parseFloat(document.getElementById('prestamosCP').value),
+                prestamosLP: parseFloat(document.getElementById('prestamosLP').value),
+                capitalSocial: parseFloat(document.getElementById('capitalSocial').value),
+                utilidadesRetenidas: parseFloat(document.getElementById('utilidadesRetenidas').value),
+            };
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', id_proyecto: currentProjectId, i5_cuentas_json: JSON.stringify(data) })
+                });
+                const result = await res.json();
+                result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
+            } catch (err) { PlanIA.notifySaveError(); }
+        }
+    </script>
+</body>
+
+</html>
