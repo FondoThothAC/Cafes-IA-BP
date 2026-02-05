@@ -201,6 +201,10 @@ DESCRIPCIÓN: Proyección de Costos Fijos y Variables a 5 años
                 <span style="color: var(--text-muted); margin: 0 0.5rem;">vs</span>
                 <span class="variable-tag">📦 Costos Variables</span>
             </div>
+            <button class="btn btn-primary" onclick="estimateCostsAI()"
+                style="background: linear-gradient(135deg, #a855f7, #ec4899); border: none; margin-left: auto;">
+                🤖 Estimar Costos (IA)
+            </button>
         </div>
 
         <!-- Summary -->
@@ -560,8 +564,71 @@ DESCRIPCIÓN: Proyección de Costos Fijos y Variables a 5 años
                 console.error('Error importing payroll:', err);
                 alert('Error al importar la nómina: ' + err.message);
             }
+        } catch (err) {
+            console.error('Error importing payroll:', err);
+            alert('Error al importar la nómina: ' + err.message);
         }
-    </script>
-</body>
+        }
 
-</html>
+        // AI Integration
+        function estimateCostsAI() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : 'Negocio';
+            const desc = project ? project.a2_descripcion_negocio : '';
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            if (!confirm("⚠️ Esto reemplazará los costos actuales (excepto nómina) con estimaciones de la IA. ¿Continuar?")) return;
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Analista Financiero.
+            Negocio: ${name}. ${desc}.
+
+            Estima los COSTOS OPERATIVOS mensuales típicos para iniciar este negocio en México (en Pesos MXN).
+            
+            1. Costos Fijos (Renta, Luz, Internet, Software, Contabilidad, etc). NO incluyas Sueldos/Nómina.
+            2. Costos Variables (Materia Prima por mes estimado, Empaques, Comisiones, Envios).
+            
+            Formato JSON EXACTO:
+            {
+               "fijos": [
+                  { "concepto": "Renta Local", "mensual": 15000 },
+                  { "concepto": "Servicios (Luz/Agua/Net)", "mensual": 2000 }
+               ],
+               "variables": [
+                  { "concepto": "Insumos Iniciales", "mensual": 10000 },
+                  { "concepto": "Publicidad Mensual", "mensual": 3000 }
+               ]
+            }
+            Solo dame el JSON.`;
+
+            const oldParse = window.Moltbot.parseAndFillFields;
+            window.Moltbot.parseAndFillFields = function (response) {
+                try {
+                    const match = response.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        const estimation = JSON.parse(match[0]);
+
+                        // Preserve existing Payroll/Nomina
+                        const payroll = data.fijos.filter(item =>
+                            item.concepto.startsWith('Nómina:') ||
+                            item.concepto.startsWith('Personal:') ||
+                            item.concepto === 'Carga Social (IMSS, ISN)'
+                        );
+
+                        // Merge
+                        data.fijos = [...payroll, ...(estimation.fijos || [])];
+                        data.variables = estimation.variables || [];
+
+                        renderAll();
+                        window.Moltbot.addMessage(`✅ Costos estimados aplicados.`, 'system');
+                    }
+                } catch (e) { console.error(e); }
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
+        }
+</body >
+
+</html >

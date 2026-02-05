@@ -307,7 +307,7 @@ DESCRIPCIÓN: Análisis FODA (SWOT) interactivo
         </div>
 
         <div class="d-flex justify-content-end mb-3">
-            <button class="btn btn-warning" onclick="generateFODAAI()">🤖 Auto-completar con IA</button>
+            <button class="btn btn-warning" onclick="generateFODAAI()">🧠 Analizar Riesgos Ocultos (IA)</button>
         </div>
 
         <div class="foda-grid">
@@ -533,58 +533,43 @@ DESCRIPCIÓN: Análisis FODA (SWOT) interactivo
         function generateFODAAI() {
             const project = PlanIA.getCurrentProject();
             const name = project ? project.a1_nombre_negocio : 'Tu Negocio';
+            const desc = project ? project.a2_descripcion_negocio : '';
 
-            if (!confirm(`¿Deseas que la IA analice "${name}" y complete el FODA + CAME + Estrategias?\n\nEsto reemplazará el contenido actual.`)) return;
+            if (!window.Moltbot) {
+                alert("BoB IA no está listo aún.");
+                return;
+            }
 
-            // Loading state
-            const btn = document.querySelector('button[onclick="generateFODAAI()"]');
-            const originalText = btn.innerText;
-            btn.innerText = "⏳ Analizando...";
-            btn.disabled = true;
+            window.Moltbot.toggle(); // Open chat
 
-            setTimeout(() => {
-                // Mock AI Generation
-                const mockData = {
-                    fortalezas: ["Equipo con experiencia técnica", "Ubicación estratégica", "Bajos costos operativos"],
-                    debilidades: ["Falta de reconocimiento de marca", "Presupuesto de marketing limitado", "Personal reducido"],
-                    oportunidades: ["Creciente demanda de servicios digitales", "Nuevos canales de venta online", "Alianzas con proveedores locales"],
-                    amenazas: ["Competencia agresiva en precios", "Cambios regulatorios", "Inflación de costos"],
-                    strategies: {
-                        fo: "Lanzar campaña digital aprovechando la experiencia técnica para captar la nueva demanda.",
-                        fa: "Optimizar costos operativos para mantener precios competitivos ante la competencia.",
-                        do: "Utilizar canales online gratuitos para mitigar la falta de presupuesto de marketing.",
-                        da: "Capacitar al personal reducido para ser multifuncional y resistir la inflación."
-                    },
-                    came: {
-                        corregir: "Implementar plan de marketing orgánico en redes sociales.",
-                        afrontar: "Diversificar proveedores para evitar impacto de inflación.",
-                        mantener: "Documentar procesos técnicos para asegurar calidad continua.",
-                        explotar: "Crear tienda en línea integrada con WhatsApp para ventas rápidas."
-                    }
-                };
+            const prompt = `Actúa como un Consultor de Negocios "Abogado del Diablo".
+            Analiza este negocio: "${name}" - ${desc}.
+            
+            Tu objetivo es encontrar los RIESGOS OCULTOS y ser BRUTALMENTE HONESTO.
+            No quiero halagos. Quiero que identifiques las Debilidades y Amenazas que el emprendedor ignora.
+            
+            Genera un análisis FODA completo y Estrategias CAME.
+            
+            Formato de respuesta EXACTO para auto-llenado:
+            
+            fortalezas: "lista, separada, por comas"
+            debilidades: "lista, separada, por comas"
+            oportunidades: "lista, separada, por comas"
+            amenazas: "lista, separada, por comas"
+            
+            came-corregir: "Estrategia para corregir debilidades"
+            came-afrontar: "Estrategia para afrontar amenazas"
+            came-mantener: "Estrategia para mantener fortalezas"
+            came-explotar: "Estrategia para explotar oportunidades"
+            
+            strategyFO: "Estrategia ofensiva"
+            strategyFA: "Estrategia defensiva"
+            strategyDO: "Estrategia de reorientación"
+            strategyDA: "Estrategia de supervivencia"
+            
+            Termina con un breve comentario ácido pero constructivo.`;
 
-                // Clear lists
-                ['fortalezas', 'debilidades', 'oportunidades', 'amenazas'].forEach(type => {
-                    document.getElementById(type).innerHTML = '';
-                    mockData[type].forEach(item => addItem(type, item));
-                });
-
-                // Fill Textareas
-                document.getElementById('strategyFO').value = mockData.strategies.fo;
-                document.getElementById('strategyFA').value = mockData.strategies.fa;
-                document.getElementById('strategyDO').value = mockData.strategies.do;
-                document.getElementById('strategyDA').value = mockData.strategies.da;
-
-                document.getElementById('came-corregir').value = mockData.came.corregir;
-                document.getElementById('came-afrontar').value = mockData.came.afrontar;
-                document.getElementById('came-mantener').value = mockData.came.mantener;
-                document.getElementById('came-explotar').value = mockData.came.explotar;
-
-                btn.innerText = originalText;
-                btn.disabled = false;
-                alert("✨ Análisis IA completado con éxito.");
-
-            }, 2500);
+            window.Moltbot.send(prompt);
         }
     </script>
     <script src="js/moltbot_widget.js"></script>

@@ -174,7 +174,13 @@ DESCRIPCIÓN: Plan de marketing completo: estrategia de precio, canales,
     <div id="plania-navbar"></div>
 
     <div class="page-container">
-        <h1 style="padding: 1.5rem 1.5rem 0;">📣 Plan de Marketing</h1>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 1.5rem 0;">
+            <h1>📣 Plan de Marketing</h1>
+            <button class="btn btn-ai" onclick="generateMarketingAI()"
+                style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                🤖 Generar Estrategia (IA)
+            </button>
+        </div>
         <p style="padding: 0 1.5rem; color: var(--text-muted);">
             Estrategia para llegar a tus clientes y convertirlos en compradores. Basado en Harvard/MIT.
         </p>
@@ -547,6 +553,93 @@ DESCRIPCIÓN: Plan de marketing completo: estrategia de precio, canales,
                 clearTimeout(timeout);
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
+        }
+
+        // AI Integration
+        function generateMarketingAI() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : 'Negocio';
+            const desc = project ? project.a2_descripcion_negocio : '';
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Chief Marketing Officer (CMO).
+            Negocio: ${name}. ${desc}.
+
+            Desarrolla una ESTRATEGIA DE MARKETING completa.
+            
+            1. Estrategia de Precio: Elige una (costo_margen, valor_percibido, competencia, penetracion, descremado, freemium).
+            2. Canales: Elige los mejores (tienda_fisica, ecommerce, marketplace, whatsapp, redes_sociales, distribuidores, venta_directa, delivery).
+            3. Promoción: Elige tácticas (facebook_ads, google_ads, instagram, tiktok, email, influencers, eventos, referidos, seo, radio_tv).
+            4. Métricas Estimadas: Precio promedio, CAC, CLV, ROAS.
+            
+            Formato JSON EXACTO:
+            {
+               "priceStrategy": "valor_percibido",
+               "avgPrice": 500,
+               "margin": 40,
+               "priceJustification": "Explicación breve...",
+               "mainChannel": "ecommerce",
+               "channels": ["ecommerce", "instagram", "whatsapp"],
+               "promos": ["facebook_ads", "instagram", "email"],
+               "budget": 5000,
+               "budgetPct": 15,
+               "funnel": { "aware": 1000, "consider": 300, "intent": 100, "buy": 20 },
+               "metrics": { "cac": 150, "clv": 1500, "roas": 4.5 }
+            }
+            Solo dame el JSON.`;
+
+            const oldParse = window.Moltbot.parseAndFillFields;
+            window.Moltbot.parseAndFillFields = function (response) {
+                try {
+                    const match = response.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        const data = JSON.parse(match[0]);
+
+                        // Price
+                        document.getElementById('estrategia_precio').value = data.priceStrategy || '';
+                        document.getElementById('precio_promedio').value = data.avgPrice || '';
+                        document.getElementById('margen_objetivo').value = data.margin || '';
+                        document.getElementById('justificacion_precio').value = data.priceJustification || '';
+
+                        // Channels
+                        selectedChannels = data.channels || [];
+                        updateChannelVisuals();
+                        document.getElementById('canales_distribucion').value = selectedChannels.join(',');
+                        document.getElementById('canal_principal').value = data.mainChannel || '';
+
+                        // Promos
+                        selectedPromos = data.promos || [];
+                        updatePromoVisuals();
+                        document.getElementById('tacticas_promocion').value = selectedPromos.join(',');
+                        document.getElementById('presupuesto_marketing').value = data.budget || '';
+                        document.getElementById('pct_marketing').value = data.budgetPct || '';
+
+                        // Funnel
+                        if (data.funnel) {
+                            document.getElementById('funnel_awareness').value = data.funnel.aware;
+                            document.getElementById('funnel_consideracion').value = data.funnel.consider;
+                            document.getElementById('funnel_intencion').value = data.funnel.intent;
+                            document.getElementById('funnel_compra').value = data.funnel.buy;
+                        }
+
+                        // Metrics
+                        if (data.metrics) {
+                            document.getElementById('cac_objetivo').value = data.metrics.cac;
+                            document.getElementById('clv_objetivo').value = data.metrics.clv;
+                            document.getElementById('roas_objetivo').value = data.metrics.roas;
+                        }
+
+                        saveData();
+                        calculateMetrics();
+                        window.Moltbot.addMessage(`✅ Estrategia de Marketing generada para ${name}.`, 'system');
+                    }
+                } catch (e) { console.error(e); }
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
         }
     </script>
 </body>

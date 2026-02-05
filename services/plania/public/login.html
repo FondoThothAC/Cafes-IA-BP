@@ -69,7 +69,7 @@
         </div>
 
         <div class="login-card rounded-2xl p-8">
-            <form id="loginForm" onsubmit="handleLogin(event)">
+            <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-400 mb-2">Usuario</label>
                     <input type="text" id="username" class="input-dark w-full px-4 py-3 rounded-xl"
@@ -123,6 +123,9 @@
                 if (data.success) {
                     // Store Session
                     localStorage.setItem('plania_session', JSON.stringify(data.session));
+                    // Fix for plania-core.js compatibility
+                    localStorage.setItem('uuid_usuario', data.session.username);
+                    localStorage.setItem('user_role', data.session.role);
 
                     // Redirect based on role
                     if (data.session.role === 'admin') {

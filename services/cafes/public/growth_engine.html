@@ -1,0 +1,352 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/growth_engine.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Motores de Crecimiento (Viral, Pegajoso, Remunerado)
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Motores de Crecimiento</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --viral: #ec4899;
+            --sticky: #f59e0b;
+            --paid: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .engine-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .engine-option {
+            flex: 1;
+            background: var(--surface);
+            border: 2px solid transparent;
+            padding: 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .engine-option:hover {
+            transform: translateY(-5px);
+        }
+
+        .engine-option.active {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .engine-option h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .engine-option p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .calculator-panel {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media(max-width:768px) {
+            .calculator-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .result-box {
+            background: var(--bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            color: var(--primary);
+        }
+
+        .metric-label {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>🚀 Motor de Crecimiento</h1>
+                <p style="color: var(--text-muted);">Identifica y afina la máquina que impulsa tu startup.</p>
+            </div>
+        </header>
+
+        <div class="engine-selector">
+            <div class="engine-option" onclick="selectEngine('sticky')" id="opt-sticky">
+                <div style="font-size: 2rem;">🧲</div>
+                <h3>Pegajoso (Sticky)</h3>
+                <p>Retención a largo plazo. Clave: Churn Rate.</p>
+            </div>
+            <div class="engine-option" onclick="selectEngine('viral')" id="opt-viral">
+                <div style="font-size: 2rem;">🦠</div>
+                <h3>Viral</h3>
+                <p>Crecimiento exponencial. Clave: Coeficiente K.</p>
+            </div>
+            <div class="engine-option" onclick="selectEngine('paid')" id="opt-paid">
+                <div style="font-size: 2rem;">💰</div>
+                <h3>Remunerado (Paid)</h3>
+                <p>Publicidad pagada. Clave: LTV > CAC.</p>
+            </div>
+        </div>
+
+        <div class="calculator-panel" id="calc-panel">
+            <!-- Inputs dynamically rendered -->
+            <div id="calc-inputs">
+                <h3 style="margin-bottom:1.5rem;">Variables del Motor</h3>
+                <!-- Form fields go here -->
+            </div>
+
+            <!-- Results -->
+            <div class="result-box">
+                <h3 style="margin-bottom:1rem;">Métrica Principal</h3>
+                <div class="metric-value" id="main-metric">0.0</div>
+                <div class="metric-label" id="main-label">-</div>
+                <div id="health-status" style="margin-top: 1rem; font-weight: 600;"></div>
+
+                <button class="btn-ai" onclick="tuneEngineAI()">
+                    🛠️ Afinar Motor con IA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let currentEngine = 'sticky';
+        let engineData = {
+            sticky: { newUsers: 100, churn: 5 },
+            viral: { users: 100, invites: 10, conv: 20 },
+            paid: { ltv: 100, cac: 30 }
+        };
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            selectEngine('sticky');
+        });
+
+        function selectEngine(type) {
+            currentEngine = type;
+            // UI
+            document.querySelectorAll('.engine-option').forEach(el => el.classList.remove('active'));
+            document.getElementById(`opt-${type}`).classList.add('active');
+
+            renderInputs();
+            calcMetric();
+        }
+
+        function renderInputs() {
+            const container = document.getElementById('calc-inputs');
+            if (currentEngine === 'sticky') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Tasa de Adquisición de Nuevos Clientes (%)</label>
+                        <input type="number" id="in-new" value="${engineData.sticky.newUsers}" oninput="updateData('newUsers', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Tasa de Deserción (Churn Rate) (%)</label>
+                        <input type="number" id="in-churn" value="${engineData.sticky.churn}" oninput="updateData('churn', this.value)">
+                    </div>
+                    <p style="font-size:0.9rem; color:#f59e0b;">Objetivo: Adquisición > Churn</p>
+                `;
+            } else if (currentEngine === 'viral') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Invitaciones por Usuario (i)</label>
+                        <input type="number" id="in-invites" value="${engineData.viral.invites}" oninput="updateData('invites', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Conversión de Invitación (%) (c)</label>
+                        <input type="number" id="in-conv" value="${engineData.viral.conv}" oninput="updateData('conv', this.value)">
+                    </div>
+                    <p style="font-size:0.9rem; color:#ec4899;">Objetivo: Coeficiente K >= 1.0</p>
+                `;
+            } else { // paid
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Lifetime Value (LTV) $</label>
+                        <input type="number" id="in-ltv" value="${engineData.paid.ltv}" oninput="updateData('ltv', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Costo Adquisición (CAC) $</label>
+                        <input type="number" id="in-cac" value="${engineData.paid.cac}" oninput="updateData('cac', this.value)">
+                    </div>
+                    <p style="font-size:0.9rem; color:#10b981;">Objetivo: LTV > 3x CAC</p>
+                `;
+            }
+        }
+
+        function updateData(key, val) {
+            engineData[currentEngine][key] = parseFloat(val) || 0;
+            calcMetric();
+        }
+
+        function calcMetric() {
+            let val = 0;
+            let label = '';
+            let status = '';
+            let color = '';
+
+            if (currentEngine === 'sticky') {
+                const growth = engineData.sticky.newUsers - engineData.sticky.churn;
+                val = growth.toFixed(1) + '%';
+                label = 'Crecimiento Neto';
+                if (growth > 0) { status = '✅ Creciendo'; color = '#10b981'; }
+                else { status = '⚠️ Contrayendo'; color = '#ef4444'; }
+            } else if (currentEngine === 'viral') {
+                const k = engineData.viral.invites * (engineData.viral.conv / 100);
+                val = k.toFixed(2);
+                label = 'Coeficiente Viral (K)';
+                if (k >= 1) { status = '🔥 Viralidad Exponencial'; color = '#ec4899'; }
+                else { status = '🧊 Sin Viralidad'; color = '#94a3b8'; }
+            } else {
+                const ratio = engineData.paid.cac > 0 ? (engineData.paid.ltv / engineData.paid.cac) : 0;
+                val = ratio.toFixed(1) + 'x';
+                label = 'Ratio LTV:CAC';
+                if (ratio >= 3) { status = '💰 Rentable'; color = '#10b981'; }
+                else if (ratio >= 1) { status = '⚠️ Riesgoso'; color = '#f59e0b'; }
+                else { status = '💸 Pérdida'; color = '#ef4444'; }
+            }
+
+            document.getElementById('main-metric').textContent = val;
+            document.getElementById('main-metric').style.color = color;
+            document.getElementById('main-label').textContent = label;
+
+            const statusEl = document.getElementById('health-status');
+            statusEl.textContent = status;
+            statusEl.style.color = color;
+        }
+
+        // ========================
+        // AI Tuning
+        // ========================
+        function tuneEngineAI() {
+            if (!window.Moltbot) { alert("IA no disponible"); return; }
+
+            const prompt = `Actúa como Growth Hacker Experto.
+            
+            Estoy analizando un Motor de Crecimiento: ${currentEngine.toUpperCase()}.
+            Mis métricas actuales son:
+            ${JSON.stringify(engineData[currentEngine])}
+            
+            El resultado actual es: ${document.getElementById('main-metric').textContent} (${document.getElementById('health-status').textContent}).
+
+            Dame 3 tácticas específicas y accionables para mejorar este motor.
+            No digas obviedades como "mejora el producto". Di "Implementa un programa de referidos con doble incentivo".
+            
+            Responde en bullets HTML.`;
+
+            window.Moltbot.toggle();
+            window.Moltbot.send(prompt);
+        }
+    </script>
+</body>
+
+</html>

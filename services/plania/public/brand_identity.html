@@ -516,9 +516,15 @@ DESCRIPCIÓN: Módulo de Identidad de Marca - Logotipo, Colores, Redes Sociales
     <div id="plania-navbar"></div>
 
     <div class="page-container">
-        <div class="page-header">
-            <h1>🎨 Identidad de Marca</h1>
-            <p class="subtitle">Logotipo, Colores Corporativos, Tipografía y Redes Sociales</p>
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h1>🎨 Identidad de Marca</h1>
+                <p class="subtitle">Logotipo, Colores Corporativos, Tipografía y Redes Sociales</p>
+            </div>
+            <button class="btn btn-ai" onclick="generateIdentityAI()"
+                style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                🤖 Generar Identidad (IA)
+            </button>
         </div>
 
         <!-- AI Brand Search Section -->
@@ -930,6 +936,85 @@ DESCRIPCIÓN: Módulo de Identidad de Marca - Logotipo, Colores, Redes Sociales
                 const result = await res.json();
                 result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
             } catch (err) { PlanIA.notifySaveError(); }
+        } catch (err) { PlanIA.notifySaveError(); }
+        }
+
+        // AI Integration
+        function generateIdentityAI() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : document.getElementById('brandName').value || 'Mi Marca';
+            const desc = project ? project.a2_descripcion_negocio : document.getElementById('brandDescription').value || '';
+            const type = document.getElementById('businessType').value || '';
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Director Creativo de Branding.
+            Marca: ${name}. ${desc}. Giro: ${type}.
+
+            Diseña una IDENTIDAD DE MARCA ÚNICA.
+            1. Slogan memorable.
+            2. Paleta de colores (Hex) con psicología del color adecuada.
+            3. Tipografía recomendada.
+            4. Descripción breve de la "personalidad" de la marca.
+            5. Sugerencia de usuarios para redes sociales.
+            
+            Formato JSON EXACTO:
+            {
+               "slogan": "El futuro de...",
+               "description": "Una marca audaz y moderna...",
+               "colors": {
+                  "primary": "#6366f1",
+                  "secondary": "#3b82f6",
+                  "accent": "#10b981",
+                  "background": "#ffffff",
+                  "text": "#1f2937",
+                  "alert": "#ef4444"
+               },
+               "font": "'Inter', sans-serif",
+               "socials": {
+                  "instagram": "@marca.oficial",
+                  "facebook": "MarcaOficial",
+                  "tiktok": "@marca.mx"
+               }
+            }
+            Solo dame el JSON.`;
+
+            const oldParse = window.Moltbot.parseAndFillFields;
+            window.Moltbot.parseAndFillFields = function (response) {
+                try {
+                    const match = response.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        const id = JSON.parse(match[0]);
+
+                        document.getElementById('brandSlogan').value = id.slogan || '';
+                        document.getElementById('brandDescription').value = id.description || '';
+
+                        if (id.colors) {
+                            document.getElementById('colorPrimary').value = id.colors.primary;
+                            document.getElementById('colorSecondary').value = id.colors.secondary;
+                            document.getElementById('colorAccent').value = id.colors.accent;
+                            document.getElementById('colorBackground').value = id.colors.background;
+                            document.getElementById('colorText').value = id.colors.text;
+                            document.getElementById('colorAlert').value = id.colors.alert;
+                        }
+
+                        if (id.font) document.getElementById('fontPrimary').value = id.font;
+
+                        if (id.socials) {
+                            document.getElementById('socialInstagram').value = id.socials.instagram || '';
+                            document.getElementById('socialFacebook').value = id.socials.facebook || '';
+                            document.getElementById('socialTiktok').value = id.socials.tiktok || '';
+                        }
+
+                        updatePreview();
+                        window.Moltbot.addMessage(`✅ Identidad visual generada.`, 'system');
+                    }
+                } catch (e) { console.error(e); }
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
         }
     </script>
     <script src="js/brand-search.js"></script>

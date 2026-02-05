@@ -1,4 +1,4 @@
-# 🤖 AI-Toolkit
+# 🤖 AI-Toolkit v1.1
 
 Sistema de IA local containerizado. 100% aislado, portable entre Mac y Windows.
 

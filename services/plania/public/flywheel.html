@@ -751,7 +751,7 @@ DESCRIPCIÓN: Dashboard del ciclo Flywheel que muestra el ciclo virtuoso de
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            renderNavbar();
+            // renderNavbar handled by plania-core.js
             await loadProjectData();
             updateMetrics();
             selectStage(1);

@@ -7,8 +7,8 @@
     // Config
     const ERROR_LOG = [];
     const AI_CHAT_API = 'http://localhost:3002/api/generate';
-    const SEARCH_API = 'http://localhost:3005/search';
-    const OSINT_API = 'http://localhost:3005/osint/user';
+    const SEARCH_API = 'http://localhost:8085/search';
+    const OSINT_API = 'http://localhost:8085/osint/user';
 
     // Auto-detect path
     const JS_PATH = document.currentScript ? document.currentScript.src : 'js/moltbot_widget.js';

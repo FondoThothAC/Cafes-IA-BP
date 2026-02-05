@@ -328,6 +328,9 @@
                 <p class="text-muted">Define los puestos, sueldos y estructura organizacional</p>
             </div>
             <div class="flex gap-1">
+                <button class="btn btn-ai" onclick="suggestStructureAI()"
+                    style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none;">🤖
+                    Sugerir Estructura (IA)</button>
                 <button class="btn btn-secondary" onclick="addRole()">➕ Agregar Puesto</button>
                 <button class="btn btn-primary" onclick="saveOrg()">💾 Guardar</button>
             </div>
@@ -470,6 +473,35 @@
             </div>
         </div>
 
+        <!-- Interview Modal -->
+        <div id="interviewModal" class="modal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto;">
+            <div
+                style="background: var(--surface); margin: 5% auto; padding: 2rem; width: 90%; max-width: 800px; border-radius: 16px; position: relative;">
+                <button onclick="document.getElementById('interviewModal').style.display='none'"
+                    style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+
+                <h2 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    🎤 Guía de Entrevista: <span id="interviewRoleName" style="color: var(--primary);"></span>
+                </h2>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;" id="interviewRoleContext"></p>
+
+                <div id="interviewContent">
+                    <div style="text-align: center; padding: 4rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🤖</div>
+                        <p>Generando preguntas inteligentes...</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; text-align: right;">
+                    <button class="btn btn-secondary" onclick="copyInterviewToClipboard()">📋 Copiar al
+                        Portapapeles</button>
+                    <button class="btn btn-primary"
+                        onclick="document.getElementById('interviewModal').style.display='none'">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
         <footer class="footer">© 2026 Fondo Thoth AC</footer>
     </div>
 
@@ -486,6 +518,196 @@
             { id: 2, name: 'Administrador', count: 1, salary: 18000, riskClass: 'I', reportsTo: 'Director General', responsibilities: 'Operaciones diarias', profile: 'LAE' },
             { id: 3, name: 'Operador', count: 2, salary: 12000, riskClass: 'II', reportsTo: 'Administrador', responsibilities: 'Producción/Atención', profile: 'Preparatoria' },
         ];
+
+        // AI Integration
+        function suggestStructureAI() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : 'Negocio';
+            const desc = project ? project.a2_descripcion_negocio : '';
+
+            if (!window.Moltbot) {
+                alert("BoB IA no está disponible.");
+                return;
+            }
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Experto en Recursos Humanos y Desarrollo Organizacional.
+            Negocio: ${name}. ${desc}.
+
+            Diseña una estructura organizacional IDEAL y ESCALABLE para este negocio (Start-up / PyME).
+            Sugiere los 5-7 roles clave necesarios.
+            Para cada rol, estima un sueldo mensual realista en MXN (Pesos).
+            
+            Formato EXACTO JSON:
+            [
+              {
+                "name": "Nombre del Puesto (ej. CEO, Gerente de Ventas)",
+                "count": 1,
+                "salary": 25000,
+                "riskClass": "I",
+                "reportsTo": "Nombre del Jefe (o '-' para el CEO)",
+                "responsibilities": "Breve descripción de funciones principales",
+                "profile": "Perfil deseado (ej. Licenciatura, Exp 3 años)"
+              },
+              ...
+            ]
+            
+            Usa riskClass: I (Oficina), II (Comercio), III (Transporte), IV (Manufactura), V (Riesgo).
+            El CEO debe reportar a '-'.
+            Solo dame el JSON.`;
+
+            window.Moltbot.send(prompt);
+        }
+
+        // Interview Generation Logic
+        function generateRoleInterview(roleId) {
+            const role = roles.find(r => r.id === roleId);
+            if (!role) return;
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            // Open Modal
+            document.getElementById('interviewModal').style.display = 'block';
+            document.getElementById('interviewRoleName').textContent = role.name;
+            document.getElementById('interviewRoleContext').textContent = `${role.responsibilities} | $${role.salary}`;
+            document.getElementById('interviewContent').innerHTML = `
+                <div style="text-align: center; padding: 4rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">🤖</div>
+                    <p>Diseñando entrevista perfecta para ${role.name}...</p>
+                </div>
+            `;
+
+            window.Moltbot.toggle(); // Ensure backend is ready
+
+            const prompt = `Actúa como Director de RRHH experto (Top Recruiter).
+            
+            Puesto: "${role.name}"
+            Responsabilidades: "${role.responsibilities}"
+            Perfil: "${role.profile}"
+            Sueldo: $${role.salary}
+            
+            Genera una GUÍA DE ENTREVISTA ESTRUCTURADA para evaluar candidatos reales.
+            
+            Formato JSON EXACTO:
+            {
+               "filters": ["Pregunta filtro 1 (Killer question)", "Pregunta filtro 2", "Pregunta filtro 3"],
+               "deep_dive": [
+                  {"q": "Pregunta de comportamiento (STAR)", "purpose": "Qué evalúa esta pregunta"},
+                  {"q": "Pregunta situacional", "purpose": "Qué evalúa"}
+               ],
+               "challenge": {
+                  "title": "Título del Reto Técnico (ej. Roleplay de Venta)",
+                  "desc": "Instrucciones breves del reto para hacer en 15 mins"
+               }
+            }
+            
+            Las preguntas "filter" deben servir para descartar rápido a quien no sepa lo básico.
+            Las preguntas "deep_dive" deben ser profundas.
+            Solo dame el JSON.`;
+
+            // Custom parser for this specific call (temporary override pattern or specific handler)
+            // Ideally Moltbot should support callbacks, but for now we hook globally or wait for message
+            // Since we don't have callbacks, we'll override parseAndFillFields just for this action
+            const oldParse = window.Moltbot.parseAndFillFields;
+
+            window.Moltbot.parseAndFillFields = function (response) {
+                try {
+                    const match = response.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        const guide = JSON.parse(match[0]);
+                        renderInterviewGuide(guide);
+                        window.Moltbot.addMessage(`✅ Guía de entrevista creada para ${role.name}.`, 'system');
+                    }
+                } catch (e) { console.error(e); }
+                // Restore original
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
+        }
+
+        function renderInterviewGuide(guide) {
+            const html = `
+                <div style="display: grid; gap: 1.5rem;">
+                    <div style="background: rgba(239, 68, 68, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #ef4444;">
+                        <h3 style="color: #ef4444; margin-bottom: 1rem;">🛑 Preguntas Filtro (Killer Questions)</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Si fallan estas, termina la entrevista amablemente.</p>
+                        <ul style="list-style: none; padding: 0;">
+                            ${guide.filters.map(q => `<li style="margin-bottom: 0.75rem; display: flex; gap: 0.5rem;"><span style="color: #ef4444;">•</span> ${q}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #3b82f6;">
+                        <h3 style="color: #3b82f6; margin-bottom: 1rem;">🧠 Entrevista Profunda (Topgrading)</h3>
+                        <div style="display: grid; gap: 1rem;">
+                            ${guide.deep_dive.map(item => `
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 0.25rem;">"${item.q}"</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">🎯 Busca evaluar: ${item.purpose}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #10b981;">
+                        <h3 style="color: #10b981; margin-bottom: 1rem;">⚡ Reto Práctico (15 mins)</h3>
+                        <h4 style="margin-bottom: 0.5rem;">${guide.challenge.title}</h4>
+                        <p style="color: var(--text);">${guide.challenge.desc}</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('interviewContent').innerHTML = html;
+        }
+
+        function copyInterviewToClipboard() {
+            const content = document.getElementById('interviewContent').innerText;
+            navigator.clipboard.writeText(content);
+            alert("Guía copiada al portapapeles ✅");
+        }
+
+        // Override Parser
+        const originalParse = window.Moltbot.parseAndFillFields;
+        window.Moltbot.parseAndFillFields = function (response) {
+            try {
+                const jsonMatch = response.match(/\[[\s\S]*\]/);
+                if (jsonMatch) {
+                    const newRoles = JSON.parse(jsonMatch[0]);
+                    if (Array.isArray(newRoles) && newRoles.length > 0) {
+
+                        // Smart merge or replace? Let's replace for a clean slate if requested
+                        if (confirm("¿Reemplazar la estructura actual con la sugerencia de la IA?")) {
+                            roles = newRoles.map((r, i) => ({
+                                id: Date.now() + i,
+                                name: r.name,
+                                count: r.count || 1,
+                                salary: r.salary || 10000,
+                                riskClass: r.riskClass || 'I',
+                                parentId: '', // Will link separately
+                                reportsToName: r.reportsTo, // Temp storage
+                                responsibilities: r.responsibilities || '',
+                                profile: r.profile || ''
+                            }));
+
+                            // Second pass to link parents
+                            roles.forEach(role => {
+                                if (role.reportsToName && role.reportsToName !== '-') {
+                                    // Fuzzy match parent name
+                                    const parent = roles.find(p => p.name.includes(role.reportsToName) || role.reportsToName.includes(p.name));
+                                    if (parent && parent.id !== role.id) {
+                                        role.parentId = parent.id;
+                                    }
+                                }
+                            });
+
+                            renderRoles();
+                            this.addMessage(`✅ Estructura organizacional generada con ${roles.length} puestos.`, 'system');
+                            return;
+                        }
+                    }
+                }
+            } catch (e) { console.error(e); }
+            originalParse.call(this, response);
+        };
 
         window.addEventListener('plania:projectChanged', loadOrg);
         window.addEventListener('DOMContentLoaded', () => setTimeout(loadOrg, 500));
@@ -613,7 +835,10 @@
                         </td>
                         <td><span class="risk-badge risk-${role.riskClass}">$${social.toLocaleString('es-MX', { maximumFractionDigits: 0 })}</span></td>
                         <td><strong>$${totalRole.toLocaleString('es-MX', { maximumFractionDigits: 0 })}</strong></td>
-                        <td><button class="btn-remove" onclick="removeRole(${role.id})">🗑️</button></td>
+                        <td style="display: flex; gap: 0.5rem;">
+                            <button class="btn-mini edit" onclick="generateRoleInterview(${role.id})" title="Generar Guía de Entrevista (IA)" style="background: #8b5cf6;">🎤</button>
+                            <button class="btn-remove" onclick="removeRole(${role.id})" title="Eliminar Puesto" style="display: inline-flex; align-items: center; justify-content: center;">🗑️</button>
+                        </td>
                     </tr>
                 `;
             }).join('');

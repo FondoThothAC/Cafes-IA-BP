@@ -16,24 +16,24 @@ const PlanIA = {
 
     // Theme definitions
     themes: {
-        // Dark Themes
-        'blue-dark': { name: 'Azul Oscuro', primary: '#2563eb', bg: '#0f172a', surface: '#1e293b', text: '#f1f5f9' },
-        'green-dark': { name: 'Verde Esmeralda', primary: '#10b981', bg: '#022c22', surface: '#064e3b', text: '#ecfdf5' },
-        'purple-dark': { name: 'Púrpura', primary: '#8b5cf6', bg: '#1e1033', surface: '#2e1065', text: '#f5f3ff' },
-        'orange-dark': { name: 'Naranja', primary: '#f59e0b', bg: '#1a1207', surface: '#451a03', text: '#fffbeb' },
-        'pink-dark': { name: 'Rosa', primary: '#ec4899', bg: '#2d0a1e', surface: '#500724', text: '#fdf2f8' },
-        'cyan-dark': { name: 'Cian', primary: '#06b6d4', bg: '#0c1a1e', surface: '#083344', text: '#ecfeff' },
-        'red-dark': { name: 'Rojo', primary: '#ef4444', bg: '#1a0505', surface: '#450a0a', text: '#fef2f2' },
+        // Dark Themes (Muted Text: Lighter)
+        'blue-dark': { name: 'Azul Oscuro', primary: '#2563eb', bg: '#0f172a', surface: '#1e293b', text: '#f1f5f9', textMuted: '#94a3b8' },
+        'green-dark': { name: 'Verde Esmeralda', primary: '#10b981', bg: '#022c22', surface: '#064e3b', text: '#ecfdf5', textMuted: '#6ee7b7' },
+        'purple-dark': { name: 'Púrpura', primary: '#8b5cf6', bg: '#1e1033', surface: '#2e1065', text: '#f5f3ff', textMuted: '#c4b5fd' },
+        'orange-dark': { name: 'Naranja', primary: '#f59e0b', bg: '#1a1207', surface: '#451a03', text: '#fffbeb', textMuted: '#fde68a' },
+        'pink-dark': { name: 'Rosa', primary: '#ec4899', bg: '#2d0a1e', surface: '#500724', text: '#fdf2f8', textMuted: '#fbcfe8' },
+        'cyan-dark': { name: 'Cian', primary: '#06b6d4', bg: '#0c1a1e', surface: '#083344', text: '#ecfeff', textMuted: '#a5f3fc' },
+        'red-dark': { name: 'Rojo', primary: '#ef4444', bg: '#1a0505', surface: '#450a0a', text: '#fef2f2', textMuted: '#fca5a5' },
 
-        // Light Themes
-        'blue-light': { name: 'Azul Claro', primary: '#2563eb', bg: '#f8fafc', surface: '#ffffff', text: '#0f172a' },
-        'green-light': { name: 'Verde Claro', primary: '#059669', bg: '#f0fdf4', surface: '#ffffff', text: '#064e3b' },
-        'purple-light': { name: 'Púrpura Claro', primary: '#7c3aed', bg: '#f5f3ff', surface: '#ffffff', text: '#2e1065' },
-        'orange-light': { name: 'Naranja Claro', primary: '#d97706', bg: '#fffbeb', surface: '#ffffff', text: '#451a03' },
-        'pink-light': { name: 'Rosa Claro', primary: '#db2777', bg: '#fdf2f8', surface: '#ffffff', text: '#500724' },
-        'cyan-light': { name: 'Cian Claro', primary: '#0891b2', bg: '#ecfeff', surface: '#ffffff', text: '#083344' },
-        'red-light': { name: 'Rojo Claro', primary: '#dc2626', bg: '#fef2f2', surface: '#ffffff', text: '#450a0a' },
-        'slate-light': { name: 'Gris Profesional', primary: '#475569', bg: '#f8fafc', surface: '#ffffff', text: '#0f172a' },
+        // Light Themes (Muted Text: Darker for Contrast)
+        'blue-light': { name: 'Azul Claro', primary: '#2563eb', bg: '#f8fafc', surface: '#ffffff', text: '#0f172a', textMuted: '#475569' },
+        'green-light': { name: 'Verde Claro', primary: '#059669', bg: '#f0fdf4', surface: '#ffffff', text: '#064e3b', textMuted: '#374151' },
+        'purple-light': { name: 'Púrpura Claro', primary: '#7c3aed', bg: '#f5f3ff', surface: '#ffffff', text: '#2e1065', textMuted: '#4c1d95' },
+        'orange-light': { name: 'Naranja Claro', primary: '#d97706', bg: '#fffbeb', surface: '#ffffff', text: '#451a03', textMuted: '#78350f' },
+        'pink-light': { name: 'Rosa Claro', primary: '#db2777', bg: '#fdf2f8', surface: '#ffffff', text: '#500724', textMuted: '#831843' },
+        'cyan-light': { name: 'Cian Claro', primary: '#0891b2', bg: '#ecfeff', surface: '#ffffff', text: '#083344', textMuted: '#155e75' },
+        'red-light': { name: 'Rojo Claro', primary: '#dc2626', bg: '#fef2f2', surface: '#ffffff', text: '#450a0a', textMuted: '#7f1d1d' },
+        'slate-light': { name: 'Gris Profesional', primary: '#475569', bg: '#f8fafc', surface: '#ffffff', text: '#0f172a', textMuted: '#334155' },
     },
 
     // State
@@ -80,6 +80,7 @@ const PlanIA = {
         document.documentElement.style.setProperty('--bg', theme.bg);
         document.documentElement.style.setProperty('--surface', theme.surface);
         document.documentElement.style.setProperty('--text', theme.text);
+        document.documentElement.style.setProperty('--text-muted', theme.textMuted || '#94a3b8');
 
         document.body.style.backgroundColor = theme.bg;
         document.body.style.color = theme.text;
@@ -165,6 +166,9 @@ const PlanIA = {
                     { id: 'foda', icon: '⚡', label: 'Análisis FODA', href: 'foda.html' },
                     { id: 'brand_identity', icon: '🏷️', label: 'Identidad de Marca', href: 'brand_identity.html' },
                     { id: 'flywheel', icon: '🔄', label: 'Flywheel (Ciclo)', href: 'flywheel.html' },
+                    { id: 'lean_experiments', icon: '🧪', label: 'Experimentos Lean', href: 'lean_experiments.html' },
+                    { id: 'mvp_builder', icon: '🏗️', label: 'Constructor MVP', href: 'mvp_builder.html' },
+                    { id: 'pivot_strategy', icon: '⚖️', label: 'Pivote o Persevera', href: 'pivot_strategy.html' },
                 ]
             },
             {
@@ -173,6 +177,7 @@ const PlanIA = {
                     { id: 'market_study', icon: '📊', label: 'Estudio de Mercado', href: 'market_study.html' },
                     { id: 'customer_research', icon: '🔬', label: 'Investigación Cliente', href: 'customer_research.html' },
                     { id: 'marketing_plan', icon: '📣', label: 'Plan de Marketing', href: 'marketing_plan.html' },
+                    { id: 'growth_engine', icon: '🚀', label: 'Motor de Crecimiento', href: 'growth_engine.html' },
                     { id: 'surveys', icon: '📝', label: 'Encuestas', href: 'surveys.html' },
                 ]
             },
@@ -198,7 +203,7 @@ const PlanIA = {
             },
             {
                 id: 'control', icon: '🎛️', label: 'Control', items: [
-                    { id: 'flywheel', icon: '🔄', label: 'Flywheel (Ciclo)', href: 'flywheel.html' },
+                    { id: 'innovation_accounting', icon: '📊', label: 'Contabilidad Innovación', href: 'innovation_accounting.html' },
                     { id: 'kpis', icon: '🎯', label: 'Dashboard KPIs', href: 'kpis.html' },
                     { id: 'esg_sustainability', icon: '🌱', label: 'ESG Sostenibilidad', href: 'esg_sustainability.html' },
                     { id: 'projects_list', icon: '📋', label: 'Mis Proyectos', href: 'projects_list.html' },
@@ -215,7 +220,7 @@ const PlanIA = {
                 const isActive = item.items.some(sub => sub.id === currentPage);
                 // Note: Added onclick to toggle 'active' class on the dropdown parent for mobile/click support
                 return `
-                    <div class="nav-item-dropdown" onclick="this.classList.toggle('force-show')">
+                    <div class="nav-item-dropdown" onclick="toggleDropdown(this)">
                         <div class="nav-link nav-dropdown-trigger ${isActive ? 'active' : ''}">
                             <span class="nav-icon">${item.icon}</span>
                             <span class="nav-label">${item.label}</span>
@@ -243,15 +248,34 @@ const PlanIA = {
 
         container.innerHTML = `
             <style>
-                /* Inject logic for force-show click handling */
-                .nav-item-dropdown.force-show .nav-dropdown-menu { display: block; }
                 .user-widget { display: flex; align-items: center; gap: 8px; padding: 0 10px; border-left: 1px solid var(--surface-light); margin-left: 10px; font-size: 0.85rem; cursor: pointer; position: relative;}
                 .user-widget .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-light); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
                 .user-dropdown { display: none; position: absolute; top: 100%; right: 0; background: var(--surface); border: 1px solid var(--surface-light); border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); min-width: 150px; padding: 0.5rem; z-index: 1000; }
                 .user-dropdown.show { display: block; }
                 .user-item { display: block; padding: 0.5rem 1rem; color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; transition: background 0.1s; text-align: left; width: 100%; border: none; background: transparent; }
                 .user-item:hover { background: var(--surface-light); }
+                /* Explicit show class for JS handling */
+                .nav-item-dropdown.force-show .nav-dropdown-menu { display: block !important; }
             </style>
+            <script>
+                // Self-contained logic for this navbar instance to avoid polluting global scope more than needed
+                (function() {
+                    document.addEventListener('click', (e) => {
+                        // Close all dropdowns if click is outside
+                        if (!e.target.closest('.nav-item-dropdown')) {
+                            document.querySelectorAll('.nav-item-dropdown').forEach(el => el.classList.remove('force-show'));
+                        }
+                    });
+                })();
+                
+                function toggleDropdown(el) {
+                    // Close others
+                    document.querySelectorAll('.nav-item-dropdown').forEach(item => {
+                        if (item !== el) item.classList.remove('force-show');
+                    });
+                    el.classList.toggle('force-show');
+                }
+            </script>
             <nav class="plania-nav">
                 <div class="nav-brand">
                     <a href="index.html">🚀 <span>PlanIA</span></a>

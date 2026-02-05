@@ -11,6 +11,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Leaflet.heat for heatmap visualization -->
     <style>
+        .btn-ai {
+            transition: transform 0.2s;
+        }
+
+        .btn-ai:hover {
+            transform: scale(1.1);
+        }
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -331,6 +339,8 @@
                         <input type="text" id="denue-search" placeholder="Buscar: restaurante, tienda..."
                             style="flex: 1;">
                         <button class="btn btn-secondary" onclick="searchDENUE()" style="font-size: 0.8rem;">🔍</button>
+                        <button class="btn btn-ai" onclick="suggestCompetitorsAI()" title="Sugerir qué buscar (IA)"
+                            style="font-size: 0.8rem; background: #a855f7; color: white; border: none;">🤖</button>
                     </div>
                     <div class="data-grid" style="margin-bottom: 0.5rem;">
                         <div class="data-item"><span class="label">Total</span><span class="value"
@@ -345,7 +355,11 @@
 
                 <!-- Funnel -->
                 <div class="info-section">
-                    <h4>🧮 Embudo de Ventas</h4>
+                    <h4 style="display: flex; justify-content: space-between;">
+                        <span>🧮 Embudo de Ventas</span>
+                        <button class="btn-mini" onclick="suggestFunnelAI()" title="Estimar con IA"
+                            style="background: #a855f7; color: white; border: none;">🤖</button>
+                    </h4>
                     <div class="funnel-mini">
                         <div class="funnel-row">
                             <label>Mercado objetivo:</label>
@@ -824,8 +838,14 @@
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <h4>📋 Lista de Competidores <span id="comp-count"
                                     style="font-size: 0.75rem; color: var(--text-muted);"></span></h4>
-                            <button class="btn btn-sm btn-secondary" onclick="saveCompetitorsToProject()"
-                                style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">💾 Guardar Lista</button>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-sm btn-ai" onclick="generateMysteryShopper()"
+                                    title="Generar Checklist Mystery Shopper (IA)"
+                                    style="padding: 0.2rem 0.5rem; font-size: 0.8rem; background: #8b5cf6; color: white;">🕵️
+                                    Checklist IA</button>
+                                <button class="btn btn-sm btn-secondary" onclick="saveCompetitorsToProject()"
+                                    style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">💾 Guardar Lista</button>
+                            </div>
                         </div>
                         <div class="denue-list" id="comp-list" style="max-height: 400px;">
                             <p class="text-muted" style="text-align: center; padding: 2rem;">
@@ -1039,11 +1059,71 @@
                             <p class="text-muted">Calcula el potencial para ver recomendaciones específicas</p>
                         </div>
                     </div>
+
+                    <!-- Mystery Shopper Modal -->
+                    <div id="mysteryModal" class="modal"
+                        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto;">
+                        <div
+                            style="background: var(--surface); margin: 5% auto; padding: 2rem; width: 90%; max-width: 800px; border-radius: 16px; position: relative;">
+                            <button onclick="document.getElementById('mysteryModal').style.display='none'"
+                                style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+
+                            <h2
+                                style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; color: #8b5cf6;">
+                                🕵️ Checklist de Mystery Shopper
+                            </h2>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Guía de observación para espiar
+                                (legalmente) a tu competencia.</p>
+
+                            <div id="mysteryContent">
+                                <div style="text-align: center; padding: 4rem;">
+                                    <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">
+                                        🤖</div>
+                                    <p>Generando misión de espionaje...</p>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 2rem; text-align: right;">
+                                <button class="btn btn-secondary" onclick="copyMysteryToClipboard()">📋 Copiar</button>
+                                <button class="btn btn-primary"
+                                    onclick="document.getElementById('mysteryModal').style.display='none'">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <footer class="footer">© 2026 Fondo Thoth AC | Datos: INEGI Censo 2020 + DENUE + ENIGH + ENDUTIH</footer>
+    </div>
+
+    <!-- Mystery Shopper Modal -->
+    <div id="mysteryModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto;">
+        <div
+            style="background: var(--surface); margin: 5% auto; padding: 2rem; width: 90%; max-width: 800px; border-radius: 16px; position: relative;">
+            <button onclick="document.getElementById('mysteryModal').style.display='none'"
+                style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+
+            <h2 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; color: #8b5cf6;">
+                🕵️ Checklist de Mystery Shopper
+            </h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Guía de observación para espiar (legalmente) a tu
+                competencia.</p>
+
+            <div id="mysteryContent">
+                <div style="text-align: center; padding: 4rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">🤖</div>
+                    <p>Generando misión de espionaje...</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; text-align: right;">
+                <button class="btn btn-secondary" onclick="copyMysteryToClipboard()">📋 Copiar</button>
+                <button class="btn btn-primary"
+                    onclick="document.getElementById('mysteryModal').style.display='none'">Cerrar</button>
+            </div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2255,6 +2335,179 @@
                 console.error(e);
                 PlanIA.notifySaveError();
             }
+        }
+    </script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        // AI Integration for Market Study
+        function suggestCompetitorsAI() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : 'Mi Negocio';
+            const desc = project ? project.a2_descripcion_negocio : '';
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Experto en Investigación de Mercado.
+            Negocio: ${name}. ${desc}.
+
+            Para analizar la competencia local en México usando el DENUE (Directorio Económico),
+            ¿Qué palabras clave debería buscar? (Ej. cafetería, restaurante, boutique).
+            Dame una lista de 3 a 5 términos de búsqueda precisos separados por comas.
+            
+            Formato: "palabra1, palabra2, palabra3"
+            
+            Solo la lista.`;
+
+            // Custom handler for this simple response
+            const oldParse = window.Moltbot.parseAndFillFields;
+            window.Moltbot.parseAndFillFields = function (response) {
+                const keywords = response.replace(/"/g, '').trim();
+                if (keywords.length > 3) {
+                    document.getElementById('denue-search').value = keywords;
+                    window.Moltbot.addMessage(`✅ Sugerencia aplicada: ${keywords}`, 'system');
+                }
+                // Restore default
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
+        }
+
+        function suggestFunnelAI() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : 'Negocio';
+            const desc = project ? project.a2_descripcion_negocio : '';
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Analista de Negocios.
+            Negocio: ${name}. ${desc}.
+
+            Estima métricas conservadoras para un Embudo de Ventas mensual inicial:
+            1. Reach % (Alcance del mercado potencial en radio físico): 1-100
+            2. Conversion % (Visitantes a Clientes): 1-100
+            3. Ticket Promedio (MXN): Precio medio gastado por cliente.
+
+            Formato JSON EXACTO:
+            {
+                "reach": 20,
+                "conversion": 5,
+                "ticket": 150
+            }
+            Solo dame el JSON.`;
+
+            // Custom handler
+            const oldParse = window.Moltbot.parseAndFillFields;
+            window.Moltbot.parseAndFillFields = function (response) {
+                try {
+                    const match = response.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        const data = JSON.parse(match[0]);
+                        document.getElementById('f-reach').value = data.reach;
+                        document.getElementById('f-conv').value = data.conversion;
+                        document.getElementById('f-ticket').value = data.ticket;
+                        calcFunnel();
+                        window.Moltbot.addMessage(`✅ Estimaciones aplicadas: Reach ${data.reach}%, Conv ${data.conversion}%, Ticket $${data.ticket}`, 'system');
+                    }
+                } catch (e) { console.error(e); }
+                // Restore default
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
+        }
+
+        // Mystery Shopper AI
+        function generateMysteryShopper() {
+            // Get context from search input or activity
+            const keyword = document.getElementById('denueKeyword').value;
+            const activitySelect = document.getElementById('denueActivity');
+            const activityText = activitySelect.options[activitySelect.selectedIndex]?.text || '';
+            const businessType = keyword || activityText || "mi competencia";
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            // Open Modal
+            document.getElementById('mysteryModal').style.display = 'block';
+            document.getElementById('mysteryContent').innerHTML = `
+                <div style="text-align: center; padding: 4rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">🕵️</div>
+                    <p>Diseñando misión de espionaje para: <strong>${businessType}</strong>...</p>
+                </div>
+            `;
+
+            window.Moltbot.toggle();
+
+            const prompt = `Actúa como Experto en Inteligencia de Mercado y Mystery Shopping.
+            
+            Objetivo: Analizar la competencia de un negocio tipo: "${businessType}".
+            
+            Genera un CHECKLIST DE OBSERVACIÓN de 10 puntos clave que un emprendedor debe revisar al visitar a su competencia.
+            Divídelo en 3 áreas:
+            1. Experiencia del Cliente (Servicio, Tiempos)
+            2. Producto/Precio (Calidad, Ofertas)
+            3. Local/Ambiente (Limpieza, Exhibición)
+            
+            Formato JSON EXACTO:
+            {
+               "experience": ["Punto 1", "Punto 2", "Punto 3"],
+               "product": ["Punto 1", "Punto 2", "Punto 3"],
+               "place": ["Punto 1", "Punto 2", "Punto 3", "Punto 4"]
+            }
+            
+            Sé muy específico. No digas "¿Es bueno?", di "¿Saludan en los primeros 5 seg?".
+            Solo dame el JSON.`;
+
+            const oldParse = window.Moltbot.parseAndFillFields;
+            window.Moltbot.parseAndFillFields = function (response) {
+                try {
+                    const match = response.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        const checklist = JSON.parse(match[0]);
+                        renderMysteryChecklist(checklist);
+                        window.Moltbot.addMessage(`✅ Checklist de Mystery Shopper generado.`, 'system');
+                    }
+                } catch (e) { console.error(e); }
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
+        }
+
+        function renderMysteryChecklist(list) {
+            const html = `
+                <div style="display: grid; gap: 1.5rem;">
+                    <div style="background: rgba(139, 92, 246, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #8b5cf6;">
+                        <h3 style="color: #8b5cf6; margin-bottom: 1rem;">😊 Experiencia del Cliente</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            ${list.experience.map(item => `<li style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem;"><input type="checkbox"> ${item}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <div style="background: rgba(245, 158, 11, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #f59e0b;">
+                        <h3 style="color: #f59e0b; margin-bottom: 1rem;">📦 Producto y Precio</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            ${list.product.map(item => `<li style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem;"><input type="checkbox"> ${item}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #10b981;">
+                        <h3 style="color: #10b981; margin-bottom: 1rem;">🏪 Local y Ambiente</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            ${list.place.map(item => `<li style="margin-bottom: 0.5rem; display: flex; gap: 0.5rem;"><input type="checkbox"> ${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            document.getElementById('mysteryContent').innerHTML = html;
+        }
+
+        function copyMysteryToClipboard() {
+            const content = document.getElementById('mysteryContent').innerText;
+            navigator.clipboard.writeText(content);
+            alert("Checklist copiado al portapapeles ✅");
         }
     </script>
 </body>

@@ -1,0 +1,502 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/mvp_builder.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Constructor de MVP (Matriz de Priorización Impacto vs Esfuerzo)
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Constructor MVP</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --high-impact: #10b981;
+            --low-effort: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Layout */
+        .mvp-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            flex: 1;
+            min-height: 0;
+            /* Fix flex overflow */
+        }
+
+        /* Sidebar - Feature List */
+        .feature-panel {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--surface-light);
+            overflow: hidden;
+        }
+
+        .feature-input {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .feature-input input {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--surface-light);
+            background: var(--bg);
+            color: white;
+        }
+
+        .feature-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .feature-card {
+            background: var(--surface-light);
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: grab;
+            border: 1px solid transparent;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .feature-card:active {
+            cursor: grabbing;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        /* Matrix */
+        .matrix-container {
+            position: relative;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--surface-light);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            padding: 2rem;
+            gap: 2px;
+            /* Grid lines */
+        }
+
+        /* Quadrants */
+        .quadrant {
+            background: var(--bg);
+            padding: 1rem;
+            position: relative;
+            border: 1px dashed var(--surface-light);
+            min-height: 200px;
+            transition: background 0.2s;
+        }
+
+        .quadrant:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .q-label {
+            position: absolute;
+            font-weight: 700;
+            opacity: 0.3;
+            font-size: 2rem;
+            pointer-events: none;
+            z-index: 0;
+            text-transform: uppercase;
+        }
+
+        /* Q1: High Impact, Low Effort (The MVP) */
+        #q-mvp {
+            border-color: var(--high-impact);
+        }
+
+        #q-mvp .q-label {
+            color: var(--high-impact);
+            top: 1rem;
+            left: 1rem;
+            content: 'MVP';
+        }
+
+        /* Q2: High Impact, High Effort (Major Projects) */
+        #q-major .q-label {
+            top: 1rem;
+            right: 1rem;
+        }
+
+        /* Q3: Low Impact, Low Effort (Quick Wins) */
+        #q-quick .q-label {
+            bottom: 1rem;
+            left: 1rem;
+        }
+
+        /* Q4: Low Impact, High Effort (Waste) */
+        #q-waste {
+            opacity: 0.7;
+        }
+
+        #q-waste .q-label {
+            bottom: 1rem;
+            right: 1rem;
+        }
+
+        /* Axis Labels */
+        .axis-y {
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: rotate(-90deg) translateX(50%);
+            font-weight: bold;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+
+        .axis-x {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>🏗️ Constructor MVP</h1>
+                <p style="color: var(--text-muted);">Matriz de Priorización: Impacto (Valor) vs Esfuerzo (Costo)</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="savePriorities()">💾 Guardar Prioridades</button>
+            </div>
+        </header>
+
+        <div class="mvp-layout">
+            <!-- Sidebar -->
+            <div class="feature-panel">
+                <button class="btn-ai" onclick="aiPrioritize()">🤖 Clasificar con IA</button>
+
+                <div class="feature-input">
+                    <input type="text" id="newFeature" placeholder="Nueva característica..."
+                        onkeypress="if(event.key==='Enter') addFeature()">
+                    <button class="btn-add" onclick="addFeature()">+</button>
+                </div>
+
+                <div class="feature-list" id="backlog" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <!-- Features go here -->
+                </div>
+            </div>
+
+            <!-- Matrix -->
+            <div class="matrix-container">
+                <div class="axis-y">IMPACTO ▲</div>
+                <div class="axis-x">ESFUERZO ▶</div>
+
+                <!-- Q1: High Impact, Low Effort (Top Left) -->
+                <div class="quadrant" id="q-mvp" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="q-label">💎 MVP (Do Now)</div>
+                </div>
+
+                <!-- Q2: High Impact, High Effort (Top Right) -->
+                <div class="quadrant" id="q-major" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="q-label">🗓️ Strategic</div>
+                </div>
+
+                <!-- Q3: Low Impact, Low Effort (Bottom Left) -->
+                <div class="quadrant" id="q-quick" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="q-label">⚡ Quick Wins</div>
+                </div>
+
+                <!-- Q4: Low Impact, High Effort (Bottom Right) -->
+                <div class="quadrant" id="q-waste" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="q-label">🗑️ Drop</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let features = [];
+        let currentProjectId = null;
+
+        window.addEventListener('plania:projectChanged', loadProject);
+        window.addEventListener('DOMContentLoaded', () => setTimeout(loadProject, 500));
+
+        async function loadProject() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) return;
+            currentProjectId = project.id_proyecto;
+
+            // Load features
+            features = [];
+            try {
+                if (project.h5_recursos_clave_json) { // Saving in h5 as "MVP Store"
+                    const data = JSON.parse(project.h5_recursos_clave_json);
+                    if (data.features) features = data.features;
+                }
+            } catch (e) { features = []; }
+
+            // Default
+            if (features.length === 0) {
+                features = [
+                    { id: 1, name: 'Registro de Usuarios', area: 'q-mvp' },
+                    { id: 2, name: 'Modo Oscuro', area: 'q-quick' },
+                    { id: 3, name: 'Pagos con Crypto', area: 'backlog' }
+                ];
+            }
+
+            renderFeatures();
+        }
+
+        function renderFeatures() {
+            // Clear all areas
+            ['backlog', 'q-mvp', 'q-major', 'q-quick', 'q-waste'].forEach(id => {
+                const el = document.getElementById(id);
+                // Keep q-label inside quadrants
+                const label = el.querySelector('.q-label');
+                el.innerHTML = '';
+                if (label) el.appendChild(label);
+            });
+
+            features.forEach(f => {
+                const card = document.createElement('div');
+                card.className = 'feature-card';
+                card.id = `feat-${f.id}`;
+                card.draggable = true;
+                card.ondragstart = drag;
+                card.innerHTML = `
+                    <span>${f.name}</span>
+                    <span style="cursor:pointer; color:#ef4444;" onclick="deleteFeature(${f.id})">×</span>
+                `;
+
+                const container = document.getElementById(f.area) || document.getElementById('backlog');
+                container.appendChild(card);
+            });
+        }
+
+        // Drag & Drop
+        function allowDrop(ev) { ev.preventDefault(); }
+        function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const card = document.getElementById(data);
+
+            // Find target container (handle dropping on label or existing card)
+            let target = ev.target;
+            while (!target.id || (!target.classList.contains('quadrant') && !target.classList.contains('feature-list'))) {
+                target = target.parentElement;
+                if (!target) return;
+            }
+
+            target.appendChild(card);
+
+            // Update model
+            const id = parseInt(data.replace('feat-', ''));
+            const feat = features.find(f => f.id === id);
+            if (feat) feat.area = target.id;
+        }
+
+        function addFeature() {
+            const input = document.getElementById('newFeature');
+            const name = input.value.trim();
+            if (!name) return;
+
+            const newFeat = { id: Date.now(), name, area: 'backlog' };
+            features.push(newFeat);
+            input.value = '';
+            renderFeatures();
+        }
+
+        function deleteFeature(id) {
+            if (!confirm("¿Eliminar?")) return;
+            features = features.filter(f => f.id !== id);
+            renderFeatures();
+        }
+
+        async function savePriorities() {
+            if (!currentProjectId) return;
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: currentProjectId,
+                        h5_recursos_clave_json: JSON.stringify({ features })
+                    })
+                });
+                const result = await res.json();
+                if (result.success) PlanIA.notifySaved();
+            } catch (e) { alert("Error guardando"); }
+        }
+
+        // ==========================================
+        // AI LOGIC
+        // ==========================================
+        function aiPrioritize() {
+            if (features.length === 0) {
+                alert("Agrega características primero.");
+                return;
+            }
+
+            if (!window.Moltbot) {
+                alert("BoB IA no disponible.");
+                return;
+            }
+
+            window.Moltbot.toggle();
+
+            const featureList = features.map(f => `- ${f.name}`).join('\n');
+            const project = PlanIA.getCurrentProject();
+            const desc = project ? project.a2_descripcion_negocio : '';
+
+            const prompt = `Actúa como un Product Manager Experto.
+            Negocio: ${desc}
+
+            Tengo estas características para mi producto:
+            ${featureList}
+
+            CLASIFÍCALAS según la Matriz de Impacto vs Esfuerzo.
+            Reglas:
+            - "q-mvp": MVP (Alto Impacto, Bajo Esfuerzo) -> ESENCIALES PARA LANZAR
+            - "q-major": Strategic (Alto Impacto, Alto Esfuerzo)
+            - "q-quick": Quick Wins (Bajo Impacto, Bajo Esfuerzo)
+            - "q-waste": Waste (Bajo Impacto, Alto Esfuerzo)
+
+            Responde SOLO con un JSON válido que mapee el nombre de la característica a su ID de área:
+            {
+                "Nombre Característica": "q-mvp",
+                "Otra": "q-waste"
+            }`;
+
+            window.Moltbot.send(prompt);
+        }
+
+        // Override parse logic to handle classification
+        const originalParse = window.Moltbot.parseAndFillFields;
+
+        window.Moltbot.parseAndFillFields = function (response) {
+            try {
+                // Look for JSON object
+                const jsonMatch = response.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const mapping = JSON.parse(jsonMatch[0]);
+                    let updated = 0;
+
+                    features.forEach(f => {
+                        // Find match by name (fuzzy match ideally, but direct for now)
+                        // Improve: Remove quotes just in case
+                        for (const [name, area] of Object.entries(mapping)) {
+                            if (f.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(f.name.toLowerCase())) {
+                                if (['q-mvp', 'q-major', 'q-quick', 'q-waste'].includes(area)) {
+                                    f.area = area;
+                                    updated++;
+                                }
+                            }
+                        }
+                    });
+
+                    if (updated > 0) {
+                        renderFeatures();
+                        savePriorities();
+                        this.addMessage(`✅ Clasifiqué ${updated} características automáticamente.`, 'system');
+                        return;
+                    }
+                }
+            } catch (e) { }
+
+            originalParse.call(this, response);
+        };
+    </script>
+</body>
+
+</html>

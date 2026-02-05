@@ -4,10 +4,16 @@ const puppeteer = require('puppeteer-core');
 const { exec } = require('child_process');
 
 const app = express();
-const PORT = 3005;
+// ==========================================
+// CONFIGURACIÓN
+// ==========================================
+const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
+
+// Servir UI Dedicada (Dashboard)
+app.use(express.static('public'));
 
 // Configuración de Puppeteer para Alpine Linux
 // Configuración de Puppeteer (Detectar entorno: Mac vs Linux/Docker)
@@ -24,7 +30,8 @@ const PUPPETEER_OPTIONS = {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--disable-extensions'
+        '--disable-extensions',
+        '--lang=es-MX,es' // Force Spanish locale for results
     ]
 };
 
@@ -99,8 +106,25 @@ app.post('/search', async (req, res) => {
         await page.goto(`https://duckduckgo.com/?q=${encodeURIComponent(query)}&kl=mx-es`, { waitUntil: 'networkidle2', timeout: 30000 });
 
         const results = await page.evaluate(() => {
+            // 1. Try to get Instant Answer (Calculator/Converter)
+            const answerEl = document.querySelector('.c-base__title') || document.querySelector('#zci-result') || document.querySelector('.zci__def__text');
+            const answerSub = document.querySelector('.c-base__sub') || document.querySelector('.zci__def__sub');
+
+            let instantAnswer = null;
+            if (answerEl) {
+                instantAnswer = {
+                    title: "Respuesta Rápida (Instant Answer)",
+                    url: "https://duckduckgo.com",
+                    snippet: "DATOS EXACTOS: " + answerEl.innerText + (answerSub ? " " + answerSub.innerText : "")
+                };
+            }
+
+            // 2. Get Standard Results
             const items = document.querySelectorAll('article');
             const data = [];
+
+            if (instantAnswer) data.push(instantAnswer);
+
             items.forEach(item => {
                 const titleEl = item.querySelector('h2 a');
                 const linkEl = item.querySelector('h2 a');
@@ -114,7 +138,7 @@ app.post('/search', async (req, res) => {
                     });
                 }
             });
-            return data.slice(0, 5); // Return top 5
+            return data.slice(0, 6); // Return top 6
         });
 
         res.json({ success: true, count: results.length, results });
@@ -162,6 +186,36 @@ app.post('/osint/user', async (req, res) => {
             results
         });
     });
+});
+
+app.post('/agent/research', async (req, res) => {
+    const { topic } = req.body;
+    try {
+        const report = await deepResearch(topic);
+        res.json({ success: true, result: report });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/agent/report', async (req, res) => {
+    const { content, filename } = req.body;
+    try {
+        const file = await createPDF(content, filename || `report_${Date.now()}.pdf`);
+        res.json({ success: true, url: `http://localhost:${PORT}/${file}` });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.post('/agent/video', async (req, res) => {
+    const { script, filename } = req.body;
+    try {
+        const file = await createVideo(script, filename || `video_${Date.now()}.mp4`);
+        res.json({ success: true, url: `http://localhost:${PORT}/${file}` });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
 });
 
 app.listen(PORT, () => {

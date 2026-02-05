@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Consola de Administración</title>
+    <!-- CSS Dependencies -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0f172a;
+            font-family: 'Inter', sans-serif;
+            color: #e2e8f0;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link.active {
+            background: rgba(168, 85, 247, 0.2);
+            color: #e9d5ff;
+            border-left: 3px solid #a855f7;
+        }
+
+        .table-row:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel border-r border-gray-800 flex flex-col">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                PlanIA Admin
+            </h1>
+            <p class="text-xs text-gray-400 mt-1">v2.5.0 (AI-Native)</p>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <button onclick="showSection('users')"
+                class="nav-link active w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors flex items-center gap-3">
+                <span>👥</span> Usuarios
+            </button>
+            <button onclick="showSection('projects')"
+                class="nav-link w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors flex items-center gap-3">
+                <span>📁</span> Proyectos
+            </button>
+            <button onclick="showSection('logs')"
+                class="nav-link w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors flex items-center gap-3">
+                <span>🤖</span> Logs IA
+            </button>
+            <button onclick="showSection('backup')"
+                class="nav-link w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors flex items-center gap-3">
+                <span>💾</span> Backup
+            </button>
+        </nav>
+
+        <div class="p-6 border-t border-gray-800">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold"
+                    id="userAvatar">A</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-medium truncate" id="userName">Admin</p>
+                    <p class="text-xs text-green-400">Online</p>
+                </div>
+            </div>
+            <button onclick="logout()"
+                class="w-full py-2 px-4 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-sm transition-colors">
+                Cerrar Sesión
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 relative">
+
+        <!-- Section: Users -->
+        <section id="section-users" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Gestión de Usuarios</h2>
+                <button
+                    class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                    <span>+</span> Nuevo Usuario
+                </button>
+            </div>
+
+            <div class="glass-panel rounded-xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-800/50 text-gray-400 text-xs uppercase">
+                        <tr>
+                            <th class="px-6 py-4">ID</th>
+                            <th class="px-6 py-4">Usuario</th>
+                            <th class="px-6 py-4">Rol</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-gray-800" id="usersTableBody">
+                        <!-- Mock Data loaded via JS -->
+                        <tr class="table-row animate-pulse">
+                            <td class="px-6 py-4" colspan="5">Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section: Projects (Hidden) -->
+        <section id="section-projects" class="space-y-6 hidden">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Asignación de Proyectos</h2>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    Asignar Proyecto
+                </button>
+            </div>
+            <div class="glass-panel rounded-xl p-8 text-center text-gray-400">
+                <p>Lista de proyectos disponible próximamente.</p>
+            </div>
+        </section>
+
+        <!-- Section: Logs (Hidden) -->
+        <section id="section-logs" class="space-y-6 hidden">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Monitor de IA (En Vivo)</h2>
+                <button onclick="loadLogs()" class="text-purple-400 hover:text-purple-300 text-sm">Actualizar</button>
+            </div>
+            <div class="glass-panel rounded-xl overflow-hidden" style="max-height: 600px; overflow-y: auto;">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-800/50 text-gray-400 text-xs uppercase sticky top-0 bg-[#0f172a]">
+                        <tr>
+                            <th class="px-6 py-4">Tiempo</th>
+                            <th class="px-6 py-4">Usuario</th>
+                            <th class="px-6 py-4">Prompt</th>
+                            <th class="px-6 py-4">Modelo</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-gray-800" id="logsTableBody">
+                        <!-- Logs here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section: Backup (Hidden) -->
+        <section id="section-backup" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold">Copias de Seguridad</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel p-6 rounded-xl">
+                    <h3 class="font-bold mb-2">Base de Datos (SQL)</h3>
+                    <p class="text-sm text-gray-400 mb-4">Exportar estructura completa y datos de usuarios/proyectos.
+                    </p>
+                    <button class="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Descargar .sql</button>
+                </div>
+                <div class="glass-panel p-6 rounded-xl">
+                    <h3 class="font-bold mb-2">Logs de IA (JSON)</h3>
+                    <p class="text-sm text-gray-400 mb-4">Exportar historial de chat para entrenamiento.</p>
+                    <button class="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">Descargar
+                        .json</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Check Auth
+        const session = JSON.parse(localStorage.getItem('plania_session') || 'null');
+        if (!session || session.role !== 'admin') {
+            window.location.href = 'login.html';
+        }
+
+        // Init UI
+        document.getElementById('userName').textContent = session.username;
+        document.getElementById('userAvatar').textContent = session.username.charAt(0).toUpperCase();
+
+        function logout() {
+            localStorage.removeItem('plania_session');
+            window.location.href = 'login.html';
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`section-${id}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            if (id === 'users') loadUsers();
+            if (id === 'logs') loadLogs();
+        }
+
+        // Mock Data Loaders (Real API calls would go here)
+        async function loadUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = `
+                <tr class="table-row">
+                    <td class="px-6 py-4 text-gray-400">#1</td>
+                    <td class="px-6 py-4 font-medium text-white">admin</td>
+                    <td class="px-6 py-4"><span class="bg-purple-500/20 text-purple-400 px-2 py-1 rounded-md text-xs">Admin</span></td>
+                    <td class="px-6 py-4 text-green-400">Activo</td>
+                    <td class="px-6 py-4"><button class="text-gray-400 hover:text-white">Editar</button></td>
+                </tr>
+                 <tr class="table-row">
+                    <td class="px-6 py-4 text-gray-400">#2</td>
+                    <td class="px-6 py-4 font-medium text-white">Roberto (Asesor)</td>
+                    <td class="px-6 py-4"><span class="bg-blue-500/20 text-blue-400 px-2 py-1 rounded-md text-xs">Asesor</span></td>
+                    <td class="px-6 py-4 text-green-400">Activo</td>
+                    <td class="px-6 py-4"><button class="text-gray-400 hover:text-white">Editar</button></td>
+                </tr>
+            `;
+        }
+
+        async function loadLogs() {
+            // Try to fetch from real API if available, else Mock
+            const tbody = document.getElementById('logsTableBody');
+            // Mock for now until connected to DB
+            tbody.innerHTML = `
+                <tr class="table-row">
+                    <td class="px-6 py-4 text-gray-400">10:52 AM</td>
+                    <td class="px-6 py-4">admin</td>
+                    <td class="px-6 py-4 text-gray-300">Investigar mercado 2026</td>
+                    <td class="px-6 py-4 text-xs text-gray-500">gemma-3n-4b</td>
+                </tr>
+            `;
+        }
+
+        // Initial Load
+        loadUsers();
+    </script>
+</body>
+
+</html>

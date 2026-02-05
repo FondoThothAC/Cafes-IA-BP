@@ -9,6 +9,9 @@
     "dependencies": {
         "express": "^4.18.2",
         "cors": "^2.8.5",
-        "puppeteer-core": "^19.7.5"
+        "puppeteer-core": "^19.7.5",
+        "fluent-ffmpeg": "^2.1.2",
+        "markdown-it": "^13.0.1",
+        "google-tts-api": "^2.0.2"
     }
 }

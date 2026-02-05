@@ -340,6 +340,9 @@ DESCRIPCIÓN: Plan Financiero Interactivo con gráficas y punto de equilibrio
                             Inicial ($)</label>
                         <input type="number" id="initialInvestment" value="100000" min="0" onchange="recalculate()">
                     </div>
+                    <button class="btn-primary"
+                        style="background: linear-gradient(135deg, #a855f7, #ec4899); border: none; margin-bottom: 10px;"
+                        onclick="autoFillFinancials()">🪄 Auto-llenar con IA</button>
                     <button class="btn-primary" onclick="recalculate()">Recalcular</button>
                 </div>
             </div>
@@ -598,6 +601,31 @@ DESCRIPCIÓN: Plan Financiero Interactivo con gráficas y punto de equilibrio
                     }
                 }
             });
+        }
+        function autoFillFinancials() {
+            const project = PlanIA.getCurrentProject();
+            const industry = project ? project.nombre_proyecto : "Negocio Genérico";
+
+            if (!window.Moltbot) {
+                alert("BoB IA no está listo aún.");
+                return;
+            }
+
+            window.Moltbot.toggle(); // Open chat
+
+            const prompt = `Actúa como un Experto Financiero en México.
+            Necesito estimaciones REALISTAS y CONSERVADORAS para un negocio de tipo: "${industry}".
+            
+            Investiga o calcula promedios de mercado para 2026 y dame los siguientes valores en este formato EXACTO para que mi sistema los lea:
+
+            avgPrice: "precio unitario promedio en pesos"
+            varCost: "costo variable unitario (aprox 40% del precio)"
+            fixedCosts: "costos fijos mensuales (renta, luz, 1 empleado, internet)"
+            initialInvestment: "inversión inicial básica (equipamiento, permisos, depósito renta)"
+
+            Explica brevemente tu razonamiento.`;
+
+            window.Moltbot.send(prompt);
         }
     </script>
 </body>

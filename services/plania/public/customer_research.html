@@ -414,6 +414,36 @@ DESCRIPCIÓN: Módulo de Investigación de Cliente - Encuestas N-D-D
             </div>
         </div>
 
+        <!-- AI Interview Guide Section -->
+        <div class="survey-section" id="aiGuideSection">
+            <h3>🤖 Guía de Entrevista Inteligente</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                Si no sabes qué preguntar, deja que la IA genere las preguntas correctas para validar este producto.
+            </p>
+            <button class="btn-ai" onclick="generateInterviewGuide()"
+                style="width: 100%; padding: 1rem; margin-bottom: 1rem;">
+                ✨ Generar Preguntas de Validación (IA)
+            </button>
+
+            <div id="aiQuestionsContainer" style="display: none;">
+                <div class="question-card" style="border-left: 4px solid #fcd34d;">
+                    <div class="question-text" style="color: #fcd34d;">1. Para validar NECESIDAD (Problema)</div>
+                    <ul id="aiNeedQuestions"
+                        style="margin: 0; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.95rem;"></ul>
+                </div>
+                <div class="question-card" style="border-left: 4px solid #60a5fa;">
+                    <div class="question-text" style="color: #60a5fa;">2. Para validar DESEO (Solución)</div>
+                    <ul id="aiDesireQuestions"
+                        style="margin: 0; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.95rem;"></ul>
+                </div>
+                <div class="question-card" style="border-left: 4px solid #4ade80;">
+                    <div class="question-text" style="color: #4ade80;">3. Para validar DEMANDA (Pago)</div>
+                    <ul id="aiDemandQuestions"
+                        style="margin: 0; padding-left: 1.2rem; color: var(--text-muted); font-size: 0.95rem;"></ul>
+                </div>
+            </div>
+        </div>
+
         <!-- Add Response Section -->
         <div class="survey-section">
             <h3>➕ Registrar Respuesta de Encuesta</h3>
@@ -1178,6 +1208,77 @@ DESCRIPCIÓN: Módulo de Investigación de Cliente - Encuestas N-D-D
             setTimeout(() => {
                 toast.remove();
             }, 3000);
+        }
+        updateInsights();
+        }
+
+        // AI Interview Guide
+        function generateInterviewGuide() {
+            if (!currentProduct) {
+                alert("Primero selecciona un producto para evaluar.");
+                return;
+            }
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            const name = currentProduct.nombre || 'Producto';
+            const price = currentProduct.precio || 0;
+            const project = currentProject || {};
+            const desc = project.a2_descripcion_negocio || '';
+
+            const btn = document.querySelector('#aiGuideSection button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '🤖 Generando preguntas...';
+            btn.disabled = true;
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Experto en User Research y Lean Startup.
+            Contexto: Estoy validando un producto llamado "${name}" (Precio: $${price}).
+            Negocio: ${desc}.
+
+            Genera 3 PREGUNTAS CLAVE para CADA etapa de validación (Necesidad, Deseo, Demanda).
+            Las preguntas deben ser para hacerle al cliente potencial en una entrevista.
+            Evita preguntas sesgadas (como "¿Te gusta?"). Usa preguntas de comportamiento pasado o situaciones reales ("The Mom Test").
+
+            1. NECESIDAD: Validar si tienen el problema que resuelvo.
+            2. DESEO: Validar si mi solución les atrae frente a alternativas.
+            3. DEMANDA: Validar si pagarían el precio ($${price}).
+
+            Formato JSON EXACTO:
+            {
+               "need": ["¿Cuéntame la última vez que trataste de...?", "¿Qué es lo más difícil de...?", "¿Cómo solucionas actualmente...?"],
+               "desire": ["¿Qué opinas de esta solución para...?", "¿Qué te detendría de usar esto...?", "¿Cómo se compara esto con lo que usas hoy?"],
+               "demand": ["¿Estarías dispuesto a pagar $${price} hoy mismo?", "¿De qué presupuesto saldría este gasto?", "¿Si tuvieras que pagar por adelantado...?"]
+            }
+            Solo dame el JSON.`;
+
+            const oldParse = window.Moltbot.parseAndFillFields;
+            window.Moltbot.parseAndFillFields = function (response) {
+                try {
+                    const match = response.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        const questions = JSON.parse(match[0]);
+
+                        const renderList = (id, list) => {
+                            const el = document.getElementById(id);
+                            el.innerHTML = list.map(q => `<li style="margin-bottom: 0.5rem;">"${q}"</li>`).join('');
+                        };
+
+                        renderList('aiNeedQuestions', questions.need || []);
+                        renderList('aiDesireQuestions', questions.desire || []);
+                        renderList('aiDemandQuestions', questions.demand || []);
+
+                        document.getElementById('aiQuestionsContainer').style.display = 'block';
+                        window.Moltbot.addMessage(`✅ Guía de entrevista generada para ${name}.`, 'system');
+                    }
+                } catch (e) { console.error(e); }
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
         }
     </script>
 </body>

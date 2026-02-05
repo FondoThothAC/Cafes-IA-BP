@@ -17,6 +17,8 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
     <link rel="stylesheet" href="css/plania-core.css?v=3">
     <script src="js/autofill-mapper.js"></script>
     <script src="js/business-prompts.js"></script>
+    <script src="js/bob-client.js"></script>
+    <script src="js/import-client.js"></script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -305,6 +307,27 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
         <div class="page-header" style="text-align: center;">
             <h1 id="wizard-title">✏️ Nuevo Proyecto</h1>
             <p class="subtitle">Completa tu plan de negocios paso a paso</p>
+        </div>
+
+        <!-- Bob Agent Header -->
+        <div
+            style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 15px 25px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);">
+            <div style="color: white; display: flex; align-items: center; gap: 15px;">
+                <span style="font-size: 32px;">🤖</span>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.2rem;">Agente Autónomo Bob</h3>
+                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Tu asistente de IA para completar el plan de
+                        negocios.</p>
+                </div>
+            </div>
+            <button type="button" onclick="window.runBobAgentGlobal()"
+                style="background: white; color: #1e3a8a; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: transform 0.2s;">
+                <span>✨</span> Auto-completar Proyecto
+            </button>
+            <button type="button" onclick="window.importClient.open()"
+                style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-left: 10px; transition: all 0.2s;">
+                <span>📄</span> Importar Documento
+            </button>
         </div>
 
         <!-- Progress -->

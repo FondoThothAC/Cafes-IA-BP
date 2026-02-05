@@ -24,6 +24,7 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
+    ffmpeg \
     && rm -rf /var/cache/apk/*
 
 # Instalar herramientas OSINT (Python)
@@ -39,6 +40,7 @@ COPY package.json ./
 RUN npm install
 
 COPY server.js ./
+COPY public ./public
 
 # Salud del contenedor
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \

@@ -210,6 +210,9 @@
                 <p class="text-muted">Define los 9 bloques de tu modelo de negocio</p>
             </div>
             <div class="flex gap-1">
+                <button class="btn btn-ai" onclick="generateCanvasAI()"
+                    style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none; font-weight: 600;">🤖
+                    Generar Canvas (IA)</button>
                 <button class="btn btn-secondary" onclick="resetCanvas()">🔄 Reiniciar</button>
                 <button class="btn btn-primary" onclick="saveCanvas()">💾 Guardar</button>
             </div>
@@ -360,7 +363,7 @@
 
                 container.innerHTML = canvasData[block].map((item, idx) => `
                     <div class="block-item">
-                        <input type="text" value="${item}" onchange="updateItem('${block}', ${idx}, this.value)">
+                        <input type="text" id="${block}_${idx}" value="${item}" onchange="updateItem('${block}', ${idx}, this.value)">
                         <button class="btn-remove-item" onclick="removeItem('${block}', ${idx})">✕</button>
                     </div>
                 `).join('');
@@ -452,7 +455,67 @@
                 alert('Error de conexión: ' + err.message);
             }
         }
+
+
+        // AI Integration
+        function generateCanvasAI() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : 'Negocio';
+            const desc = project ? project.a2_descripcion_negocio : '';
+
+            if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
+
+            if (canvasData.value.length > 1 || canvasData.segments.length > 1) {
+                if (!confirm("⚠️ Esto reemplazará el contenido actual del Canvas. ¿Continuar?")) return;
+            }
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Consultor de Negocios Experto.
+            Negocio: ${name}. ${desc}.
+
+            Genera un BUSINESS MODEL CANVAS completo.
+            Dame 3-5 puntos clave para CADA uno de los 9 bloques.
+            SÉ ESPECÍFICO y práctico.
+            
+            Formato JSON EXACTO:
+            {
+               "partners": ["Proveedores de...", "Aliados estratégicos..."],
+               "activities": ["Producción de...", "Marketing digital..."],
+               "resources": ["Capital intelectual", "Plataforma web..."],
+               "value": ["Solución integral para...", "Precios accesibles..."],
+               "relationships": ["Asistencia personalizada", "Automatización..."],
+               "channels": ["Redes sociales", "Sitio web..."],
+               "segments": ["Jóvenes de 18-35...", "PyMEs..."],
+               "costs": ["Nómina", "Servidores..."],
+               "revenue": ["Venta directa", "Suscripción..."]
+            }
+            Solo dame el JSON.`;
+
+            const oldParse = window.Moltbot.parseAndFillFields;
+            window.Moltbot.parseAndFillFields = function (response) {
+                try {
+                    const match = response.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        const newCanvas = JSON.parse(match[0]);
+
+                        // Populate
+                        Object.keys(newCanvas).forEach(key => {
+                            if (canvasData[key] !== undefined) {
+                                canvasData[key] = newCanvas[key];
+                            }
+                        });
+
+                        renderAllBlocks();
+                        window.Moltbot.addMessage(`✅ Business Model Canvas generado.`, 'system');
+                    }
+                } catch (e) { console.error(e); }
+                window.Moltbot.parseAndFillFields = oldParse;
+            };
+
+            window.Moltbot.send(prompt);
+        }
     </script>
+    <script src="js/moltbot_widget.js"></script>
 </body>
 
 </html>

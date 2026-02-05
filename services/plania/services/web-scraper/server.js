@@ -23,7 +23,7 @@ const KB_DIR = path.join(__dirname, 'knowledge_base');
 const upload = multer({ dest: KB_DIR });
 
 const app = express();
-const PORT = 3001;
+const PORT = 3005;
 
 // Módulo de Base de Datos SQLite
 const db = require('./database');
@@ -643,520 +643,690 @@ async function searchMercadoLibrePrecios(product, category = '') {
     } finally {
         await page.close();
     }
-}
-
-/**
- * DENUE - Directorio de empresas INEGI
- * Busca empresas por actividad y ubicación
- */
-async function searchDENUE(activity, state = '') {
-    const browser = await getBrowser();
-    const page = await browser.newPage();
-
-    try {
-        await page.goto(`https://www.inegi.org.mx/app/mapa/denue/default.aspx`, {
-            waitUntil: 'networkidle2',
-            timeout: 20000
-        });
-
-        // El DENUE requiere interacción, hacer búsqueda simple
-        const searchUrl = `https://www.inegi.org.mx/app/buscador/default.html?q=denue+${encodeURIComponent(activity)}+${encodeURIComponent(state)}`;
-        await page.goto(searchUrl, { waitUntil: 'networkidle2' });
-
-        await page.waitForSelector('.resultado', { timeout: 8000 }).catch(() => { });
-
-        const results = await page.evaluate(() => {
-            const items = document.querySelectorAll('.resultado');
-            const data = [];
-
-            items.forEach((item, i) => {
-                if (i >= 3) return;
-
-                const titleEl = item.querySelector('h3 a');
-                const descEl = item.querySelector('.descripcion');
-
-                if (titleEl) {
-                    data.push({
-                        title: titleEl.textContent?.trim() || '',
-                        url: titleEl.href || '',
-                        description: descEl?.textContent?.trim() || '',
-                        source: 'DENUE/INEGI'
-                    });
-                }
-            });
-
-            return data;
-        });
-
-        return results;
-    } catch (error) {
-        console.error('[DENUE] Error:', error.message);
-        return [];
-    } finally {
-        await page.close();
-    }
-}
-
-// =============================================================================
-// FUNCIONES ORIGINALES (mantenidas)
-// =============================================================================
-
-/**
- * Buscar en DuckDuckGo (sin límites de API)
- */
-async function searchDuckDuckGo(query, maxResults = 5) {
-    const browser = await getBrowser();
-    const page = await browser.newPage();
-
-    try {
-        await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
-        await page.goto(`https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web`, {
-            waitUntil: 'networkidle2',
-            timeout: 15000
-        });
-
-        await page.waitForSelector('[data-testid="result"]', { timeout: 10000 }).catch(() => { });
-
-        const results = await page.evaluate((max) => {
-            const items = document.querySelectorAll('[data-testid="result"]');
-            const data = [];
-
-            items.forEach((item, i) => {
-                if (i >= max) return;
-
-                const titleEl = item.querySelector('h2 a');
-                const snippetEl = item.querySelector('[data-result="snippet"]');
-
-                if (titleEl) {
-                    data.push({
-                        title: titleEl.textContent?.trim() || '',
-                        url: titleEl.href || '',
-                        snippet: snippetEl?.textContent?.trim() || ''
-                    });
-                }
-            });
-
-            return data;
-        }, maxResults);
-
-        return results;
-    } catch (error) {
-        console.error('[DuckDuckGo] Error:', error.message);
-        return [];
-    } finally {
-        await page.close();
-    }
-}
-
-/**
- * Buscar competidores en Google Maps
- */
-async function searchGoogleMaps(query, location = '') {
-    const browser = await getBrowser();
-    const page = await browser.newPage();
-
-    try {
-        const searchQuery = location ? `${query} near ${location}` : query;
-        await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
-        await page.goto(`https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`, {
-            waitUntil: 'networkidle2',
-            timeout: 20000
-        });
-
-        await page.waitForSelector('[role="feed"]', { timeout: 10000 }).catch(() => { });
-        await new Promise(r => setTimeout(r, 2000));
-
-        const results = await page.evaluate(() => {
-            const items = document.querySelectorAll('[role="feed"] > div > div > a');
-            const data = [];
-
-            items.forEach((item, i) => {
-                if (i >= 5) return;
-
-                const name = item.getAttribute('aria-label');
-                const href = item.href;
-
-                if (name) {
-                    data.push({
-                        name: name,
-                        url: href,
-                        source: 'Google Maps'
-                    });
-                }
-            });
-
-            return data;
-        });
-
-        return results;
-    } catch (error) {
-        console.error('[GoogleMaps] Error:', error.message);
-        return [];
-    } finally {
-        await page.close();
-    }
-}
-
-// =============================================================================
-// API ENDPOINTS
-// =============================================================================
-
-/**
- * POST /search - Búsqueda general
- */
-app.post('/search', async (req, res) => {
-    const { query, type = 'general', location = '', maxResults = 5, user = '' } = req.body;
-
-    console.log(`[API] Search: "${query}" type=${type}`);
-
-    try {
-        let results = [];
-
-        switch (type) {
-            case 'competitors':
-                results = await searchGoogleMaps(query, location);
-                break;
-            case 'statistics':
-                const denue = await searchDENUE(query, location);
-                results = denue;
-                break;
-            case 'prices':
-                const mlResults = await searchMercadoLibrePrecios(query);
-                results = mlResults.items;
-                results.averagePrice = mlResults.averagePrice;
-                break;
-            case 'general':
-            default:
-                results = await searchDuckDuckGo(query, maxResults);
-        }
-
-        // Registrar en historial
-        logSearch({
-            type,
-            query,
-            location,
-            user: user || req.headers['x-user-id'] || 'anónimo',
-            resultsCount: Array.isArray(results) ? results.length : 0
-        });
-
-        res.json({ success: true, results, query, type });
-    } catch (error) {
-        console.error('[API] Error:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-/**
- * GET /indicators - Indicadores económicos de México
- */
-app.get('/indicators', async (req, res) => {
-    console.log('[API] Getting economic indicators');
-
-    try {
-        const [inegi, banxico] = await Promise.all([
-            getINEGIIndicators('desempleo'),
-            getBanxicoData('tipo_cambio')
-        ]);
-
-        res.json({
-            success: true,
-            indicators: {
-                inegi,
-                banxico,
-                timestamp: new Date().toISOString()
-            }
-        });
-    } catch (error) {
-        console.error('[API] Indicators error:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-/**
- * POST /prices - Comparar precios de productos
- */
-app.post('/prices', async (req, res) => {
-    const { product } = req.body;
-
-    console.log(`[API] Price search: "${product}"`);
-
-    try {
-        const [mercadoLibre, profeco] = await Promise.all([
-            searchMercadoLibrePrecios(product),
-            searchProfecoPrecios(product)
-        ]);
-
-        // Registrar en historial
-        logSearch({
-            type: 'prices',
-            query: product,
-            resultsCount: (mercadoLibre.items?.length || 0) + (profeco?.length || 0),
-            user: req.body.user || 'anónimo'
-        });
-
-        res.json({
-            success: true,
-            product,
-            data: {
-                mercadoLibre: {
-                    items: mercadoLibre.items,
-                    averagePrice: mercadoLibre.averagePrice,
-                    sampleSize: mercadoLibre.sampleSize
-                },
-                profeco: profeco
-            }
-        });
-    } catch (error) {
-        console.error('[API] Prices error:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-/**
- * POST /research - Investigación completa para un negocio
- */
-app.post('/research', async (req, res) => {
-    const { businessName, industry, location } = req.body;
-
-    console.log(`[API] Research: "${businessName}" in ${industry}`);
-
-    try {
-        // Búsquedas paralelas
-        const [competitors, marketInfo, indicators] = await Promise.all([
-            searchGoogleMaps(`${industry} ${location}`, location),
-            searchDuckDuckGo(`${industry} mercado tendencias México 2024`, 3),
-            Promise.all([
-                getINEGIIndicators('empresas'),
-                getBanxicoData('tipo_cambio')
-            ])
-        ]);
-
-        // Registrar en historial
-        logSearch({
-            type: 'research',
-            query: `${businessName} - ${industry}`,
-            location,
-            resultsCount: 1, // Resultado complejo
-            user: req.body.user || 'anónimo'
-        });
-
-        res.json({
-            success: true,
-            businessName,
-            data: {
-                competitors,
-                marketInfo,
-                economicIndicators: {
-                    inegi: indicators[0],
-                    banxico: indicators[1]
-                }
-            }
-        });
-    } catch (error) {
-        console.error('[API] Research error:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-/**
- * POST /capture-map - Capturar screenshot de Google Maps
- */
-app.post('/capture-map', async (req, res) => {
-    const { query, user } = req.body;
-    console.log(`[API] Capturing Map: "${query}"`);
-
-    try {
+    /**
+     * CONSULTA SNIIM (Sistema Nacional de Información e Integración de Mercados)
+     * Agrícolas, Pecuarios, etc.
+     */
+    async function searchSNIIM(product) {
+        console.log(`[SNIIM] Buscando: ${product}`);
         const browser = await getBrowser();
         const page = await browser.newPage();
-        await page.setViewport({ width: 1280, height: 720 });
-
-        // Navegar a Google Maps
-        // Usamos una URL de embed o search limpia
-        await page.goto(`https://www.google.com/maps/search/${encodeURIComponent(query)}?hl=es`, { waitUntil: 'networkidle2' });
-
-        // Esperar carga visual extra
-        await new Promise(r => setTimeout(r, 3000));
-
-        const filename = `map_${Date.now()}.jpg`;
-        const filepath = path.join(__dirname, 'public/screenshots', filename);
-
-        await page.screenshot({ path: filepath, type: 'jpeg', quality: 85 });
-        await page.close();
-
-        // Log auditoría
-        await logSearch({
-            type: 'map_capture',
-            query: query,
-            location: 'Screenshot',
-            resultsCount: 1,
-            user: user || 'system'
-        });
-
-        console.log(`[Capture] Saved to ${filepath}`);
-        res.json({ success: true, url: `http://localhost:${PORT}/screenshots/${filename}` });
-    } catch (e) {
-        console.error('[Capture] Error:', e);
-        res.status(500).json({ error: e.message });
-    }
-});
-/**
- * GET /health - Health check
- */
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        service: 'PlanIA Web Scraper + APIs México',
-        port: PORT,
-        sources: ['DuckDuckGo', 'Google Maps', 'INEGI API', 'Banxico API', 'Profeco', 'MercadoLibre', 'DENUE']
-    });
-});
-
-// Cleanup on exit
-process.on('SIGINT', async () => {
-    if (browser) {
-        await browser.close();
-    }
-    process.exit();
-});
-
-// =============================================================================
-// KNOWLEDGE BASE (RAG) - LOCAL FILES
-// =============================================================================
-
-app.post('/knowledge/upload', upload.single('file'), async (req, res) => {
-    try {
-        if (!req.file) return res.status(400).json({ success: false, error: 'No file uploaded' });
-
-        const originalName = req.file.originalname;
-        const filePath = req.file.path;
-        console.log(`[KB] File uploaded: ${originalName}`);
-
-        // Extract Text if PDF
-        let textContent = '';
-        if (req.file.mimetype === 'application/pdf' || originalName.toLowerCase().endsWith('.pdf')) {
-            try {
-                const dataBuffer = fs.readFileSync(filePath);
-                const pdfData = await pdf(dataBuffer);
-                textContent = pdfData.text;
-            } catch (err) {
-                console.error('Error parsing PDF:', err);
-                textContent = '[Error reading PDF content]';
-            }
-        } else {
-            // Assume text/md
-            textContent = fs.readFileSync(filePath, 'utf8');
+        try {
+            await page.goto(`https://www.google.com/search?q=site:economia-sniim.gob.mx+precio+${encodeURIComponent(product)}`, { waitUntil: 'networkidle2' });
+            const results = await page.evaluate(() => {
+                const data = [];
+                document.querySelectorAll('.g').forEach(el => {
+                    const title = el.querySelector('h3')?.innerText;
+                    const snippet = el.querySelector('.VwiC3b')?.innerText;
+                    if (title && snippet) {
+                        const priceMatch = snippet.match(/\$\s?(\d+(?:\.\d{2})?)/);
+                        data.push({
+                            product: title.replace(' - SNIIM', ''),
+                            price: priceMatch ? parseFloat(priceMatch[1]) : null,
+                            source: 'SNIIM (via Google)',
+                            date: new Date().toISOString().split('T')[0]
+                        });
+                    }
+                });
+                return data;
+            });
+            return results.filter(r => r.price !== null);
+        } catch (error) {
+            console.error('[SNIIM] Error:', error);
+            return [];
+        } finally {
+            await page.close();
         }
-
-        // Save Extracted Text as .txt metadata
-        const metaPath = filePath + '.txt';
-        fs.writeFileSync(metaPath, textContent);
-
-        // Save Metadata JSON
-        const jsonPath = filePath + '.json';
-        const meta = {
-            id: req.file.filename,
-            originalName: originalName,
-            mimetype: req.file.mimetype,
-            size: req.file.size,
-            uploadDate: new Date().toISOString(),
-            txtPath: metaPath
-        };
-        fs.writeFileSync(jsonPath, JSON.stringify(meta));
-
-        res.json({ success: true, file: meta });
-
-    } catch (e) {
-        console.error('[KB] Upload Error:', e);
-        res.status(500).json({ success: false, error: e.message });
     }
-});
 
-app.get('/knowledge/list', (req, res) => {
-    try {
-        if (!fs.existsSync(KB_DIR)) fs.mkdirSync(KB_DIR);
-        const files = fs.readdirSync(KB_DIR).filter(f => f.endsWith('.json'));
-        const docs = files.map(f => {
-            try {
-                const content = fs.readFileSync(path.join(KB_DIR, f), 'utf8');
-                return JSON.parse(content);
-            } catch (e) { return null; }
-        }).filter(d => d !== null);
-        res.json({ success: true, documents: docs });
-    } catch (e) {
-        res.status(500).json({ success: false, error: e.message });
+    /**
+     * Búsqueda Generica de Supermercados
+     * (Walmart, Soriana, Chedraui via Google Shopping)
+     */
+    async function searchSupermarkets(product) {
+        const browser = await getBrowser();
+        const page = await browser.newPage();
+        try {
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+            const query = encodeURIComponent(product);
+            await page.goto(`https://www.google.com/search?q=${query}&tbm=shop`, { waitUntil: 'networkidle2' });
+            const results = await page.evaluate(() => {
+                const items = [];
+                document.querySelectorAll('.sh-dgr__content').forEach(el => {
+                    const title = el.querySelector('h3')?.innerText;
+                    const priceText = el.querySelector('.a8Pemb')?.innerText || el.querySelector('.HL4Sgs')?.innerText;
+                    const merchant = el.querySelector('.aULzUe')?.innerText || el.querySelector('.IuHnof')?.innerText;
+                    if (title && priceText) {
+                        const price = parseFloat(priceText.replace(/[^0-9.]/g, ''));
+                        items.push({
+                            title,
+                            price,
+                            merchant: merchant || 'Desconocido',
+                            currency: 'MXN'
+                        });
+                    }
+                });
+                return items.slice(0, 10);
+            });
+            return results;
+        } catch (e) {
+            console.error('[Supermarkets] Error:', e);
+            return [];
+        } finally {
+            await page.close();
+        }
     }
-});
+    async function searchDENUE(activity, state = '') {
+        const browser = await getBrowser();
+        const page = await browser.newPage();
 
-app.post('/knowledge/scrape', async (req, res) => {
-    let internalBrowser;
-    try {
-        const { url } = req.body;
-        if (!url) return res.status(400).json({ success: false, error: 'URL is required' });
+        try {
+            await page.goto(`https://www.inegi.org.mx/app/mapa/denue/default.aspx`, {
+                waitUntil: 'networkidle2',
+                timeout: 20000
+            });
 
-        console.log(`[KB] Scraping to Knowledge Base: ${url}`);
+            // El DENUE requiere interacción, hacer búsqueda simple
+            const searchUrl = `https://www.inegi.org.mx/app/buscador/default.html?q=denue+${encodeURIComponent(activity)}+${encodeURIComponent(state)}`;
+            await page.goto(searchUrl, { waitUntil: 'networkidle2' });
 
-        // 1. Launch Puppeteer to get clean text
-        internalBrowser = await puppeteer.launch({ headless: 'new' });
-        const page = await internalBrowser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+            await page.waitForSelector('.resultado', { timeout: 8000 }).catch(() => { });
 
-        const title = await page.title();
-        const textContent = await page.evaluate(() => document.body.innerText);
+            const results = await page.evaluate(() => {
+                const items = document.querySelectorAll('.resultado');
+                const data = [];
 
-        // 2. Save to KB folder
-        const id = 'scrape_' + Date.now();
-        const fileName = `${id}.txt`;
-        const jsonName = `${id}.json`;
+                items.forEach((item, i) => {
+                    if (i >= 3) return;
 
-        fs.writeFileSync(path.join(KB_DIR, fileName), textContent);
+                    const titleEl = item.querySelector('h3 a');
+                    const descEl = item.querySelector('.descripcion');
 
-        const meta = {
-            id: id,
-            originalName: `🌐 ${title || url}`,
-            mimetype: 'text/plain',
-            size: textContent.length,
-            uploadDate: new Date().toISOString(),
-            url: url
-        };
-        fs.writeFileSync(path.join(KB_DIR, jsonName), JSON.stringify(meta));
+                    if (titleEl) {
+                        data.push({
+                            title: titleEl.textContent?.trim() || '',
+                            url: titleEl.href || '',
+                            description: descEl?.textContent?.trim() || '',
+                            source: 'DENUE/INEGI'
+                        });
+                    }
+                });
 
-        res.json({ success: true, file: meta });
+                return data;
+            });
 
-    } catch (e) {
-        console.error('[KB] Scrape Error:', e);
-        res.status(500).json({ success: false, error: e.message });
-    } finally {
-        if (internalBrowser) await internalBrowser.close();
+            return results;
+        } catch (error) {
+            console.error('[DENUE] Error:', error.message);
+            return [];
+        } finally {
+            await page.close();
+        }
     }
-});
 
-app.post('/knowledge/context', (req, res) => {
-    try {
-        const { docIds } = req.body;
-        if (!docIds || !Array.isArray(docIds)) return res.json({ success: false, context: '' });
+    // =============================================================================
+    // FUNCIONES ORIGINALES (mantenidas)
+    // =============================================================================
 
-        let context = '';
-        docIds.forEach(id => {
-            // id is filename without extension (multer id)
-            // But we stored it in meta.id
-            const txtPath = path.join(KB_DIR, id + '.txt');
-            const jsonPath = path.join(KB_DIR, id + '.json');
+    /**
+     * Buscar en DuckDuckGo (sin límites de API)
+     */
+    async function searchDuckDuckGo(query, maxResults = 5, region = 'mx-es') {
+        const browser = await getBrowser();
+        const page = await browser.newPage();
 
-            if (fs.existsSync(txtPath) && fs.existsSync(jsonPath)) {
-                const meta = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-                let text = fs.readFileSync(txtPath, 'utf8');
-                // Truncate
-                if (text.length > 15000) text = text.substring(0, 15000) + '... (truncado)';
-                context += `\n>>> FUENTE: ${meta.originalName} <<<\n${text}\n----------------------------------\n`;
+        try {
+            await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
+            const regionParam = region ? `&kl=${region}` : '';
+            await page.goto(`https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web${regionParam}`, {
+                waitUntil: 'networkidle2',
+                timeout: 15000
+            });
+
+            await page.waitForSelector('[data-testid="result"]', { timeout: 10000 }).catch(() => { });
+
+            const results = await page.evaluate((max) => {
+                // 1. Try to get Instant Answer (Calculator/Converter/Zero-Click Info)
+                const answerEl = document.querySelector('.c-base__title') ||
+                    document.querySelector('#zci-result') ||
+                    document.querySelector('.zci__def__text') ||
+                    document.querySelector('.module__content .module__title'); // Generic
+
+                const answerSub = document.querySelector('.c-base__sub') ||
+                    document.querySelector('.zci__def__sub') ||
+                    document.querySelector('.module__content .module__text'); // Generic
+
+                let instantAnswer = null;
+                if (answerEl) {
+                    instantAnswer = {
+                        title: "Respuesta Rápida (Instant Answer)",
+                        url: "https://duckduckgo.com",
+                        snippet: "DATOS EXACTOS (TOP RESULT): " + answerEl.innerText + (answerSub ? " " + answerSub.innerText : "")
+                    };
+                }
+
+                // 2. Standard Results
+                const items = document.querySelectorAll('[data-testid="result"]');
+                const data = [];
+
+                if (instantAnswer) {
+                    data.push(instantAnswer);
+                }
+
+                items.forEach((item, i) => {
+                    if (data.length >= max + (instantAnswer ? 1 : 0)) return;
+
+                    const titleEl = item.querySelector('h2 a');
+                    const snippetEl = item.querySelector('[data-result="snippet"]');
+
+                    if (titleEl) {
+                        data.push({
+                            title: titleEl.textContent?.trim() || '',
+                            url: titleEl.href || '',
+                            snippet: snippetEl?.textContent?.trim() || ''
+                        });
+                    }
+                });
+
+                return data;
+            }, maxResults);
+
+            return results;
+        } catch (error) {
+            console.error('[DuckDuckGo] Error:', error.message);
+            return [];
+        } finally {
+            await page.close();
+        }
+    }
+
+    /**
+     * Buscar competidores en Google Maps
+     */
+    async function searchGoogleMaps(query, location = '') {
+        const browser = await getBrowser();
+        const page = await browser.newPage();
+
+        try {
+            const searchQuery = location ? `${query} near ${location}` : query;
+            await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
+            await page.goto(`https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`, {
+                waitUntil: 'networkidle2',
+                timeout: 20000
+            });
+
+            await page.waitForSelector('[role="feed"]', { timeout: 10000 }).catch(() => { });
+            await new Promise(r => setTimeout(r, 2000));
+
+            const results = await page.evaluate(() => {
+                const items = document.querySelectorAll('[role="feed"] > div > div > a');
+                const data = [];
+
+                items.forEach((item, i) => {
+                    if (i >= 5) return;
+
+                    const name = item.getAttribute('aria-label');
+                    const href = item.href;
+
+                    if (name) {
+                        data.push({
+                            name: name,
+                            url: href,
+                            source: 'Google Maps'
+                        });
+                    }
+                });
+
+                return data;
+            });
+
+            return results;
+        } catch (error) {
+            console.error('[GoogleMaps] Error:', error.message);
+            return [];
+        } finally {
+            await page.close();
+        }
+    }
+
+    // =============================================================================
+    // API ENDPOINTS
+    // =============================================================================
+
+    /**
+     * POST /search - Búsqueda general
+     */
+    app.post('/search', async (req, res) => {
+        const { query, type = 'general', location = '', maxResults = 5, user = '' } = req.body;
+
+        console.log(`[API] Search: "${query}" type=${type}`);
+
+        try {
+            let results = [];
+
+            switch (type) {
+                case 'competitors':
+                    results = await searchGoogleMaps(query, location);
+                    break;
+                case 'statistics':
+                    const denue = await searchDENUE(query, location);
+                    results = denue;
+                    break;
+                case 'prices':
+                    const mlResults = await searchMercadoLibrePrecios(query);
+                    results = mlResults.items;
+                    results.averagePrice = mlResults.averagePrice;
+                    break;
+                case 'general':
+                default:
+                    // Enhancement: Check for currency queries to inject reliable API data
+                    const loweredQuery = query.toLowerCase();
+                    const currencyKeywords = ['dolar', 'dólar', 'usd', 'peso', 'cambio', 'moneda'];
+
+                    // Extract region from request or default to Mexico (mx-es) if not specified
+                    // DuckDuckGo regions: mx-es, us-en, cn-zh, ru-ru, fr-fr, etc.
+                    const regionParam = req.body.region || 'mx-es';
+
+                    results = await searchDuckDuckGo(query, maxResults, regionParam);
+
+                    if (currencyKeywords.some(kw => loweredQuery.includes(kw))) {
+                        try {
+                            console.log('[API] Detected currency query, fetching Banxico/API data...');
+                            const currencyData = await getBanxicoData('tipo_cambio');
+                            if (currencyData && currencyData.value) {
+                                results.unshift({
+                                    title: `💰 ${currencyData.title} (Oficial/API)`,
+                                    url: "https://www.banxico.org.mx/",
+                                    snippet: `DATOS OFICIALES (${currencyData.date}): El tipo de cambio es de $${currencyData.value} MXN por USD. Fuente: ${currencyData.source}.`
+                                });
+                            }
+                        } catch (e) {
+                            console.error('[API] Failed to inject currency data:', e);
+                        }
+                    }
+                    break;
             }
-        });
-        res.json({ success: true, context });
-    } catch (e) {
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
 
-app.listen(PORT, () => {
-    console.log(`
+            // Registrar en historial
+            logSearch({
+                type,
+                query,
+                location,
+                user: user || req.headers['x-user-id'] || 'anónimo',
+                resultsCount: Array.isArray(results) ? results.length : 0
+            });
+
+            res.json({ success: true, results, query, type });
+        } catch (error) {
+            console.error('[API] Error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    // Endpoint para productos agrícolas (SNIIM)
+    app.post('/prices/agriculture', async (req, res) => {
+        const { product } = req.body;
+        if (!product) return res.status(400).json({ error: 'Product is required' });
+        try {
+            const results = await searchSNIIM(product);
+            await logSearch({ type: 'sniim', query: product, results: results.length });
+            res.json({ success: true, data: results });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Endpoint para retail (Supermercados)
+    app.post('/prices/retail', async (req, res) => {
+        const { product } = req.body;
+        if (!product) return res.status(400).json({ error: 'Product is required' });
+        try {
+            const results = await searchSupermarkets(product);
+            await logSearch({ type: 'retail', query: product, results: results.length });
+            res.json({ success: true, data: results });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    /**
+     * GET /indicators - Indicadores económicos de México
+     */
+    app.get('/indicators', async (req, res) => {
+        console.log('[API] Getting economic indicators');
+
+        try {
+            const [inegi, banxico] = await Promise.all([
+                getINEGIIndicators('desempleo'),
+                getBanxicoData('tipo_cambio')
+            ]);
+
+            res.json({
+                success: true,
+                indicators: {
+                    inegi,
+                    banxico,
+                    timestamp: new Date().toISOString()
+                }
+            });
+        } catch (error) {
+            console.error('[API] Indicators error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    /**
+     * POST /prices - Comparar precios de productos
+     */
+    app.post('/prices', async (req, res) => {
+        const { product } = req.body;
+
+        console.log(`[API] Price search: "${product}"`);
+
+        try {
+            const [mercadoLibre, profeco] = await Promise.all([
+                searchMercadoLibrePrecios(product),
+                searchProfecoPrecios(product)
+            ]);
+
+            // Registrar en historial
+            logSearch({
+                type: 'prices',
+                query: product,
+                resultsCount: (mercadoLibre.items?.length || 0) + (profeco?.length || 0),
+                user: req.body.user || 'anónimo'
+            });
+
+            res.json({
+                success: true,
+                product,
+                data: {
+                    mercadoLibre: {
+                        items: mercadoLibre.items,
+                        averagePrice: mercadoLibre.averagePrice,
+                        sampleSize: mercadoLibre.sampleSize
+                    },
+                    profeco: profeco
+                }
+            });
+        } catch (error) {
+            console.error('[API] Prices error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    /**
+     * POST /research - Investigación completa para un negocio
+     */
+    app.post('/research', async (req, res) => {
+        const { businessName, industry, location } = req.body;
+
+        console.log(`[API] Research: "${businessName}" in ${industry}`);
+
+        try {
+            // Búsquedas paralelas
+            const [competitors, marketInfo, indicators] = await Promise.all([
+                searchGoogleMaps(`${industry} ${location}`, location),
+                searchDuckDuckGo(`${industry} mercado tendencias México 2024`, 3),
+                Promise.all([
+                    getINEGIIndicators('empresas'),
+                    getBanxicoData('tipo_cambio')
+                ])
+            ]);
+
+            // Registrar en historial
+            logSearch({
+                type: 'research',
+                query: `${businessName} - ${industry}`,
+                location,
+                resultsCount: 1, // Resultado complejo
+                user: req.body.user || 'anónimo'
+            });
+
+            res.json({
+                success: true,
+                businessName,
+                data: {
+                    competitors,
+                    marketInfo,
+                    economicIndicators: {
+                        inegi: indicators[0],
+                        banxico: indicators[1]
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('[API] Research error:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+    /**
+     * POST /capture-map - Capturar screenshot de Google Maps
+     */
+    app.post('/capture-map', async (req, res) => {
+        const { query, user } = req.body;
+        console.log(`[API] Capturing Map: "${query}"`);
+
+        try {
+            const browser = await getBrowser();
+            const page = await browser.newPage();
+            await page.setViewport({ width: 1280, height: 720 });
+
+            // Navegar a Google Maps
+            // Usamos una URL de embed o search limpia
+            await page.goto(`https://www.google.com/maps/search/${encodeURIComponent(query)}?hl=es`, { waitUntil: 'networkidle2' });
+
+            // Esperar carga visual extra
+            await new Promise(r => setTimeout(r, 3000));
+
+            const filename = `map_${Date.now()}.jpg`;
+            const filepath = path.join(__dirname, 'public/screenshots', filename);
+
+            await page.screenshot({ path: filepath, type: 'jpeg', quality: 85 });
+            await page.close();
+
+            // Log auditoría
+            await logSearch({
+                type: 'map_capture',
+                query: query,
+                location: 'Screenshot',
+                resultsCount: 1,
+                user: user || 'system'
+            });
+
+            console.log(`[Capture] Saved to ${filepath}`);
+            res.json({ success: true, url: `http://localhost:${PORT}/screenshots/${filename}` });
+        } catch (e) {
+            console.error('[Capture] Error:', e);
+            res.status(500).json({ error: e.message });
+        }
+    });
+    /**
+     * GET /health - Health check
+     */
+    app.get('/health', (req, res) => {
+        res.json({
+            status: 'ok',
+            service: 'PlanIA Web Scraper + APIs México',
+            port: PORT,
+            sources: ['DuckDuckGo', 'Google Maps', 'INEGI API', 'Banxico API', 'Profeco', 'MercadoLibre', 'DENUE']
+        });
+    });
+
+    // Cleanup on exit
+    process.on('SIGINT', async () => {
+        if (browser) {
+            await browser.close();
+        }
+        process.exit();
+    });
+
+    // =============================================================================
+    // KNOWLEDGE BASE (RAG) - LOCAL FILES
+    // =============================================================================
+
+    app.post('/knowledge/upload', upload.single('file'), async (req, res) => {
+        try {
+            if (!req.file) return res.status(400).json({ success: false, error: 'No file uploaded' });
+
+            const originalName = req.file.originalname;
+            const filePath = req.file.path;
+            console.log(`[KB] File uploaded: ${originalName}`);
+
+            // Extract Text if PDF
+            let textContent = '';
+            if (req.file.mimetype === 'application/pdf' || originalName.toLowerCase().endsWith('.pdf')) {
+                try {
+                    const dataBuffer = fs.readFileSync(filePath);
+                    const pdfData = await pdf(dataBuffer);
+                    textContent = pdfData.text;
+                } catch (err) {
+                    console.error('Error parsing PDF:', err);
+                    textContent = '[Error reading PDF content]';
+                }
+            } else {
+                // Assume text/md
+                textContent = fs.readFileSync(filePath, 'utf8');
+            }
+
+            // Save Extracted Text as .txt metadata
+            const metaPath = filePath + '.txt';
+            fs.writeFileSync(metaPath, textContent);
+
+            // Save Metadata JSON
+            const jsonPath = filePath + '.json';
+            const meta = {
+                id: req.file.filename,
+                originalName: originalName,
+                mimetype: req.file.mimetype,
+                size: req.file.size,
+                uploadDate: new Date().toISOString(),
+                txtPath: metaPath
+            };
+            fs.writeFileSync(jsonPath, JSON.stringify(meta));
+
+            res.json({ success: true, file: meta });
+
+        } catch (e) {
+            console.error('[KB] Upload Error:', e);
+            res.status(500).json({ success: false, error: e.message });
+        }
+    });
+
+    app.get('/knowledge/list', (req, res) => {
+        try {
+            if (!fs.existsSync(KB_DIR)) fs.mkdirSync(KB_DIR);
+            const files = fs.readdirSync(KB_DIR).filter(f => f.endsWith('.json'));
+            const docs = files.map(f => {
+                try {
+                    const content = fs.readFileSync(path.join(KB_DIR, f), 'utf8');
+                    return JSON.parse(content);
+                } catch (e) { return null; }
+            }).filter(d => d !== null);
+            res.json({ success: true, documents: docs });
+        } catch (e) {
+            res.status(500).json({ success: false, error: e.message });
+        }
+    });
+
+    app.post('/knowledge/scrape', async (req, res) => {
+        let internalBrowser;
+        try {
+            const { url } = req.body;
+            if (!url) return res.status(400).json({ success: false, error: 'URL is required' });
+
+            console.log(`[KB] Scraping to Knowledge Base: ${url}`);
+
+            // 1. Launch Puppeteer to get clean text
+            internalBrowser = await puppeteer.launch({ headless: 'new' });
+            const page = await internalBrowser.newPage();
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+            const title = await page.title();
+            const textContent = await page.evaluate(() => document.body.innerText);
+
+            // 2. Save to KB folder
+            const id = 'scrape_' + Date.now();
+            const fileName = `${id}.txt`;
+            const jsonName = `${id}.json`;
+
+            fs.writeFileSync(path.join(KB_DIR, fileName), textContent);
+
+            const meta = {
+                id: id,
+                originalName: `🌐 ${title || url}`,
+                mimetype: 'text/plain',
+                size: textContent.length,
+                uploadDate: new Date().toISOString(),
+                url: url
+            };
+            fs.writeFileSync(path.join(KB_DIR, jsonName), JSON.stringify(meta));
+
+            res.json({ success: true, file: meta });
+
+        } catch (e) {
+            console.error('[KB] Scrape Error:', e);
+            res.status(500).json({ success: false, error: e.message });
+        } finally {
+            if (internalBrowser) await internalBrowser.close();
+        }
+    });
+
+    app.post('/knowledge/context', (req, res) => {
+        try {
+            const { docIds } = req.body;
+            if (!docIds || !Array.isArray(docIds)) return res.json({ success: false, context: '' });
+
+            let context = '';
+            docIds.forEach(id => {
+                // id is filename without extension (multer id)
+                // But we stored it in meta.id
+                const txtPath = path.join(KB_DIR, id + '.txt');
+                const jsonPath = path.join(KB_DIR, id + '.json');
+
+                if (fs.existsSync(txtPath) && fs.existsSync(jsonPath)) {
+                    const meta = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+                    let text = fs.readFileSync(txtPath, 'utf8');
+                    // Truncate
+                    if (text.length > 15000) text = text.substring(0, 15000) + '... (truncado)';
+                    context += `\n>>> FUENTE: ${meta.originalName} <<<\n${text}\n----------------------------------\n`;
+                }
+            });
+            res.json({ success: true, context });
+        } catch (e) {
+            res.status(500).json({ success: false, error: e.message });
+        }
+    });
+
+    // =============================================================================
+    // OLLAMA PROXY (Para evitar CORS desde el navegador)
+    // =============================================================================
+    app.post('/api/ollama-proxy', async (req, res) => {
+        try {
+            const { prompt, model = 'gemma3:1b', stream = false } = req.body;
+
+            // Forward to local Ollama
+            const ollamaUrl = process.env.OLLAMA_HOST || 'http://localhost:11434';
+            const response = await fetch(`${ollamaUrl}/api/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, model, stream })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ollama returned ${response.status}`);
+            }
+
+            const data = await response.json();
+            res.json(data);
+        } catch (error) {
+            console.error('[Ollama Proxy Error]', error.message);
+            res.status(500).json({ error: error.message, response: null });
+        }
+    });
+
+    app.listen(PORT, () => {
+        console.log(`
 ╔═══════════════════════════════════════════════════╗
 ║  PlanIA Web Scraper + APIs México Service         ║
 ║  Running on http://localhost:${PORT}                 ║
@@ -1171,4 +1341,4 @@ app.listen(PORT, () => {
 ║  • DENUE         - Directorio de empresas         ║
 ╚═══════════════════════════════════════════════════╝
     `);
-});
+    });

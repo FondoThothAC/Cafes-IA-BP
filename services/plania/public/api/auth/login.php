@@ -3,7 +3,7 @@
 // public/api/auth/login.php
 
 header('Content-Type: application/json');
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../../config/database.php';
 
 // Allow CORS for local dev if needed
 header("Access-Control-Allow-Origin: *");

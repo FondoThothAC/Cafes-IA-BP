@@ -12,6 +12,7 @@ const express = require('express');
 const cors = require('cors');
 const { exec } = require('child_process');
 const multer = require('multer');
+const FormData = require('form-data');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -20,25 +21,28 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 
 // ============================================
-// DETECCIÓN DE PLATAFORMA (desde env o auto)
+// DETECCIÓN DE PLATAFORMA (Forced Local/Ollama per User Request)
 // ============================================
-const PLATFORM = process.env.HOST_PLATFORM || os.platform(); // 'darwin' (Mac), 'win32' (Windows)
+const PLATFORM = process.env.HOST_PLATFORM || os.platform();
 const IS_MAC = PLATFORM === 'darwin';
-const IS_WINDOWS = PLATFORM === 'win32' || PLATFORM === 'windows';
 
 // Config de backends
 const MLX_HOST = process.env.MLX_HOST || 'http://localhost:8000';
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
-const MOLTBOT_CONTAINER = 'ai-moltbot';
+
+// FORZAR OLLAMA (User Preference: Costa Efficiency)
+const AI_BACKEND = 'ollama';
+const AI_HOST = OLLAMA_HOST;
+// User requested "gemma3n" -> mapping to available gemma model (likely gemma2 or custom)
+// If 'gemma3n' fails, ensure user has done 'ollama pull gemma3n' or 'ollama pull gemma2'
+const DEFAULT_MODEL = 'gemma3:1b';
+
+// Service hosts
+const MOLTBOT_CONTAINER = 'http://ai-moltbot:8080';
 const WHISPER_HOST = process.env.WHISPER_HOST || 'http://ai-whisper:9000';
 
-// Backend activo según plataforma
-const AI_BACKEND = IS_MAC ? 'mlx' : 'ollama';
-const AI_HOST = IS_MAC ? MLX_HOST : OLLAMA_HOST;
-const DEFAULT_MODEL = IS_MAC ? 'gemma-3-4b-it' : 'gemma3:1b';
-
 console.log(`🖥️  Platform: ${PLATFORM}`);
-console.log(`🤖 AI Backend: ${AI_BACKEND} (${AI_HOST})`);
+console.log(`🤖 AI Backend: ${AI_BACKEND} (${AI_HOST}) - FORCED LOCAL`);
 console.log(`📦 Default Model: ${DEFAULT_MODEL}`);
 
 // Middleware
@@ -80,9 +84,70 @@ app.get('/health', (req, res) => {
         services: {
             ai: AI_HOST,
             moltbot: MOLTBOT_CONTAINER,
-            whisper: WHISPER_HOST
+            whisper: WHISPER_HOST,
+            plania_agent: 'http://plania-python:5000'
         }
     });
+});
+
+// ============================================
+// BOB AGENT PROXY (PlanIA Python)
+// ============================================
+const PLANIA_PYTHON_HOST = 'http://plania-python:5000';
+
+app.all('/api/agent/*', async (req, res) => {
+    try {
+        const path = req.originalUrl;
+        console.log(`🤖 Proxying agent request: ${path}`);
+
+        const response = await fetch(`${PLANIA_PYTHON_HOST}${path}`, {
+            method: req.method,
+            headers: { 'Content-Type': 'application/json' },
+            body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? JSON.stringify(req.body) : undefined
+        });
+
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (error) {
+        console.error('Agent proxy error:', error);
+        res.status(502).json({ success: false, error: 'Agent service unavailable: ' + error.message });
+    }
+});
+
+// ============================================
+// OCR UPLOAD PROXY (Handle Multipart)
+// ============================================
+app.post('/api/agent/ocr-upload', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'No file uploaded to gateway' });
+        }
+
+        console.log(`📄 Proxying OCR upload: ${req.file.originalname}`);
+
+        const form = new FormData();
+        form.append('file', fs.createReadStream(req.file.path), req.file.originalname);
+
+        const response = await fetch(`${PLANIA_PYTHON_HOST}/api/agent/ocr-upload`, {
+            method: 'POST',
+            body: form,
+            headers: form.getHeaders() // Crucial for multipart boundary
+        });
+
+        // Cleanup temp file
+        fs.unlink(req.file.path, (err) => { if (err) console.error('Cleanup error:', err); });
+
+        if (!response.ok) {
+            throw new Error(`Python Service Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        res.json(data);
+
+    } catch (error) {
+        console.error('OCR Upload Proxy Error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // ============================================

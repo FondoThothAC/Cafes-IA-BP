@@ -112,6 +112,8 @@ CREATE TABLE IF NOT EXISTS proyectos_negocio (
     url_evidencia_5 VARCHAR(512),
 
     -- 11. CONTROL DE AGENTES IA (Local Connection)
+    agent_context_md LONGTEXT COMMENT 'Contexto acumulado del agente Bob (Markdown)',
+    agent_complexity ENUM('micro', 'startup', 'enterprise') DEFAULT 'micro' COMMENT 'Complejidad determinada por el agente',
     ia_flag_procesar BOOLEAN DEFAULT FALSE COMMENT 'Si TRUE, el agente local debe leer esta fila',
     ia_ultimo_log TEXT COMMENT 'Mensaje de error o éxito del agente local',
     ia_fecha_procesamiento TIMESTAMP NULL,

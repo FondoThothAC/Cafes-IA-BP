@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moltbot Control Center</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="scanlines"></div>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">MB</div>
+                <h1>MOLTBOT<br><span>CONTROL CENTER</span></h1>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="active" onclick="setMode('chat')">➤ EXECUTOR</a>
+                <a href="#" onclick="setMode('osint')">➤ OSINT SCANNER</a>
+                <a href="#" onclick="setMode('logs')">➤ SYSTEM LOGS</a>
+            </nav>
+
+            <div class="sys-info">
+                <p>CORE: <span class="success">ONLINE</span></p>
+                <p>OLLAMA: <span class="warning">CHECKING...</span></p>
+                <p>PORT: 8085</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-terminal">
+            <div class="terminal-window" id="chat-window">
+                <div class="message system">
+                    <span class="prefix">[SYSTEM]</span> Moltbot v2.0 initialized.<br>
+                    <span class="prefix">[SYSTEM]</span> Gateway channel open.<br>
+                    <span class="prefix">[INFO]</span> Waiting for input...
+                </div>
+            </div>
+
+            <div class="input-area">
+                <span class="prompt-char">root@moltbot:~$</span>
+                <input type="text" id="user-input" placeholder="Ingresa comando o consulta..." autocomplete="off">
+                <button id="send-btn">EJECUTAR</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

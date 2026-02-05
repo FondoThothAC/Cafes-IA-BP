@@ -14,6 +14,7 @@ DESCRIPCIÓN: Vista de administración tipo hoja de cálculo para proyectos.
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PlanIA - Admin Grid</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
     <style>
         :root {
             --primary: #2563eb;
@@ -257,6 +258,7 @@ DESCRIPCIÓN: Vista de administración tipo hoja de cálculo para proyectos.
 </head>
 
 <body>
+    <div id="plania-navbar"></div>
     <div class="container">
         <header>
             <h1>📊 PlanIA Admin Grid</h1>
@@ -282,6 +284,7 @@ DESCRIPCIÓN: Vista de administración tipo hoja de cálculo para proyectos.
                             <th>USD</th>
                             <th>TIIE</th>
                             <th>ROI</th>
+                            <th>Acciones</th>
                             <th>Última Actualización</th>
                         </tr>
                     </thead>
@@ -357,6 +360,9 @@ DESCRIPCIÓN: Vista de administración tipo hoja de cálculo para proyectos.
                     <td>${p.g1_tipo_cambio_usd || '-'}</td>
                     <td>${p.g2_tasa_interes_tiie || '-'}</td>
                     <td>${p.g10_rentabilidad_roi || '-'}</td>
+                    <td>
+                        <button class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="openProject(${p.id_proyecto})">📂 Abrir</button>
+                    </td>
                     <td>${new Date(p.fecha_actualizacion).toLocaleString()}</td>
                 </tr>
             `).join('');
@@ -409,7 +415,19 @@ DESCRIPCIÓN: Vista de administración tipo hoja de cálculo para proyectos.
 
         // Initialize
         document.addEventListener('DOMContentLoaded', loadProjects);
+
+        function openProject(id) {
+            if (typeof PlanIA !== 'undefined') {
+                PlanIA.setCurrentProject(id);
+                window.location.href = 'kpis.html'; // Go to dashboard/KPIs for that project
+            } else {
+                // Fallback if PlanIA not loaded
+                localStorage.setItem('plania_current_project', id);
+                window.location.href = 'kpis.html';
+            }
+        }
     </script>
+    <script src="js/plania-core.js"></script>
 </body>
 
 </html>

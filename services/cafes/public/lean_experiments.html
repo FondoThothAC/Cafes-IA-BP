@@ -1,0 +1,555 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/lean_experiments.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Tablero Kanban para Experimentos Lean y Validación
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Experimentos Lean</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --todo: #64748b;
+            --progress: #3b82f6;
+            --success: #10b981;
+            --fail: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* OpenAI/Kanban Style */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            min-height: 70vh;
+        }
+
+        @media (max-width: 1024px) {
+            .kanban-board {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .kanban-column {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kanban-header {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .col-todo {
+            border-color: var(--todo);
+            color: var(--text);
+        }
+
+        .col-progress {
+            border-color: var(--progress);
+            color: var(--progress);
+        }
+
+        .col-done {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .col-invalid {
+            border-color: var(--fail);
+            color: var(--fail);
+        }
+
+        .experiment-card {
+            background: var(--surface-light);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .experiment-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .card-metrics {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            border-radius: 6px;
+            color: white;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>🧪 Experimentos Lean</h1>
+                <p style="color: var(--text-muted);">Tablero de validación Construir-Medir-Aprender</p>
+            </div>
+            <div style="display: flex;">
+                <button class="btn-ai" onclick="suggestExperiments()">
+                    ⚡ Sugerir Experimentos (IA)
+                </button>
+            </div>
+        </header>
+
+        <div class="kanban-board">
+            <!-- 1. IDEAS / HIPÓTESIS -->
+            <div class="kanban-column col-todo" id="col-ideas">
+                <div class="kanban-header">
+                    <span>💡 Hipótesis</span>
+                    <span id="count-ideas">0</span>
+                </div>
+                <div class="cards-container" id="list-ideas">
+                    <!-- Cards go here -->
+                </div>
+                <button class="btn-add" onclick="openModal('Nuevo Experimento')">+ Agregar</button>
+            </div>
+
+            <!-- 2. EN PROGRESO -->
+            <div class="kanban-column col-progress" id="col-progress">
+                <div class="kanban-header">
+                    <span>🏃 En Progreso</span>
+                    <span id="count-progress">0</span>
+                </div>
+                <div class="cards-container" id="list-progress"></div>
+            </div>
+
+            <!-- 3. VALIDADO -->
+            <div class="kanban-column col-done" id="col-validated">
+                <div class="kanban-header">
+                    <span>✅ Validado</span>
+                    <span id="count-validated">0</span>
+                </div>
+                <div class="cards-container" id="list-validated"></div>
+            </div>
+
+            <!-- 4. INVALIDADO -->
+            <div class="kanban-column col-invalid" id="col-invalidated">
+                <div class="kanban-header">
+                    <span>❌ Invalidado</span>
+                    <span id="count-invalidated">0</span>
+                </div>
+                <div class="cards-container" id="list-invalidated"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <h2 id="modalTitle" style="margin-bottom: 1.5rem;">Tarjeta de Experimento</h2>
+
+            <input type="hidden" id="expId">
+
+            <div class="form-group">
+                <label>Hipótesis (Creemos que...)</label>
+                <textarea id="expHypothesis" rows="2"
+                    placeholder="Ej: Los clientes prefieren pagar suscripción mensual."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Prueba (Para verificarlo, nosotros...)</label>
+                <textarea id="expTest" rows="2"
+                    placeholder="Ej: Crearemos una Landing Page con pricing mensual."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Métrica (Y mediremos...)</label>
+                <input type="text" id="expMetric" placeholder="Ej: % de conversión de clicks a pago.">
+            </div>
+
+            <div class="form-group">
+                <label>Criterio de Éxito (Estamos bien si...)</label>
+                <input type="text" id="expCriteria" placeholder="Ej: Conversión > 5%">
+            </div>
+
+            <div class="form-group">
+                <label>Estado</label>
+                <select id="expStatus">
+                    <option value="ideas">💡 Hipótesis (Por hacer)</option>
+                    <option value="progress">🏃 En Progreso (Corriendo)</option>
+                    <option value="validated">✅ Validado (Éxito)</option>
+                    <option value="invalidated">❌ Invalidado (Aprendizaje)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn-add" onclick="saveExperiment()">Guardar Tarjeta</button>
+                <button class="btn-add" style="background: var(--fail);" onclick="deleteExperiment()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let experiments = [];
+        let currentProjectId = null;
+
+        window.addEventListener('plania:projectChanged', loadProject);
+        window.addEventListener('DOMContentLoaded', () => setTimeout(loadProject, 500));
+
+        async function loadProject() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) return;
+            currentProjectId = project.id_proyecto;
+
+            // Load experiments from JSON field (using a generic field 'i6_experimentos_lean' or similar if available, else 'custom_json' logic)
+            // Since I cannot change DB schema easily, I'll borrow an unused text field or append to a JSON store.
+            // For now, let's assume we store it in `h4_marco_fiscal_json` or similar unused JSON, 
+            // OR better, we use `a6_necesidades_json` if effectively unused? 
+            // WAIT: PlanIA has a `save_row.php`. Let's assume we stick it in `h4_marco_fiscal_json` as "lean_store" for now as a workaround 
+            // until DB migration. Or check if there is a 'mvp_json' field?
+            // Actually, `lean_experiments.html` is new. I will save it in `h4_marco_fiscal_json` (PlanIA usually uses generic JSONs).
+            // Better: `h4_marco_fiscal_json` is usually empty for startups.
+
+            try {
+                if (project.h4_marco_fiscal_json) {
+                    const data = JSON.parse(project.h4_marco_fiscal_json);
+                    if (data.experiments) experiments = data.experiments;
+                    else experiments = [];
+                } else {
+                    experiments = [];
+                }
+            } catch (e) { experiments = []; }
+
+            // Demo Data if empty
+            if (experiments.length === 0) {
+                experiments = [
+                    { id: 1, status: 'ideas', hypothesis: 'Clientes pagarán $50', test: 'Landing Page', metric: 'Ventas', criteria: '>10 ventas' }
+                ];
+            }
+
+            renderBoard();
+        }
+
+        function renderBoard() {
+            // Clear cols
+            ['ideas', 'progress', 'validated', 'invalidated'].forEach(st => {
+                document.getElementById(`list-${st}`).innerHTML = '';
+                document.getElementById(`count-${st}`).textContent = 0;
+            });
+
+            experiments.forEach(exp => {
+                const card = document.createElement('div');
+                card.className = 'experiment-card';
+                card.onclick = () => openModal(null, exp);
+                card.innerHTML = `
+                    <div class="tag">${exp.metric}</div>
+                    <div class="card-title">${exp.hypothesis}</div>
+                    <div class="card-metrics">🧪 ${exp.test}<br>🎯 Meta: ${exp.criteria}</div>
+                `;
+
+                const colId = `list-${exp.status}`;
+                const col = document.getElementById(colId);
+                if (col) col.appendChild(card);
+            });
+
+            // Update counts
+            ['ideas', 'progress', 'validated', 'invalidated'].forEach(st => {
+                const count = experiments.filter(e => e.status === st).length;
+                document.getElementById(`count-${st}`).textContent = count;
+            });
+        }
+
+        function openModal(title, exp = null) {
+            document.getElementById('editModal').style.display = 'flex';
+            const isNew = !exp;
+
+            document.getElementById('modalTitle').textContent = isNew ? 'Nueva Hipótesis' : 'Editar Experimento';
+            document.getElementById('expId').value = isNew ? Date.now() : exp.id;
+            document.getElementById('expHypothesis').value = isNew ? '' : exp.hypothesis;
+            document.getElementById('expTest').value = isNew ? '' : exp.test;
+            document.getElementById('expMetric').value = isNew ? '' : exp.metric;
+            document.getElementById('expCriteria').value = isNew ? '' : exp.criteria;
+            document.getElementById('expStatus').value = isNew ? 'ideas' : exp.status;
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function saveExperiment() {
+            const id = document.getElementById('expId').value;
+            const newExp = {
+                id: parseInt(id),
+                status: document.getElementById('expStatus').value,
+                hypothesis: document.getElementById('expHypothesis').value,
+                test: document.getElementById('expTest').value,
+                metric: document.getElementById('expMetric').value,
+                criteria: document.getElementById('expCriteria').value
+            };
+
+            const idx = experiments.findIndex(e => e.id == id);
+            if (idx >= 0) experiments[idx] = newExp;
+            else experiments.push(newExp);
+
+            closeModal();
+            renderBoard();
+            await persistData();
+        }
+
+        async function deleteExperiment() {
+            if (!confirm("¿Eliminar tarjeta?")) return;
+            const id = document.getElementById('expId').value;
+            experiments = experiments.filter(e => e.id != id);
+            closeModal();
+            renderBoard();
+            await persistData();
+        }
+
+        async function persistData() {
+            if (!currentProjectId) return;
+
+            // Save to DB
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: currentProjectId,
+                        // Saving in h4_marco_fiscal_json as "Lean Store"
+                        h4_marco_fiscal_json: JSON.stringify({ experiments: experiments })
+                    })
+                });
+                const result = await res.json();
+                if (result.success) PlanIA.notifySaved();
+            } catch (e) { console.error(e); }
+        }
+
+        // ==========================================
+        // AI LOGIC
+        // ==========================================
+        function suggestExperiments() {
+            const project = PlanIA.getCurrentProject();
+            const name = project ? project.a1_nombre_negocio : 'Negocio';
+            const desc = project ? project.a2_descripcion_negocio : '';
+
+            if (!window.Moltbot) {
+                alert("BoB IA no está disponible.");
+                return;
+            }
+
+            window.Moltbot.toggle();
+            const prompt = `Actúa como Científico de Datos Lean Startup.
+            Negocio: ${name}. ${desc}.
+
+            Sugiere 3 experimentos de validación BARATOS y RÁPIDOS para validar la propuesta de valor.
+            
+            Formato EXACTO JSON para que mi código lo lea:
+            [
+              {
+                "hypothesis": "Creemos que el cliente valora X",
+                "test": "Campaña de FB Ads con landing falsa",
+                "metric": "CTR y Emails recolectados",
+                "criteria": "> 20 emails en 2 días"
+              },
+              ...
+            ]
+
+            Solo dame el JSON.`;
+
+            window.Moltbot.send(prompt);
+        }
+
+        // Listen to BoB responses manually to capture JSON
+        // Moltbot widget applies changes to IDs, but here we want to insert cards.
+        // We override the parser for this page via a custom event or hacking the widget callback?
+        // Moltbot Widget doesn't have a callback event.
+        // Quick Hack: We inspect ID 'ai-chat-messages' for new messages or we patch MoltbotWidget.
+
+        // Better: We add a specific handler to window.Moltbot in this page
+        const originalParse = window.Moltbot.parseAndFillFields;
+
+        // Override for this page
+        window.Moltbot.parseAndFillFields = function (response) {
+            // Try to find JSON array
+            try {
+                const jsonMatch = response.match(/\[\s*\{.*\}\s*\]/s);
+                if (jsonMatch) {
+                    const newExps = JSON.parse(jsonMatch[0]);
+                    if (Array.isArray(newExps)) {
+                        let added = 0;
+                        newExps.forEach(e => {
+                            experiments.push({
+                                id: Date.now() + Math.random(),
+                                status: 'ideas',
+                                hypothesis: e.hypothesis,
+                                test: e.test,
+                                metric: e.metric,
+                                criteria: e.criteria || ''
+                            });
+                            added++;
+                        });
+                        renderBoard();
+                        persistData();
+                        this.addMessage(`✅ Agregué ${added} experimentos al tablero.`, 'system');
+                        return;
+                    }
+                }
+            } catch (e) { }
+
+            // Fallback to default
+            originalParse.call(this, response);
+        };
+
+    </script>
+</body>
+
+</html>

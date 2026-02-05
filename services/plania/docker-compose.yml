@@ -55,6 +55,38 @@ services:
     networks:
       - plania_network
 
+  # Web Scraper Service (Node.js + Puppeteer)
+  web_scraper:
+    build:
+      context: ./services/web-scraper
+      dockerfile: Dockerfile
+    container_name: plania_scraper
+    restart: unless-stopped
+    ports:
+      - "3005:3005"
+    volumes:
+      - ./services/web-scraper/knowledge_base:/app/knowledge_base
+      - ./services/web-scraper/public/screenshots:/app/public/screenshots
+      - ./services/web-scraper/audit.sqlite:/app/audit.sqlite
+    environment:
+      - PORT=3005
+    networks:
+      - plania_network
+
+  # Form Importer Service (OCR)
+  form_importer:
+    build:
+      context: ./services/form_importer
+      dockerfile: Dockerfile
+    container_name: plania_importer
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+    networks:
+      - plania_network
+
   # Python Processing Agent
   python:
     build:
@@ -62,9 +94,12 @@ services:
       dockerfile: Dockerfile.python
     container_name: plania_python
     restart: unless-stopped
+    ports:
+      - "5000:5000"
     volumes:
       - ./modules:/app/modules
       - ./main_controller.py:/app/main_controller.py
+      - ./app.py:/app/app.py
       - ./logs:/app/logs
     environment:
       DB_HOST: db
@@ -73,13 +108,16 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-plania_pass_2026}
       INEGI_TOKEN: ${INEGI_TOKEN:-1b9e230f-2ae0-48db-bd20-8810b1db575e}
       BANXICO_TOKEN: ${BANXICO_TOKEN:-898a538159ee2d3c3741018fec6dc22462759cf51d713475980b9ebd1458a49d}
+      WEBSCRAPER_URL: http://web_scraper:3005
     depends_on:
       db:
         condition: service_healthy
+      web_scraper:
+        condition: service_started
     networks:
       - plania_network
-    # Run once on startup, then can be triggered manually
-    command: [ "tail", "-f", "/dev/null" ]
+    # Run the Flask API server
+    command: [ "python", "app.py" ]
 
   # phpMyAdmin (Optional - for DB management)
   phpmyadmin:

@@ -1,0 +1,370 @@
+<!--
+=================================================================================
+PROYECTO: PlanIA (Frontend)
+ARCHIVO: public/innovation_accounting.html
+COPYRIGHT: © 2026 Fondo Thoth AC.
+LICENCIA: MIT
+DESCRIPCIÓN: Contabilidad de la Innovación (Cohortes y Pruebas A/B)
+=================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Contabilidad de la Innovación</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--primary), #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--surface-light);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .data-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .cohort-cell {
+            background: rgba(37, 99, 235, 0.1);
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        .btn-action {
+            background: var(--surface-light);
+            border: none;
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-action:hover {
+            background: var(--primary);
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Inputs */
+        input,
+        select {
+            background: var(--bg);
+            border: 1px solid var(--surface-light);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>📊 Contabilidad de la Innovación</h1>
+                <p style="color: var(--text-muted);">Mide el progreso validado, no la vanidad.</p>
+            </div>
+            <button class="btn-ai" onclick="analyzeDataAI()">
+                🧠 Analizar Datos con IA
+            </button>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Cohort Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">👥 Análisis de Cohortes (Retención)</div>
+                    <button class="btn-action" onclick="addCohortRow()">+ Registro Semanal</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="cohort-table">
+                        <thead>
+                            <tr>
+                                <th>Semana</th>
+                                <th>Nuevos Usuarios</th>
+                                <th>Retención S1 (%)</th>
+                                <th>Retención S4 (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cohort-body">
+                            <!-- Rows go here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Split Tests A/B -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🧪 Pruebas A/B (Split Tests)</div>
+                    <button class="btn-action" onclick="addSplitTest()">+ Nuevo Test</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="split-table">
+                        <thead>
+                            <tr>
+                                <th>Experimento</th>
+                                <th>Variante A (Conv %)</th>
+                                <th>Variante B (Conv %)</th>
+                                <th>Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="split-body">
+                            <!-- Rows go here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results / Analysis Area -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <div class="card-title">📝 Interpretación de Resultados</div>
+            </div>
+            <div id="analysis-output" style="color: var(--text-muted); min-height: 100px;">
+                <p>Haz clic en "Analizar Datos con IA" para obtener una interpretación estadística de tus pruebas y
+                    cohortes.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let cohorts = [];
+        let splitTests = [];
+        let currentProjectId = null;
+
+        window.addEventListener('plania:projectChanged', loadProject);
+        window.addEventListener('DOMContentLoaded', () => setTimeout(loadProject, 500));
+
+        async function loadProject() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) return;
+            currentProjectId = project.id_proyecto;
+
+            // Load data from existing JSON field (using generic one for now)
+            // Storing in 'i6_experimentos_lean' (if available) or reusing h4/h5 logic? 
+            // Previous module used h4/h5. Let's use `a7_socios_json` or similar usually empty.
+            // Or stick to one big JSON if possible. 
+            // Let's use `a7_socios_json` for Innovation Accounting store.
+
+            try {
+                if (project.a7_socios_json) {
+                    const data = JSON.parse(project.a7_socios_json);
+                    cohorts = data.cohorts || [];
+                    splitTests = data.splitTests || [];
+                }
+            } catch (e) { cohorts = []; splitTests = []; }
+
+            // Demo Data
+            if (cohorts.length === 0) {
+                cohorts = [
+                    { week: 'Semana 1', users: 100, ret1: 40, ret4: 20 },
+                    { week: 'Semana 2', users: 120, ret1: 45, ret4: 25 }
+                ];
+                splitTests = [
+                    { name: 'Landing Header', varA: 5.2, varB: 8.4, result: 'B Ganador' }
+                ];
+            }
+
+            renderTables();
+        }
+
+        function renderTables() {
+            // Render Cohorts
+            const tbodyC = document.getElementById('cohort-body');
+            tbodyC.innerHTML = cohorts.map((c, i) => `
+                <tr>
+                    <td><input type="text" value="${c.week}" onchange="updateCohort(${i}, 'week', this.value)" style="width:100px;"></td>
+                    <td><input type="number" value="${c.users}" onchange="updateCohort(${i}, 'users', this.value)" style="width:60px;"></td>
+                    <td><input type="number" value="${c.ret1}" onchange="updateCohort(${i}, 'ret1', this.value)" style="width:60px;"></td>
+                    <td><input type="number" value="${c.ret4}" onchange="updateCohort(${i}, 'ret4', this.value)" style="width:60px;"></td>
+                </tr>
+            `).join('');
+
+            // Render Split Tests
+            const tbodyS = document.getElementById('split-body');
+            tbodyS.innerHTML = splitTests.map((t, i) => `
+                <tr>
+                    <td><input type="text" value="${t.name}" onchange="updateSplit(${i}, 'name', this.value)"></td>
+                    <td><input type="number" step="0.1" value="${t.varA}" onchange="updateSplit(${i}, 'varA', this.value)" style="width:60px;"></td>
+                    <td><input type="number" step="0.1" value="${t.varB}" onchange="updateSplit(${i}, 'varB', this.value)" style="width:60px;"></td>
+                    <td>${t.result}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateCohort(index, field, value) {
+            cohorts[index][field] = value;
+            await saveData();
+        }
+
+        async function updateSplit(index, field, value) {
+            splitTests[index][field] = value;
+            // Simple auto-calc result
+            if (field === 'varA' || field === 'varB') {
+                const a = parseFloat(splitTests[index].varA || 0);
+                const b = parseFloat(splitTests[index].varB || 0);
+                if (a > b) splitTests[index].result = 'A Ganador';
+                else if (b > a) splitTests[index].result = 'B Ganador';
+                else splitTests[index].result = 'Empate';
+                renderTables(); // Re-render to show result text
+            }
+            await saveData();
+        }
+
+        function addCohortRow() {
+            cohorts.push({ week: `Semana ${cohorts.length + 1}`, users: 0, ret1: 0, ret4: 0 });
+            renderTables();
+        }
+
+        function addSplitTest() {
+            splitTests.push({ name: 'Nuevo Test', varA: 0, varB: 0, result: '-' });
+            renderTables();
+        }
+
+        async function saveData() {
+            if (!currentProjectId) return;
+            try {
+                await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: currentProjectId,
+                        a7_socios_json: JSON.stringify({ cohorts, splitTests })
+                    })
+                });
+                PlanIA.notifySaved();
+            } catch (e) { console.error(e); }
+        }
+
+        // ==========================
+        // AI Analysis
+        // ==========================
+        function analyzeDataAI() {
+            if (!window.Moltbot) { alert("IA no disponible"); return; }
+
+            const dataContext = {
+                cohorts: cohorts,
+                splitTests: splitTests
+            };
+
+            const prompt = `Actúa como Científico de Datos experto en Lean Startup.
+            
+            Analiza estos datos de Contabilidad de la Innovación:
+            ${JSON.stringify(dataContext)}
+
+            1. Interpreta la tendencia de retención en las cohortes. ¿Estamos mejorando o empeorando?
+            2. Evalúa los Split Tests. ¿Son resultados significativos? (Asume tamaños de muestra estándar si no se dan).
+            3. Dame 1 conclusión clara: ¿Debemos PIVOTAR o PERSEVERAR basado en esto?
+
+            Responde en formato HTML simple (párrafos y listas).`;
+
+            window.Moltbot.toggle();
+            window.Moltbot.send(prompt);
+        }
+    </script>
+</body>
+
+</html>

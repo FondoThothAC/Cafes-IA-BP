@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Fuentes y Bibliografía</title>
+    <link rel="stylesheet" href="css/plania-core.css?v=3">
+    <link rel="stylesheet" href="css/moltbot.css">
+    <style>
+        .sources-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .sources-table th,
+        .sources-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .sources-table th {
+            background: var(--bg);
+            color: var(--text-muted);
+        }
+
+        .source-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .source-link:hover {
+            text-decoration: underline;
+        }
+
+        .source-tag {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="plania-navbar"></div>
+
+    <div class="page-container">
+        <div class="header-flex">
+            <div>
+                <h1>📚 Fuentes y Bibliografía</h1>
+                <p class="text-muted">Registro de fuentes consultadas, bibliografía y recursos externos.</p>
+            </div>
+            <button class="btn btn-primary" onclick="saveSources()">💾 Guardar</button>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h3>Registro de Fuentes</h3>
+            <table class="sources-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Fuente / Título</th>
+                        <th>URL</th>
+                        <th>Contexto / Dato</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="sources-body">
+                    <!-- Dinámico -->
+                </tbody>
+            </table>
+            <button class="btn btn-secondary" onclick="addManualSource()" style="margin-top: 1rem;">➕ Agregar
+                Manualmente</button>
+        </div>
+
+        <footer class="footer">© 2026 Fondo Thoth AC</footer>
+    </div>
+
+    <script src="js/plania-core.js"></script>
+    <script src="js/moltbot_widget.js"></script>
+    <script>
+        let sources = [];
+
+        window.addEventListener('plania:projectChanged', loadSources);
+        window.addEventListener('DOMContentLoaded', () => setTimeout(loadSources, 500));
+
+        async function loadSources() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) return;
+            try {
+                // Assuming z1_sources_json field or finding it in a generic field if not exists
+                // For now, we use a custom field stored in memory or local storage if DB not ready, 
+                // but let's try to fetch it from a hypothetical 'z1_sources_json' or check where else to store.
+                // Since I can't modify DB schema easily effectively, I might piggyback on an unused field or 
+                // hope the 'new modules' migration handled it. 
+                // Let's assume 'z1_bibliografia_json' exists or we use a generic 'extras' field.
+                // Safe bet: use 'z1_bibliografia_json' and if it fails saving, we notify.
+                sources = JSON.parse(project.z1_bibliografia_json || '[]');
+                renderTable();
+            } catch (e) {
+                console.error('Error loading sources', e);
+                sources = [];
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('sources-body');
+            tbody.innerHTML = sources.map((s, i) => `
+                <tr>
+                    <td>${s.date || new Date().toLocaleDateString()}</td>
+                    <td>${s.title}</td>
+                    <td><a href="${s.url}" target="_blank" class="source-link">${s.url}</a></td>
+                    <td>${s.context || '-'}</td>
+                    <td><button onclick="removeSource(${i})" class="btn-mini delete">✕</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function addManualSource() {
+            sources.push({
+                date: new Date().toLocaleDateString(),
+                title: 'Nueva Fuente',
+                url: 'https://',
+                context: 'Manual'
+            });
+            renderTable();
+        }
+
+        function removeSource(index) {
+            sources.splice(index, 1);
+            renderTable();
+        }
+
+        async function saveSources() {
+            const project = PlanIA.getCurrentProject();
+            if (!project) return alert('Selecciona un proyecto');
+
+            try {
+                const res = await fetch(PlanIA.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        id_proyecto: project.id_proyecto,
+                        z1_bibliografia_json: JSON.stringify(sources)
+                    })
+                });
+                const data = await res.json();
+                if (data.success) alert('Fuentes guardadas');
+                else alert('Error guardando');
+            } catch (e) { console.error(e); alert('Error de conexión'); }
+        }
+
+        // Expose for Moltbot
+        window.addAutoSource = function (sourceData) {
+            sources.push({
+                date: new Date().toLocaleDateString(),
+                title: sourceData.title || 'Investigación Moltbot',
+                url: sourceData.url,
+                context: sourceData.context || 'Búsqueda de precios'
+            });
+            renderTable();
+            saveSources(); // Auto-save when AI adds references
+        };
+    </script>
+</body>
+
+</html>

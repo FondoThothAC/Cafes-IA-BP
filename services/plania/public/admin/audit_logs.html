@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanIA - Audit Logs</title>
+    <link rel="stylesheet" href="../css/plania-core.css">
+    <style>
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .logs-table th,
+        .logs-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .logs-table th {
+            background: var(--surface-light);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .actor-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .actor-bob {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .actor-user {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .actor-system {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .details-json {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            max-width: 300px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🛡️ Audit Logs</h1>
+                <p style="color: var(--text-muted);">Registro de actividad del sistema y agentes</p>
+            </div>
+            <button onclick="loadLogs()" class="refresh-btn">🔄 Actualizar</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th>Tiempo</th>
+                        <th>Actor</th>
+                        <th>Acción</th>
+                        <th>Objetivo</th>
+                        <th>Detalles</th>
+                        <th>IP</th>
+                        <th>Proyecto</th>
+                    </tr>
+                </thead>
+                <tbody id="logsBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Cargando...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadLogs);
+
+        async function loadLogs() {
+            const tbody = document.getElementById('logsBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Cargando logs...</td></tr>';
+
+            try {
+                // Adjust URL if running on a different port/host setup, assuming standard relative or configured
+                // Since this file is in public/admin/..., and API is at /api/..., we need to go to root
+                const apiUrl = 'http://localhost:5000/api/audit/logs?limit=50';
+
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderLogs(data.logs);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" style="color: var(--error); text-align: center;">Error: ${data.error}</td></tr>`;
+                }
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--error); text-align: center;">Error de conexión: ${e.message}</td></tr>`;
+            }
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logsBody');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No hay registros.</td></tr>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+
+                // Format timestamp
+                const date = new Date(log.timestamp);
+                const timeStr = date.toLocaleString('es-MX');
+
+                // Actor class
+                let actorClass = 'actor-system';
+                if (log.actor.toLowerCase().includes('bob')) actorClass = 'actor-bob';
+                if (log.actor.toLowerCase().includes('user')) actorClass = 'actor-user';
+
+                row.innerHTML = `
+                    <td style="white-space: nowrap; font-size: 0.9rem;">${timeStr}</td>
+                    <td><span class="actor-tag ${actorClass}">${log.actor}</span></td>
+                    <td style="font-weight: 500;">${log.action}</td>
+                    <td style="color: var(--primary); font-size: 0.9rem;">${log.target || '-'}</td>
+                    <td class="details-json" title="${escapeHtml(JSON.stringify(log.details, null, 2))}">${escapeHtml(JSON.stringify(log.details))}</td>
+                    <td style="font-size: 0.85rem; color: var(--text-muted);">${log.ip_address || 'local'}</td>
+                    <td>${log.project_id || '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+
+</html>

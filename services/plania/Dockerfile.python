@@ -9,6 +9,14 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
+# Install build dependencies for ChromaDB (hnswlib)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    g++ \
+    tesseract-ocr \
+    libtesseract-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -16,9 +24,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY modules/ /app/modules/
 COPY main_controller.py /app/
+COPY app.py /app/
 
-# Create logs directory
-RUN mkdir -p /app/logs
+# Create logs and data directories for ChromaDB
+RUN mkdir -p /app/logs /app/data/chroma_db
 
 # Default command (can be overridden)
-CMD ["python", "main_controller.py"]
+CMD ["python", "app.py"]
