@@ -99,7 +99,19 @@ data/
 - ✅ 100% local (sin envío a cloud)
 - ✅ Portable entre máquinas
 
-## 📊 Hardware Recomendado
+## 📜 Licencia y Estado
+
+- **Licencia**: GPL v2 (Versión Open Source Pública)
+- **Estado**: Probado
+
+## 📊 Requisitos Mínimos
+
+| Plataforma | Configuración | Espacio |
+|------------|---------------|---------|
+| **Mac** | Chip M1, 16GB RAM | 20GB SSD |
+| **Windows** | 16GB RAM, 6GB VRAM (NVIDIA RTX) | - |
+
+## 📊 Hardware Recomendado (Referencias)
 
 | Config | RAM | VRAM | Modelo Máximo |
 |--------|-----|------|---------------|
