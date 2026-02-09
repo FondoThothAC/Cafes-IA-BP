@@ -11,8 +11,11 @@
 
 class ImportClient {
     constructor() {
-        this.ocrUrl = 'http://localhost:3002/api/agent/ocr-upload';
-        this.backendUrl = 'http://localhost:3002/api/agent/ocr-map';
+        // Detectar host dinámicamente para soportar acceso remoto
+        const host = window.location.hostname;
+        const gatewayPort = 3002;
+        this.ocrUrl = `http://${host}:${gatewayPort}/api/agent/ocr-upload`;
+        this.backendUrl = `http://${host}:${gatewayPort}/api/agent/ocr-map`;
         this.currentMapping = null;
     }
 

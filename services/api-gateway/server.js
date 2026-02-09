@@ -35,7 +35,7 @@ const AI_BACKEND = 'ollama';
 const AI_HOST = OLLAMA_HOST;
 // User requested "gemma3n" -> mapping to available gemma model (likely gemma2 or custom)
 // If 'gemma3n' fails, ensure user has done 'ollama pull gemma3n' or 'ollama pull gemma2'
-const DEFAULT_MODEL = 'gemma3:1b';
+const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'gemma3:1b';
 
 // Service hosts
 const MOLTBOT_CONTAINER = 'http://ai-moltbot:8080';

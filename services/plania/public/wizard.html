@@ -1205,11 +1205,13 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
             });
 
             // AI Agent Logic - IA TOOLS GATEWAY (Hub Central)
+            // Detectar host dinámicamente para soportar acceso remoto
+            const _host = window.location.hostname;
             const AI_CONFIG = {
-                url: 'http://localhost:3002/api/generate',  // Gateway
-                chatUrl: 'http://localhost:3002/api/chat',
-                osintUrl: 'http://localhost:3002/api/osint',
-                model: 'gemma3:1b',
+                url: `http://${_host}:3002/api/generate`,  // Gateway
+                chatUrl: `http://${_host}:3002/api/chat`,
+                osintUrl: `http://${_host}:3002/api/osint`,
+                model: 'gpt-oss:20b',
                 useOpenAIFormat: false
             };
 
@@ -1229,7 +1231,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
 
                 // Check if Ollama is available
                 try {
-                    const checkResponse = await fetch('http://localhost:11434/api/tags', {
+                    const checkResponse = await fetch(`http://${_host}:11434/api/tags`, {
                         method: 'GET',
                         signal: AbortSignal.timeout(2000)
                     });
@@ -1345,7 +1347,7 @@ ${prompt}`;
 
                 // AUDITORIA IA: Registrar interacción
                 try {
-                    fetch('http://localhost:3001/audit/ai', {
+                    fetch(`http://${_host}:3001/audit/ai`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1363,7 +1365,7 @@ ${prompt}`;
              * Usa APIs gratuitas: INEGI, Banxico, MercadoLibre, Google Maps
              */
             async function getWebResearch(fieldId) {
-                const WEB_SCRAPER_URL = 'http://localhost:3001';
+                const WEB_SCRAPER_URL = `http://${_host}:3001`;
 
                 try {
                     const businessName = document.getElementById('a1_nombre_negocio')?.value || '';
@@ -1576,7 +1578,7 @@ ${prompt}`;
                 input.disabled = true;
 
                 try {
-                    const res = await fetch('http://localhost:3001/knowledge/upload', {
+                    const res = await fetch(`http://${_host}:3001/knowledge/upload`, {
                         method: 'POST',
                         body: formData
                     });
@@ -1606,7 +1608,7 @@ ${prompt}`;
                 btn.disabled = true;
 
                 try {
-                    const res = await fetch('http://localhost:3001/knowledge/scrape', {
+                    const res = await fetch(`http://${_host}:3001/knowledge/scrape`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url })
@@ -2062,7 +2064,7 @@ ${prompt}`;
                 // Verificar si Ollama está disponible
                 let useAI = false;
                 try {
-                    const aiCheck = await fetch('http://localhost:11434/api/tags', {
+                    const aiCheck = await fetch(`http://${_host}:3002/api/models`, {
                         method: 'GET',
                         signal: AbortSignal.timeout(2000) // 2 second timeout
                     });
@@ -2228,8 +2230,8 @@ ${prompt}`;
             // ============================================
             // FLOATING AI CHAT LOGIC
             // ============================================
-            const AI_CHAT_API = 'http://localhost:3002/api/generate';
-            const OSINT_API = 'http://localhost:3002/api/osint/user';
+            const AI_CHAT_API = `http://${_host}:3002/api/generate`;
+            const OSINT_API = `http://${_host}:3002/api/osint/user`;
             let chatHistory = [];
 
             // Ensure chat elements are directly in body for proper visibility

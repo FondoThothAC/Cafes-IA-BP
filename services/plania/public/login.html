@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlanIA - Iniciar Sesión</title>
+    <title>PlanIA - Seleccionar Usuario</title>
     <!-- CSS Dependencies -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -44,6 +44,16 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.4);
         }
+        
+        .dev-notice {
+            background: rgba(234, 179, 8, 0.2);
+            border: 1px solid rgba(234, 179, 8, 0.5);
+            color: #fcd34d;
+            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 
@@ -69,21 +79,33 @@
         </div>
 
         <div class="login-card rounded-2xl p-8">
+            <div class="dev-notice text-center">
+                ⚠️ Modo Desarrollo - Autenticación Deshabilitada
+            </div>
+            
             <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Usuario</label>
-                    <input type="text" id="username" class="input-dark w-full px-4 py-3 rounded-xl"
-                        placeholder="admin / asesor" required>
-                </div>
-
-                <div class="mb-8">
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Contraseña</label>
-                    <input type="password" id="password" class="input-dark w-full px-4 py-3 rounded-xl"
-                        placeholder="••••••••" required>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Selecciona tu Usuario</label>
+                    <select id="username" class="input-dark w-full px-4 py-3 rounded-xl" required>
+                        <option value="">-- Elige un usuario --</option>
+                        <optgroup label="Administradores">
+                            <option value="celis">Celis (Admin)</option>
+                            <option value="segura">Segura (Admin)</option>
+                            <option value="castillo">Castillo (Admin)</option>
+                        </optgroup>
+                        <optgroup label="Asesores">
+                            <option value="yaretzy">Yaretzy (Asesor)</option>
+                            <option value="edwin">Edwin (Asesor)</option>
+                            <option value="darinka">Darinka (Asesor)</option>
+                            <option value="heidi">Heidi (Asesor)</option>
+                            <option value="angel">Angel (Asesor)</option>
+                            <option value="nico">Nico (Asesor)</option>
+                        </optgroup>
+                    </select>
                 </div>
 
                 <div id="errorMessage" class="mb-4 text-red-400 text-sm text-center hidden">
-                    Credenciales incorrectas
+                    Selecciona un usuario
                 </div>
 
                 <button type="submit" class="btn-primary w-full py-3.5 rounded-xl font-bold text-white shadow-lg">
@@ -92,7 +114,7 @@
             </form>
 
             <div class="mt-6 text-center text-xs text-gray-500">
-                © 2026 Fondo Thoth AC | Acceso restringido
+                © 2026 Fondo Thoth AC | Modo Desarrollo
             </div>
         </div>
     </div>
@@ -101,48 +123,44 @@
         async function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
             const btn = e.target.querySelector('button');
             const errorMsg = document.getElementById('errorMessage');
 
+            if (!user) {
+                errorMsg.textContent = 'Selecciona un usuario';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
             // Loading state
-            btn.innerHTML = 'Verificando...';
+            btn.innerHTML = 'Ingresando...';
             btn.disabled = true;
             errorMsg.classList.add('hidden');
 
-            try {
-                // Call Auth API (PHP)
-                const response = await fetch('api/auth/login.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: user, password: pass })
-                });
+            // Determine role from dropdown value
+            const adminUsers = ['celis', 'segura', 'castillo'];
+            const role = adminUsers.includes(user) ? 'admin' : 'asesor';
 
-                const data = await response.json();
+            // Mock session (no authentication)
+            const session = {
+                token: 'dev_mode_' + Date.now(),
+                user_id: 0,
+                username: user,
+                role: role,
+                full_name: user.charAt(0).toUpperCase() + user.slice(1),
+                login_at: new Date().toISOString()
+            };
 
-                if (data.success) {
-                    // Store Session
-                    localStorage.setItem('plania_session', JSON.stringify(data.session));
-                    // Fix for plania-core.js compatibility
-                    localStorage.setItem('uuid_usuario', data.session.username);
-                    localStorage.setItem('user_role', data.session.role);
+            // Store Session
+            localStorage.setItem('plania_session', JSON.stringify(session));
+            localStorage.setItem('uuid_usuario', session.username);
+            localStorage.setItem('user_role', session.role);
 
-                    // Redirect based on role
-                    if (data.session.role === 'admin') {
-                        window.location.href = 'admin_console.html';
-                    } else {
-                        window.location.href = 'index.html'; // Or dashboard
-                    }
-                } else {
-                    throw new Error(data.error || 'Error de acceso');
-                }
-
-            } catch (error) {
-                console.error(error);
-                errorMsg.textContent = error.message;
-                errorMsg.classList.remove('hidden');
-                btn.innerHTML = 'Ingresar al Sistema';
-                btn.disabled = false;
+            // Redirect based on role
+            if (role === 'admin') {
+                window.location.href = 'admin_console.html';
+            } else {
+                window.location.href = 'index.html';
             }
         }
     </script>

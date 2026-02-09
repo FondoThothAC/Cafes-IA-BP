@@ -4,11 +4,13 @@
  */
 
 (function () {
-    // Config
+    // Config - Detectar host dinámicamente para soportar acceso remoto
     const ERROR_LOG = [];
-    const AI_CHAT_API = 'http://localhost:3002/api/generate';
-    const SEARCH_API = 'http://localhost:8085/search';
-    const OSINT_API = 'http://localhost:8085/osint/user';
+    const host = window.location.hostname;
+    const gatewayPort = 3002;
+    const AI_CHAT_API = `http://${host}:${gatewayPort}/api/generate`;
+    const SEARCH_API = `http://${host}:8085/search`;
+    const OSINT_API = `http://${host}:8085/osint/user`;
 
     // Auto-detect path
     const JS_PATH = document.currentScript ? document.currentScript.src : 'js/moltbot_widget.js';

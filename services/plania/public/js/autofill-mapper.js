@@ -10,8 +10,8 @@
 
 const AutoFillMapper = {
 
-    // AI API endpoint (Ollama)
-    AI_URL: 'http://localhost:11434/api/generate',
+    // AI API endpoint - Uses api-gateway for remote access compatibility
+    AI_URL: `http://${window.location.hostname}:3002/api/generate`,
     AI_MODEL: 'gemma3:1b',
 
     /**

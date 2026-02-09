@@ -1,4 +1,4 @@
-# 🤖 AI-Toolkit v1.1
+# 🤖 AI-Toolkit v1.2
 
 Sistema de IA local containerizado. 100% aislado, portable entre Mac y Windows.
 
@@ -91,6 +91,21 @@ data/
 ├── transcriptions/   # Audios transcritos
 └── moltbot/          # Datos de Moltbot
 ```
+
+## 🌐 Acceso Remoto (Red)
+
+Para acceder desde otras computadoras en la red:
+
+| Puerto | Servicio | Descripción |
+|--------|----------|-------------|
+| **8080** | PlanIA Web | Interfaz principal |
+| **3002** | API Gateway | Hub de IA (requerido para autofill) |
+| **8085** | Moltbot | OSINT y búsqueda web |
+
+**Configuración:**
+1. Obtener IP del servidor: `ipconfig` (Windows) / `ifconfig` (Mac/Linux)
+2. Acceder desde otra PC: `http://[IP]:8080`
+3. Asegurar que firewall permita puertos 3002 y 8080
 
 ## 🔒 Seguridad
 

@@ -15,10 +15,11 @@ services:
       - "3002:3002"
     environment:
       - PORT=3002
-      - HOST_PLATFORM=darwin
+      - HOST_PLATFORM=windows
       - OLLAMA_HOST=http://host.docker.internal:11434
       - MLX_HOST=http://host.docker.internal:8000
       - WHISPER_HOST=http://ai-whisper:9000
+      - OLLAMA_MODEL=gpt-oss:20b
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -63,6 +64,7 @@ services:
     environment:
       - OLLAMA_HOST=http://host.docker.internal:11434
       - MOLTBOT_DATA_DIR=/data/moltbot
+      - OLLAMA_MODEL=gpt-oss:20b
     extra_hosts:
       - "host.docker.internal:host-gateway"
     stdin_open: true
@@ -101,11 +103,12 @@ services:
     ports:
       - "8080:80"
     environment:
-      - DB_HOST=mysql-db
+      - DB_HOST=plania-db
       - DB_USER=plania_user
-      - DB_PASS=plania_pass
+      - DB_PASSWORD=plania_pass
       - DB_NAME=plania
       - IA_GATEWAY=http://api-gateway:3002
+      - OLLAMA_MODEL=gpt-oss:20b
     depends_on:
       - mysql-db
       - api-gateway
@@ -122,11 +125,13 @@ services:
     container_name: plania-python
     restart: unless-stopped
     environment:
-      - DB_HOST=mysql-db
+      - DB_HOST=plania-db
       - DB_USER=plania_user
-      - DB_PASS=plania_pass
+      - DB_PASSWORD=plania_pass
       - DB_NAME=plania
       - LOOP_MODE=true
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - OLLAMA_MODEL=gpt-oss:20b
     depends_on:
       - mysql-db
     networks:
@@ -144,11 +149,12 @@ services:
     ports:
       - "8081:80"
     environment:
-      - DB_HOST=mysql-db
+      - DB_HOST=plania-db
       - DB_USER=plania_user
-      - DB_PASS=plania_pass
+      - DB_PASSWORD=plania_pass
       - DB_NAME=plania
       - IA_GATEWAY=http://api-gateway:3002
+      - OLLAMA_MODEL=gpt-oss:20b
     depends_on:
       - mysql-db
       - api-gateway
@@ -169,6 +175,7 @@ services:
       - PLANIA_API=http://host.docker.internal:3001
       - IA_GATEWAY=http://api-gateway:3002
       - MASTER_PIN=${MASTER_PIN:-1234}
+      - OLLAMA_MODEL=gpt-oss:20b
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -189,6 +196,7 @@ services:
       - PLANIA_API=http://host.docker.internal:3001
       - IA_GATEWAY=http://api-gateway:3002
       - MASTER_PIN=${MASTER_PIN:-1234}
+      - OLLAMA_MODEL=gpt-oss:20b
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

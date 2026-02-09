@@ -2,8 +2,11 @@
  * Cliente JS para interactuar con el Agente Bob (Python API)
  */
 class BobAgentClient {
-    constructor(apiUrl = 'http://localhost:3002/api/agent') {
-        this.apiUrl = apiUrl;
+    constructor(apiUrl = null) {
+        // Detectar host dinámicamente para soportar acceso remoto
+        const host = window.location.hostname;
+        const gatewayPort = 3002;
+        this.apiUrl = apiUrl || `http://${host}:${gatewayPort}/api/agent`;
         this.isLoading = false;
     }
 
