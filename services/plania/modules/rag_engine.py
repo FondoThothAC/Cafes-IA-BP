@@ -29,13 +29,37 @@ class RAGEngine:
             setup_chroma = True
             
         # Inicializar Cliente Chroma
-        # Usamos PersistentClient para guardar datos en disco
         self.client = chromadb.PersistentClient(path=self.persist_directory)
         
-        # Función de Embedding (usamos all-MiniLM-L6-v2 por defecto, ligero y eficiente)
-        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name="all-MiniLM-L6-v2"
-        )
+        # Función de Embedding personalizada usando Ollama (Qwen3-Embedding)
+        # Esto permite mejor soporte de español y contexto más largo (32K)
+        class OllamaEmbeddingFunction(embedding_functions.EmbeddingFunction):
+            def __init__(self, model_name="qwen3-embedding:0.6b"):
+                self.model_name = model_name
+                self.base_url = os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+
+            def __call__(self, input: List[str]) -> List[List[float]]:
+                import requests
+                embeddings = []
+                for text in input:
+                    try:
+                        res = requests.post(
+                            f"{self.base_url}/api/embeddings",
+                            json={"model": self.model_name, "prompt": text},
+                            timeout=30
+                        )
+                        if res.status_code == 200:
+                            embeddings.append(res.json()["embedding"])
+                        else:
+                            logger.error(f"Ollama Embedding Error: {res.text}")
+                            # Fallback dummy embedding to avoid breaking Chroma
+                            embeddings.append([0.0] * 1024) 
+                    except Exception as e:
+                        logger.error(f"Ollama Connection Error: {e}")
+                        embeddings.append([0.0] * 1024)
+                return embeddings
+
+        self.embedding_fn = OllamaEmbeddingFunction()
         
         # Obtener o crear colección
         self.collection = self.client.get_or_create_collection(

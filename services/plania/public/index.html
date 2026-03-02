@@ -120,7 +120,13 @@
             <h1>🚀 PlanIA</h1>
             <p class="subtitle">Sistema Integral de Gestión de Planes de Negocio SAETA</p>
 
-            <a href="wizard.html" class="primary-action">+ Crear Nuevo Proyecto</a>
+            <div class="action-group" style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2.5rem;">
+                <a href="wizard.html" class="primary-action" style="margin-bottom: 0;">+ Crear Nuevo Proyecto</a>
+                <button onclick="window.importClient.open()" class="primary-action"
+                    style="margin-bottom: 0; background: linear-gradient(135deg, #8b5cf6, #ec4899);">
+                    <span style="font-size: 1.2rem;">📄</span> Importar PDF / Foto
+                </button>
+            </div>
 
             <div class="stats" id="stats">
                 <div class="stat">
@@ -214,6 +220,8 @@
                 <div class="module-title">Exportar PDF</div>
                 <div class="module-desc">Documento completo</div>
             </a>
+
+            <div id="admin-module-container"></div>
         </div>
 
         <footer class="footer">
@@ -223,6 +231,7 @@
     </div>
 
     <script src="js/plania-core.js"></script>
+    <script src="js/import-client.js"></script>
     <script>
         // Update stats when projects load
         window.addEventListener('DOMContentLoaded', () => {
@@ -236,6 +245,18 @@
                 const project = PlanIA.getCurrentProject();
                 if (project) {
                     document.getElementById('export-link').href = `export_pdf.php?id=${project.id_proyecto}`;
+                }
+
+                // Show Admin Module if role is admin
+                const userRole = localStorage.getItem('user_role');
+                if (userRole === 'admin') {
+                    document.getElementById('admin-module-container').innerHTML = `
+                        <a href="admin_console.html" class="module" style="border: 2px solid #a855f7; background: rgba(168, 85, 247, 0.1);">
+                            <div class="module-icon">🛠️</div>
+                            <div class="module-title">Consola Admin</div>
+                            <div class="module-desc">Gestión de usuarios y proyectos</div>
+                        </a>
+                    `;
                 }
             }, 500);
         });

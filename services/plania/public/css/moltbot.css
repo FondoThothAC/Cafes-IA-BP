@@ -132,11 +132,11 @@
 /* Chat Panel */
 #ai-chat-panel {
     position: fixed;
-    bottom: 6rem;
-    right: 2rem;
+    bottom: 90px;
+    right: 20px;
     width: 380px;
     height: 600px;
-    max-height: 80vh;
+    max-height: calc(100vh - 120px);
     min-width: 300px;
     min-height: 400px;
     resize: both;
@@ -151,7 +151,7 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s, transform 0.3s;
-    z-index: 9998;
+    z-index: 10000;
 }
 
 #ai-chat-panel.open {

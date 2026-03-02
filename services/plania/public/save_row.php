@@ -113,6 +113,30 @@ function sanitizeInput($data)
         'url_evidencia_4',
         'url_evidencia_5',
         'ia_flag_procesar',
+        // Marketing Plan Fields (Patch v1.2.2)
+        'h1_estrategia_precio',
+        'h2_precio_promedio',
+        'h3_margen_objetivo',
+        'h4_justificacion_precio',
+        'h5_canales_distribucion',
+        'h6_canal_principal',
+        'h7_tacticas_promocion',
+        'h8_presupuesto_marketing',
+        'h9_pct_marketing',
+        'h10_funnel_awareness',
+        'h11_funnel_consideracion',
+        'h12_funnel_intencion',
+        'h13_funnel_compra',
+        'h14_cac_objetivo',
+        'h15_clv_objetivo',
+        'h16_roas_objetivo',
+        // --- Added for Units III, VII, VIII, IX ---
+        'g9_uso_capital',
+        'h4_compromiso',
+        'i1_pestel_analisis',
+        'i2_tows_matrix',
+        'i3_blue_ocean',
+        'i4_gestion_riesgos'
     ];
 
     // Explicit list of JSON columns in the database (includes those without _json suffix)
@@ -165,7 +189,26 @@ function sanitizeInput($data)
                 }
             }
             // Handle numeric fields
-            elseif (in_array($field, ['b5_monto_solicitado', 'd6_latitud', 'd7_longitud', 'g5_costos_fijos_mensuales', 'g8_inversion_inicial'])) {
+            elseif (
+                in_array($field, [
+                    'b5_monto_solicitado',
+                    'd6_latitud',
+                    'd7_longitud',
+                    'g5_costos_fijos_mensuales',
+                    'g8_inversion_inicial',
+                    'h2_precio_promedio',
+                    'h3_margen_objetivo',
+                    'h8_presupuesto_marketing',
+                    'h9_pct_marketing',
+                    'h10_funnel_awareness',
+                    'h11_funnel_consideracion',
+                    'h12_funnel_intencion',
+                    'h13_funnel_compra',
+                    'h14_cac_objetivo',
+                    'h15_clv_objetivo',
+                    'h16_roas_objetivo'
+                ])
+            ) {
                 $sanitized[$field] = is_numeric($value) ? floatval($value) : 0;
             }
             // Handle boolean fields
@@ -203,13 +246,17 @@ function insertProject($pdo, $data)
  */
 function updateProject($pdo, $id, $data)
 {
+    // Build SET clause from data keys only
     $setClause = implode(', ', array_map(fn($f) => "$f = :$f", array_keys($data)));
 
-    $sql = "UPDATE proyectos_negocio SET $setClause WHERE id_proyecto = :id";
+    $sql = "UPDATE proyectos_negocio SET $setClause WHERE id_proyecto = :id_val";
 
-    $data['id'] = $id;
+    // Add ID to params array with a unique key to avoid collision
+    $params = $data;
+    $params['id_val'] = $id;
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute($data);
+    $stmt->execute($params);
 
     return $stmt->rowCount();
 }
@@ -262,6 +309,17 @@ if (!$input) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid JSON input']);
     exit();
+}
+
+// Aliases for mismatched HTML tags to match DB Columns
+if (isset($input['c1_experiencia_habilidades'])) {
+    $input['c1_experiencia_previa'] = $input['c1_experiencia_habilidades'];
+}
+if (isset($input['c3_compromiso_tiempo'])) {
+    $input['c3_disponibilidad_tiempo'] = $input['c3_compromiso_tiempo'];
+}
+if (isset($input['f1_nombre_marca'])) {
+    $input['f1_identidad_marca'] = $input['f1_nombre_marca'];
 }
 
 $pdo = getConnection($config);

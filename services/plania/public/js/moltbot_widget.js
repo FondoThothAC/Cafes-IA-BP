@@ -35,10 +35,11 @@
                 <div style="width: 36px; height: 36px; border-radius: 50%; overflow: hidden;">
                     <img src="img/bob-logo.png" alt="MB" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PHBhdGggZD0iTTggMTRoOG0tOC00aDgiLz48L3N2Zz4='">
                 </div>
-                <div>
+                <div style="flex: 1;">
                     <h3>BoB IA - Agente</h3>
                     <span class="badge">BoB (Moltbot Core)</span>
                 </div>
+                <button onclick="window.Moltbot.resetChat()" title="Reiniciar Chat" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem;">🔄</button>
             </div>
 
             <div class="ai-chat-messages" id="ai-chat-messages">
@@ -135,6 +136,18 @@
             }
         },
 
+        resetChat: function () {
+            const messages = document.getElementById('ai-chat-messages');
+            messages.innerHTML = `
+                <div class="ai-msg assistant">
+                    <div class="ai-msg-content">
+                        ♻️ Chat reiniciado.<br>
+                        ¡Hola de nuevo! Soy <strong>BoB IA</strong>. ¿En qué te ayudo ahora?
+                    </div>
+                </div>
+            `;
+        },
+
         addMessage: function (content, role = 'assistant') {
             const messages = document.getElementById('ai-chat-messages');
             const time = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
@@ -218,13 +231,23 @@
             Fecha actual: ${new Date().toLocaleDateString()}
             Estás ayudando al usuario en el módulo: ${context._page_title}.
             
-            Contexto:
+            ${((typeof PlanIA !== 'undefined') && PlanIA.getProjectContextMD()) ?
+                    'DATOS DEL PROYECTO SELECCIONADO:\n' + PlanIA.getProjectContextMD() :
+                    '⚠️ NO HAY PROYECTO SELECCIONADO. Pide al usuario que seleccione un proyecto en el menú superior.'}
+            
+            Contexto de campos en pantalla:
             ${contextStr}
 
             Usuario: ${message}
 
+            INSTRUCCIONES CRÍTICAS:
+            1. RESPONDE SIEMPRE EN ESPAÑOL DE MÉXICO PROFESIONAL.
+            2. NO uses inglés a menos que sea un término técnico indispensable.
+            3. USA LOS DATOS DEL PROYECTO para dar respuestas específicas y contextualizadas.
+            4. Si no hay proyecto seleccionado, PRIMERO pide al usuario que seleccione uno.
+
             Tu tarea:
-            1. Responde la duda del usuario.
+            1. Responde la duda del usuario usando los datos reales del proyecto.
             2. Si detectas información que debería ir en un campo disponible (ver _available_fields), sugiérela en formato: 
                campo_id: "valor sugerido"
             3. Si mencionas un precio o dato investigado, DEBES citar la fuente en formato JSON al final:
@@ -246,9 +269,14 @@
                 const data = await response.json();
                 this.hideTyping();
 
-                const answer = data.response || data.choices?.[0]?.text || 'No pude procesar tu solicitud.';
-                this.addMessage(answer.replace(/\n/g, '<br>'));
-                this.parseAndFillFields(answer);
+                const answer = data.response || data.choices?.[0]?.text || data.error || 'No pude procesar tu solicitud.';
+
+                if (data.error) {
+                    this.addMessage('⚠️ Respuesta del servidor: ' + data.error);
+                } else {
+                    this.addMessage(answer.replace(/\n/g, '<br>'));
+                    this.parseAndFillFields(answer);
+                }
 
             } catch (error) {
                 this.hideTyping();
@@ -340,11 +368,22 @@
                     let value = match[2].trim().replace(/^"|"$/g, '');
                     const field = document.getElementById(fieldId);
                     if (field && !['ai-chat-input'].includes(fieldId)) {
-                        field.value = value;
-                        field.dispatchEvent(new Event('input', { bubbles: true }));
-                        field.style.border = "2px solid #10b981";
-                        setTimeout(() => field.style.border = "", 2000);
-                        filled.push(fieldId);
+                        let isList = field.tagName === 'UL';
+                        if (isList && typeof window.addItem === 'function') {
+                            field.innerHTML = ''; // clear previous
+                            const items = value.split(/,(?![^()]*\))/).map(i => i.trim()).filter(i => i);
+                            items.forEach(i => window.addItem(fieldId, i));
+
+                            field.style.border = "2px solid #10b981";
+                            setTimeout(() => field.style.border = "", 2000);
+                            filled.push(fieldId);
+                        } else if (!isList) {
+                            field.value = value;
+                            field.dispatchEvent(new Event('input', { bubbles: true }));
+                            field.style.border = "2px solid #10b981";
+                            setTimeout(() => field.style.border = "", 2000);
+                            filled.push(fieldId);
+                        }
                     }
                 }
             });

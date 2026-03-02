@@ -163,6 +163,18 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
             opacity: 0.3;
             cursor: not-allowed;
         }
+        /* --- Lock Toggle Styles --- */
+        .icon-btn.lock.locked {
+            color: #ef4444; /* red-500 */
+        }
+        
+        .field-locked {
+            opacity: 0.7;
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.05) !important;
+            cursor: not-allowed;
+        }
+
 
         /* Custom Scrollbar for specific containers */
         #ai-result-text::-webkit-scrollbar,
@@ -375,6 +387,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="nombre_negocio">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="nombre_negocio">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="nombre_negocio" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future" title="Próximamente">⚡</button>
                             </div>
                         </div>
@@ -388,6 +401,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="nombre_emprendedor">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="nombre_emprendedor">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="nombre_emprendedor" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -401,6 +415,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="carta_presentacion">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="carta_presentacion">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="carta_presentacion" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -421,6 +436,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="descripcion_negocio">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="descripcion_negocio">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="descripcion_negocio" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -434,6 +450,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="problema_oportunidad">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="problema_oportunidad">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="problema_oportunidad" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -447,6 +464,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="propuesta_valor">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="propuesta_valor">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="propuesta_valor" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -461,6 +479,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                                 <div class="field-icons">
                                     <button type="button" class="icon-btn info" data-info="cliente_objetivo">ℹ️</button>
                                     <button type="button" class="icon-btn ai" data-ai="cliente_objetivo">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="cliente_objetivo" title="Bloquear campo">🔓</button>
                                     <button type="button" class="icon-btn future">⚡</button>
                                 </div>
                             </div>
@@ -488,14 +507,15 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
 
                     <div class="form-group">
                         <div class="field-label">
-                            <label for="c1_experiencia_habilidades">Experiencia y Habilidades</label>
+                            <label for="c1_experiencia_previa">Experiencia y Habilidades</label>
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="experiencia">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="experiencia">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="experiencia" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
-                        <textarea id="c1_experiencia_habilidades" name="c1_experiencia_habilidades" rows="3"
+                        <textarea id="c1_experiencia_previa" name="c1_experiencia_previa" rows="3"
                             placeholder="¿Qué experiencia y habilidades tienes?"></textarea>
                     </div>
 
@@ -505,6 +525,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="motivacion">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="motivacion">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="motivacion" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -514,12 +535,12 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
 
                     <div class="form-group">
                         <div class="field-label">
-                            <label for="c3_compromiso_tiempo">Disponibilidad de Tiempo</label>
+                            <label for="c3_disponibilidad_tiempo">Disponibilidad de Tiempo</label>
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="tiempo">ℹ️</button>
                             </div>
                         </div>
-                        <input type="text" id="c3_compromiso_tiempo" name="c3_compromiso_tiempo"
+                        <input type="text" id="c3_disponibilidad_tiempo" name="c3_disponibilidad_tiempo"
                             placeholder="Ej: 40 horas semanales">
                     </div>
                 </div>
@@ -536,6 +557,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="segmento_cliente">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="segmento_cliente">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="segmento_cliente" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -549,6 +571,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="ventaja_competitiva">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="ventaja_competitiva">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="ventaja_competitiva" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -690,6 +713,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="proceso_produccion">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="proceso_produccion">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="proceso_produccion" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -729,14 +753,15 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
 
                     <div class="form-group">
                         <div class="field-label">
-                            <label for="f1_nombre_marca">Nombre e Identidad de Marca</label>
+                            <label for="f1_identidad_marca">Nombre e Identidad de Marca</label>
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="marca">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="marca">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="marca" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
-                        <input type="text" id="f1_nombre_marca" name="f1_nombre_marca"
+                        <input type="text" id="f1_identidad_marca" name="f1_identidad_marca"
                             placeholder="Nombre de tu marca y concepto">
                     </div>
 
@@ -746,6 +771,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="estrategia_precios">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="estrategia_precios">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="estrategia_precios" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -770,6 +796,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="promocion">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="promocion">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="promocion" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -814,6 +841,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="uso_capital">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="uso_capital">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="uso_capital" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -839,6 +867,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="impacto_social">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="impacto_social">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="impacto_social" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -852,6 +881,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="impacto_economico">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="impacto_economico">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="impacto_economico" title="Bloquear campo">🔓</button>
                                 <button type="button" class="icon-btn future">⚡</button>
                             </div>
                         </div>
@@ -883,6 +913,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="pestel_analisis">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="pestel_analisis">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="pestel_analisis" title="Bloquear campo">🔓</button>
                             </div>
                         </div>
                         <textarea id="i1_pestel_analisis" name="i1_pestel_analisis" rows="4"
@@ -895,6 +926,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="tows_matrix">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="tows_matrix">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="tows_matrix" title="Bloquear campo">🔓</button>
                             </div>
                         </div>
                         <textarea id="i2_tows_matrix" name="i2_tows_matrix" rows="4"
@@ -907,6 +939,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="blue_ocean">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="blue_ocean">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="blue_ocean" title="Bloquear campo">🔓</button>
                             </div>
                         </div>
                         <textarea id="i3_blue_ocean" name="i3_blue_ocean" rows="3"
@@ -919,6 +952,7 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
                             <div class="field-icons">
                                 <button type="button" class="icon-btn info" data-info="gestion_riesgos">ℹ️</button>
                                 <button type="button" class="icon-btn ai" data-ai="gestion_riesgos">🤖</button>
+                                <button type="button" class="icon-btn lock" data-lock="gestion_riesgos" title="Bloquear campo">🔓</button>
                             </div>
                         </div>
                         <textarea id="i4_gestion_riesgos" name="i4_gestion_riesgos" rows="3"
@@ -1202,6 +1236,8 @@ DESCRIPCIÓN: Formulario de plan de negocios con iconos de ayuda e IA
 
                 setupTooltips();
                 setupFunnelCalc();
+                setupLocks();
+                window.addEventListener('plania:save', () => { submitForm(); });
             });
 
             // AI Agent Logic - IA TOOLS GATEWAY (Hub Central)
@@ -1359,6 +1395,42 @@ ${prompt}`;
                     });
                 } catch (e) { console.warn('No se pudo auditar IA', e); }
             }
+            // Lock Field Logic
+            window.lockedFields = new Set();
+            function toggleLock(btn, targetId) {
+                const targetInput = document.getElementById(targetId) || document.getElementsByName(targetId)[0];
+                if (!targetInput) return;
+
+                if (window.lockedFields.has(targetId)) {
+                    // Unlock
+                    window.lockedFields.delete(targetId);
+                    btn.classList.remove('locked');
+                    btn.textContent = '🔓';
+                    targetInput.classList.remove('field-locked');
+                    if (targetInput.parentNode) {
+                        targetInput.parentNode.title = "";
+                    }
+                } else {
+                    // Lock
+                    window.lockedFields.add(targetId);
+                    btn.classList.add('locked');
+                    btn.textContent = '🔒';
+                    targetInput.classList.add('field-locked');
+                    if (targetInput.parentNode) {
+                        targetInput.parentNode.title = "Este campo está bloqueado para la IA";
+                    }
+                }
+            }
+
+            function setupLocks() {
+                document.querySelectorAll('.icon-btn.lock').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetId = btn.dataset.lock;
+                        toggleLock(btn, targetId);
+                    });
+                });
+            }
+
 
             /**
              * Obtiene investigación web del scraper service
@@ -2334,28 +2406,62 @@ Responde de forma concisa y práctica. Si puedes llenar un campo, indica cuál y
                 }
             }
 
-            function parseAndFillFields(response) {
-                // Detectar patrones como "nombre_negocio: TechVenture" o "[nombre_negocio] = TechVenture"
+                        window.MoltbotParseAndFillFields = function (text) {
+                // Remove generic introductions
+                text = text.replace(/^(¡Excelente!|¡Claro!|¡Por supuesto!|Aquí te presento|Me complace|Con gusto).*?[\n\.:]/gi, '');
+
+                const lines = text.split('\n');
+                let filled = 0;
+
                 const patterns = [
                     /(\w+):\s*"([^"]+)"/g,
                     /\[(\w+)\]\s*=\s*(.+)/g,
                     /Campo\s+(\w+):\s*(.+)/gi
                 ];
 
-                patterns.forEach(pattern => {
-                    let match;
-                    while ((match = pattern.exec(response)) !== null) {
-                        const fieldId = match[1];
-                        const value = match[2].trim();
-                        const field = document.getElementById(fieldId);
-                        if (field) {
-                            field.value = value;
-                            field.dispatchEvent(new Event('input', { bubbles: true }));
-                            addChatMessage(`✅ Campo <strong>${fieldId}</strong> llenado con: "${value}"`, 'assistant');
+                const processMatch = (fieldId, value) => {
+                    const field = document.getElementById(fieldId) || document.getElementsByName(fieldId)[0];
+                    if (field) {
+                        if (window.lockedFields && window.lockedFields.has(fieldId)) {
+                            console.log('[IA] Saltando campo bloqueado:', fieldId);
+                            return;
                         }
+                        field.value = value;
+                        field.dispatchEvent(new Event('input', { bubbles: true }));
+                        
+                        field.style.backgroundColor = '#e8f5e9';
+                        setTimeout(() => field.style.backgroundColor = '', 1000);
+                        
+                        filled++;
+                    }
+                };
+
+                // multi-line matches
+                patterns.forEach((pattern, index) => {
+                   let match;
+                   while ((match = pattern.exec(text)) !== null) {
+                       processMatch(match[1], match[2].trim());
+                   }
+                });
+
+                // Fallback direct format like: "field_id: value" without quotes
+                lines.forEach(line => {
+                    const match = line.match(/^[\-\s\*]*([a-zA-Z0-9_]+)[\s]*(:|=>|=)[\s]*(.+)$/);
+                    if (match && !line.includes('"')) {
+                        let value = match[3].replace(/^['"]|['"]$/g, '').trim();
+                        processMatch(match[1], value);
                     }
                 });
+
+                if (filled > 0) {
+                    addChatMessage(`✅ Llené ${filled} campos en el formulario en base a la sugerencia.`, 'assistant');
+                }
+            };
+
+            function parseAndFillFields(response) {
+                window.MoltbotParseAndFillFields(response);
             }
+
 
             async function aiQuickAction(action) {
                 const context = getFormContext();
@@ -2385,7 +2491,7 @@ Responde de forma concisa y práctica. Si puedes llenar un campo, indica cuál y
                                 } else {
                                     addChatMessage('✅ No encontré perfiles existentes con ese nombre. ¡El nombre parece disponible!');
                                 }
-                            } catch (e) {
+                            }\n            if(!window.Moltbot) window.Moltbot = {};\n            window.Moltbot.parseAndFillFields = window.MoltbotParseAndFillFields; catch (e) {
                                 hideTyping();
                                 addChatMessage('❌ Error en la búsqueda OSINT');
                             }

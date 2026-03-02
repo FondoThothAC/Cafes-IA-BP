@@ -24,6 +24,7 @@ class ImportClient {
      */
     init() {
         this.createModal();
+        this.checkPendingImport();
         console.log('📄 Import Client initialized');
     }
 
@@ -165,7 +166,17 @@ class ImportClient {
     applyMapping() {
         if (!this.currentMapping) return;
 
-        // Auto-fill logic
+        // Check if we are on the dashboard (index.html or generic path without form)
+        const isDashboard = !document.getElementById('a1_nombre_negocio'); // If the main form field doesn't exist, we are likely on the dashboard
+
+        if (isDashboard) {
+            // Check if user is trying to create a project from index
+            localStorage.setItem('pending_ocr_import', JSON.stringify(this.currentMapping));
+            window.location.href = 'wizard.html';
+            return;
+        }
+
+        // Auto-fill logic (we are inside the wizard or a valid form)
         let count = 0;
         for (const [key, val] of Object.entries(this.currentMapping)) {
             const input = document.getElementById(key);
@@ -185,7 +196,29 @@ class ImportClient {
         // Notify Bob Agent UI if needed (refresh completeness)
         if (window.updateCompletenessBar) window.updateCompletenessBar();
 
+        // Optional: trigger save if it's not a new unsaved form
+        if (window.PlanIA && PlanIA.getCurrentProject() && window.triggerSave) {
+            window.triggerSave();
+        }
+
         this.reset();
+    }
+
+    checkPendingImport() {
+        const pending = localStorage.getItem('pending_ocr_import');
+        if (pending) {
+            try {
+                this.currentMapping = JSON.parse(pending);
+                localStorage.removeItem('pending_ocr_import');
+                console.log('📥 Found pending OCR import, applying...');
+                // Wait for form to fully load
+                setTimeout(() => {
+                    this.applyMapping();
+                }, 800);
+            } catch (e) {
+                console.error("Error parsing pending import", e);
+            }
+        }
     }
 
     reset() {

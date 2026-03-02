@@ -936,25 +936,28 @@ DESCRIPCIÓN: Módulo de Identidad de Marca - Logotipo, Colores, Redes Sociales
                 const result = await res.json();
                 result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
             } catch (err) { PlanIA.notifySaveError(); }
-        } catch (err) { PlanIA.notifySaveError(); }
         }
 
         // AI Integration
         function generateIdentityAI() {
+            if (!PlanIA.requireProject('generar identidad de marca')) return;
+
             const project = PlanIA.getCurrentProject();
-            const name = project ? project.a1_nombre_negocio : document.getElementById('brandName').value || 'Mi Marca';
-            const desc = project ? project.a2_descripcion_negocio : document.getElementById('brandDescription').value || '';
+            const contextMD = PlanIA.getProjectContextMD();
             const type = document.getElementById('businessType').value || '';
 
             if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
 
             window.Moltbot.toggle();
             const prompt = `Actúa como Director Creativo de Branding.
-            Marca: ${name}. ${desc}. Giro: ${type}.
+            
+            DATOS COMPLETOS DEL PROYECTO:
+            ${contextMD}
+            Giro seleccionado: ${type || 'No especificado'}.
 
-            Diseña una IDENTIDAD DE MARCA ÚNICA.
-            1. Slogan memorable.
-            2. Paleta de colores (Hex) con psicología del color adecuada.
+            Diseña una IDENTIDAD DE MARCA ÚNICA basada en los datos reales del proyecto.
+            1. Slogan memorable y relevante al negocio.
+            2. Paleta de colores (Hex) con psicología del color adecuada al giro.
             3. Tipografía recomendada.
             4. Descripción breve de la "personalidad" de la marca.
             5. Sugerencia de usuarios para redes sociales.

@@ -19,7 +19,7 @@ class LLMClient:
     Cliente para conectar con Ollama o servidores compatibles con OpenAI API.
     """
     
-    def __init__(self, base_url: str = "http://host.docker.internal:11434", model: str = "gemma2:9b"):
+    def __init__(self, base_url: str = "http://host.docker.internal:11434", model: str = "qwen3:14b"):
         """
         Inicializa el cliente LLM.
         
@@ -68,7 +68,7 @@ class LLMClient:
             "stream": False,
             "temperature": temperature,
             "options": {
-                "num_ctx": 4096 # Context window
+                "num_ctx": 256000 # Massive context window (256k)
             }
         }
         

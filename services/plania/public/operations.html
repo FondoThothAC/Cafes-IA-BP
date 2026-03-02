@@ -40,6 +40,9 @@ DESCRIPCIÓN: Métricas Operativas: OTD, Rotación Inventario, DSO, DPO, CCC
             border-radius: 12px;
             padding: 1rem;
             text-align: center;
+            border: 1px solid var(--surface-light);
+            border-top: 4px solid var(--operation);
+            /* Orange Theme */
         }
 
         .kpi-value {
@@ -70,6 +73,9 @@ DESCRIPCIÓN: Métricas Operativas: OTD, Rotación Inventario, DSO, DPO, CCC
             border-radius: 12px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
+            border: 1px solid var(--surface-light);
+            border-top: 4px solid var(--operation);
+            /* Orange Theme */
         }
 
         .data-section h3 {
@@ -120,210 +126,298 @@ DESCRIPCIÓN: Métricas Operativas: OTD, Rotación Inventario, DSO, DPO, CCC
     <div id="plania-navbar"></div>
 
     <div class="page-container">
-        <div class="page-header">
-            <h1>⚙️ Métricas Operativas</h1>
-            <p class="subtitle">OTD, Rotación, DSO, DPO, CCC y Productividad</p>
+        <div class="page-container">
+            <div class="actions-bar"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 1.5rem 0.5rem;">
+                <div>
+                    <h1 style="color: var(--operation);">⚙️ Métricas Operativas</h1>
+                    <p class="text-muted">OTD, Rotación, DSO, DPO, CCC y Productividad</p>
+                </div>
+                <div class="flex gap-1" style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-ai" onclick="generateOperationsAI()"
+                        style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        🤖 Generar (IA)
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetOperations()"
+                        style="background: var(--surface); border: 1px solid var(--surface-light); color: var(--text); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+                        🔄 Reiniciar
+                    </button>
+                    <button class="btn btn-primary" onclick="saveProjectData()"
+                        style="background: var(--operation); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        💾 Guardar
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-value positive" id="otdValue">0%</div>
+                    <div class="kpi-label">Entregas a Tiempo (OTD)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="rotacionValue">0x</div>
+                    <div class="kpi-label">Rotación Inventario</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="dsoValue">0 días</div>
+                    <div class="kpi-label">DSO (Días Cobro)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="dpoValue">0 días</div>
+                    <div class="kpi-label">DPO (Días Pago)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="cccValue">0 días</div>
+                    <div class="kpi-label">CCC (Ciclo Efectivo)</div>
+                </div>
+            </div>
+
+            <!-- Delivery -->
+            <div class="data-section">
+                <h3>📦 Entregas</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Pedidos a Tiempo</label>
+                        <input type="number" id="pedidosTiempo" value="950" min="0" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Pedidos Totales</label>
+                        <input type="number" id="pedidosTotales" value="1000" min="1" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Empleados</label>
+                        <input type="number" id="empleados" value="10" min="1" onchange="calculate()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory -->
+            <div class="data-section">
+                <h3>📊 Inventario</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Costo Mercancías Vendidas ($)</label>
+                        <input type="number" id="costoMercancias" value="500000" min="0" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Inventario Promedio ($)</label>
+                        <input type="number" id="inventarioPromedio" value="100000" min="1" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Inventario Actual ($)</label>
+                        <input type="number" id="inventarioActual" value="80000" min="0" onchange="calculate()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accounts -->
+            <div class="data-section">
+                <h3>💳 Cuentas por Cobrar / Pagar</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Cuentas por Cobrar ($)</label>
+                        <input type="number" id="cuentasCobrar" value="50000" min="0" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Cuentas por Pagar ($)</label>
+                        <input type="number" id="cuentasPagar" value="40000" min="0" onchange="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>Ventas Anuales ($)</label>
+                        <input type="number" id="ventasAnuales" value="1000000" min="1" onchange="calculate()">
+                    </div>
+                </div>
+                <div class="formula-box">
+                    OTD = (Pedidos a Tiempo / Total) × 100 | Rotación = CMV / Inventario<br>
+                    DSO = (CxC / Ventas) × 365 | DPO = (CxP / CMV) × 365<br>
+                    DIO = (Inventario / CMV) × 365 | CCC = DIO + DSO - DPO
+                </div>
+            </div>
+
+            <footer class="footer">© 2026 Fondo Thoth AC</footer>
         </div>
 
-        <!-- KPIs -->
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-value positive" id="otdValue">0%</div>
-                <div class="kpi-label">Entregas a Tiempo (OTD)</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-value" id="rotacionValue">0x</div>
-                <div class="kpi-label">Rotación Inventario</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-value" id="dsoValue">0 días</div>
-                <div class="kpi-label">DSO (Días Cobro)</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-value" id="dpoValue">0 días</div>
-                <div class="kpi-label">DPO (Días Pago)</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-value" id="cccValue">0 días</div>
-                <div class="kpi-label">CCC (Ciclo Efectivo)</div>
-            </div>
-        </div>
+        <script src="js/plania-core.js"></script>
+        <script>
+            let currentProjectId = null;
 
-        <!-- Delivery -->
-        <div class="data-section">
-            <h3>📦 Entregas</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Pedidos a Tiempo</label>
-                    <input type="number" id="pedidosTiempo" value="950" min="0" onchange="calculate()">
-                </div>
-                <div class="form-group">
-                    <label>Pedidos Totales</label>
-                    <input type="number" id="pedidosTotales" value="1000" min="1" onchange="calculate()">
-                </div>
-                <div class="form-group">
-                    <label>Empleados</label>
-                    <input type="number" id="empleados" value="10" min="1" onchange="calculate()">
-                </div>
-            </div>
-        </div>
+            document.addEventListener('DOMContentLoaded', () => { setTimeout(loadProjectData, 500); });
+            window.addEventListener('plania:projectChanged', loadProjectData);
+            window.addEventListener('plania:save', saveProjectData);
 
-        <!-- Inventory -->
-        <div class="data-section">
-            <h3>📊 Inventario</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Costo Mercancías Vendidas ($)</label>
-                    <input type="number" id="costoMercancias" value="500000" min="0" onchange="calculate()">
-                </div>
-                <div class="form-group">
-                    <label>Inventario Promedio ($)</label>
-                    <input type="number" id="inventarioPromedio" value="100000" min="1" onchange="calculate()">
-                </div>
-                <div class="form-group">
-                    <label>Inventario Actual ($)</label>
-                    <input type="number" id="inventarioActual" value="80000" min="0" onchange="calculate()">
-                </div>
-            </div>
-        </div>
+            function loadProjectData() {
+                const project = PlanIA.getCurrentProject();
 
-        <!-- Accounts -->
-        <div class="data-section">
-            <h3>💳 Cuentas por Cobrar / Pagar</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Cuentas por Cobrar ($)</label>
-                    <input type="number" id="cuentasCobrar" value="50000" min="0" onchange="calculate()">
-                </div>
-                <div class="form-group">
-                    <label>Cuentas por Pagar ($)</label>
-                    <input type="number" id="cuentasPagar" value="40000" min="0" onchange="calculate()">
-                </div>
-                <div class="form-group">
-                    <label>Ventas Anuales ($)</label>
-                    <input type="number" id="ventasAnuales" value="1000000" min="1" onchange="calculate()">
-                </div>
-            </div>
-            <div class="formula-box">
-                OTD = (Pedidos a Tiempo / Total) × 100 | Rotación = CMV / Inventario<br>
-                DSO = (CxC / Ventas) × 365 | DPO = (CxP / CMV) × 365<br>
-                DIO = (Inventario / CMV) × 365 | CCC = DIO + DSO - DPO
-            </div>
-        </div>
+                // Reset all fields to defaults first
+                document.getElementById('pedidosTiempo').value = 950;
+                document.getElementById('pedidosTotales').value = 1000;
+                document.getElementById('empleados').value = 10;
+                document.getElementById('costoMercancias').value = 500000;
+                document.getElementById('inventarioPromedio').value = 100000;
+                document.getElementById('inventarioActual').value = 80000;
+                document.getElementById('cuentasCobrar').value = 50000;
+                document.getElementById('cuentasPagar').value = 40000;
+                document.getElementById('ventasAnuales').value = 1000000;
 
-        <footer class="footer">© 2026 Fondo Thoth AC</footer>
-    </div>
+                if (!project) {
+                    currentProjectId = null;
+                    calculate();
+                    return;
+                }
+                currentProjectId = project.id_proyecto;
 
-    <script src="js/plania-core.js"></script>
-    <script>
-        let currentProjectId = null;
-
-        document.addEventListener('DOMContentLoaded', () => { setTimeout(loadProjectData, 500); });
-        window.addEventListener('plania:projectChanged', loadProjectData);
-        window.addEventListener('plania:save', saveProjectData);
-
-        function loadProjectData() {
-            const project = PlanIA.getCurrentProject();
-
-            // Reset all fields to defaults first
-            document.getElementById('pedidosTiempo').value = 950;
-            document.getElementById('pedidosTotales').value = 1000;
-            document.getElementById('empleados').value = 10;
-            document.getElementById('costoMercancias').value = 500000;
-            document.getElementById('inventarioPromedio').value = 100000;
-            document.getElementById('inventarioActual').value = 80000;
-            document.getElementById('cuentasCobrar').value = 50000;
-            document.getElementById('cuentasPagar').value = 40000;
-            document.getElementById('ventasAnuales').value = 1000000;
-
-            if (!project) {
-                currentProjectId = null;
+                try {
+                    const data = JSON.parse(project.i4_operaciones_json || '{}');
+                    if (data.pedidosTiempo !== undefined) document.getElementById('pedidosTiempo').value = data.pedidosTiempo;
+                    if (data.pedidosTotales !== undefined) document.getElementById('pedidosTotales').value = data.pedidosTotales;
+                    if (data.empleados !== undefined) document.getElementById('empleados').value = data.empleados;
+                    if (data.costoMercancias !== undefined) document.getElementById('costoMercancias').value = data.costoMercancias;
+                    if (data.inventarioPromedio !== undefined) document.getElementById('inventarioPromedio').value = data.inventarioPromedio;
+                    if (data.inventarioActual !== undefined) document.getElementById('inventarioActual').value = data.inventarioActual;
+                    if (data.cuentasCobrar !== undefined) document.getElementById('cuentasCobrar').value = data.cuentasCobrar;
+                    if (data.cuentasPagar !== undefined) document.getElementById('cuentasPagar').value = data.cuentasPagar;
+                    if (data.ventasAnuales !== undefined) document.getElementById('ventasAnuales').value = data.ventasAnuales;
+                } catch (e) {
+                    console.log('No operations data or parse error:', e);
+                }
                 calculate();
-                return;
             }
-            currentProjectId = project.id_proyecto;
 
-            try {
-                const data = JSON.parse(project.i4_operaciones_json || '{}');
-                if (data.pedidosTiempo !== undefined) document.getElementById('pedidosTiempo').value = data.pedidosTiempo;
-                if (data.pedidosTotales !== undefined) document.getElementById('pedidosTotales').value = data.pedidosTotales;
-                if (data.empleados !== undefined) document.getElementById('empleados').value = data.empleados;
-                if (data.costoMercancias !== undefined) document.getElementById('costoMercancias').value = data.costoMercancias;
-                if (data.inventarioPromedio !== undefined) document.getElementById('inventarioPromedio').value = data.inventarioPromedio;
-                if (data.inventarioActual !== undefined) document.getElementById('inventarioActual').value = data.inventarioActual;
-                if (data.cuentasCobrar !== undefined) document.getElementById('cuentasCobrar').value = data.cuentasCobrar;
-                if (data.cuentasPagar !== undefined) document.getElementById('cuentasPagar').value = data.cuentasPagar;
-                if (data.ventasAnuales !== undefined) document.getElementById('ventasAnuales').value = data.ventasAnuales;
-            } catch (e) {
-                console.log('No operations data or parse error:', e);
+            function calculate() {
+                const pedidosTiempo = parseFloat(document.getElementById('pedidosTiempo').value) || 0;
+                const pedidosTotales = parseFloat(document.getElementById('pedidosTotales').value) || 1;
+                const costoMercancias = parseFloat(document.getElementById('costoMercancias').value) || 0;
+                const inventarioPromedio = parseFloat(document.getElementById('inventarioPromedio').value) || 1;
+                const inventarioActual = parseFloat(document.getElementById('inventarioActual').value) || 0;
+                const cuentasCobrar = parseFloat(document.getElementById('cuentasCobrar').value) || 0;
+                const cuentasPagar = parseFloat(document.getElementById('cuentasPagar').value) || 0;
+                const ventasAnuales = parseFloat(document.getElementById('ventasAnuales').value) || 1;
+
+                // OTD
+                const otd = (pedidosTiempo / pedidosTotales) * 100;
+                document.getElementById('otdValue').textContent = otd.toFixed(1) + '%';
+                document.getElementById('otdValue').className = 'kpi-value ' + (otd >= 95 ? 'positive' : otd >= 90 ? 'warning' : 'negative');
+
+                // Rotación
+                const rotacion = costoMercancias / inventarioPromedio;
+                document.getElementById('rotacionValue').textContent = rotacion.toFixed(1) + 'x';
+
+                // DSO
+                const dso = (cuentasCobrar / ventasAnuales) * 365;
+                document.getElementById('dsoValue').textContent = dso.toFixed(0) + ' días';
+                document.getElementById('dsoValue').className = 'kpi-value ' + (dso <= 30 ? 'positive' : dso <= 45 ? 'warning' : 'negative');
+
+                // DPO
+                const dpo = costoMercancias > 0 ? (cuentasPagar / costoMercancias) * 365 : 0;
+                document.getElementById('dpoValue').textContent = dpo.toFixed(0) + ' días';
+
+                // DIO
+                const dio = costoMercancias > 0 ? (inventarioActual / costoMercancias) * 365 : 0;
+
+                // CCC
+                const ccc = dio + dso - dpo;
+                document.getElementById('cccValue').textContent = ccc.toFixed(0) + ' días';
+                document.getElementById('cccValue').className = 'kpi-value ' + (ccc <= 30 ? 'positive' : ccc <= 60 ? 'warning' : 'negative');
             }
-            calculate();
-        }
 
-        function calculate() {
-            const pedidosTiempo = parseFloat(document.getElementById('pedidosTiempo').value) || 0;
-            const pedidosTotales = parseFloat(document.getElementById('pedidosTotales').value) || 1;
-            const costoMercancias = parseFloat(document.getElementById('costoMercancias').value) || 0;
-            const inventarioPromedio = parseFloat(document.getElementById('inventarioPromedio').value) || 1;
-            const inventarioActual = parseFloat(document.getElementById('inventarioActual').value) || 0;
-            const cuentasCobrar = parseFloat(document.getElementById('cuentasCobrar').value) || 0;
-            const cuentasPagar = parseFloat(document.getElementById('cuentasPagar').value) || 0;
-            const ventasAnuales = parseFloat(document.getElementById('ventasAnuales').value) || 1;
+            async function saveProjectData() {
+                if (!currentProjectId) { PlanIA.notifySaveError(); return; }
 
-            // OTD
-            const otd = (pedidosTiempo / pedidosTotales) * 100;
-            document.getElementById('otdValue').textContent = otd.toFixed(1) + '%';
-            document.getElementById('otdValue').className = 'kpi-value ' + (otd >= 95 ? 'positive' : otd >= 90 ? 'warning' : 'negative');
+                const data = {
+                    pedidosTiempo: parseFloat(document.getElementById('pedidosTiempo').value),
+                    pedidosTotales: parseFloat(document.getElementById('pedidosTotales').value),
+                    empleados: parseFloat(document.getElementById('empleados').value),
+                    costoMercancias: parseFloat(document.getElementById('costoMercancias').value),
+                    inventarioPromedio: parseFloat(document.getElementById('inventarioPromedio').value),
+                    inventarioActual: parseFloat(document.getElementById('inventarioActual').value),
+                    cuentasCobrar: parseFloat(document.getElementById('cuentasCobrar').value),
+                    cuentasPagar: parseFloat(document.getElementById('cuentasPagar').value),
+                    ventasAnuales: parseFloat(document.getElementById('ventasAnuales').value),
+                };
 
-            // Rotación
-            const rotacion = costoMercancias / inventarioPromedio;
-            document.getElementById('rotacionValue').textContent = rotacion.toFixed(1) + 'x';
+                try {
+                    const res = await fetch(PlanIA.API_URL, { // Corrected URL usage
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'update', id_proyecto: currentProjectId, i4_operaciones_json: JSON.stringify(data) })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        PlanIA.notifySaved();
+                    } else {
+                        PlanIA.notifySaveError();
+                    }
+                } catch (err) { PlanIA.notifySaveError(); }
+            }
 
-            // DSO
-            const dso = (cuentasCobrar / ventasAnuales) * 365;
-            document.getElementById('dsoValue').textContent = dso.toFixed(0) + ' días';
-            document.getElementById('dsoValue').className = 'kpi-value ' + (dso <= 30 ? 'positive' : dso <= 45 ? 'warning' : 'negative');
+            function resetOperations() {
+                if (!confirm('¿Reiniciar las métricas operativas?')) return;
+                document.getElementById('pedidosTiempo').value = 950;
+                document.getElementById('pedidosTotales').value = 1000;
+                document.getElementById('empleados').value = 10;
+                document.getElementById('costoMercancias').value = 500000;
+                document.getElementById('inventarioPromedio').value = 100000;
+                document.getElementById('inventarioActual').value = 80000;
+                document.getElementById('cuentasCobrar').value = 50000;
+                document.getElementById('cuentasPagar').value = 40000;
+                document.getElementById('ventasAnuales').value = 1000000;
+                calculate();
+            }
 
-            // DPO
-            const dpo = costoMercancias > 0 ? (cuentasPagar / costoMercancias) * 365 : 0;
-            document.getElementById('dpoValue').textContent = dpo.toFixed(0) + ' días';
+            function generateOperationsAI() {
+                const project = PlanIA.getCurrentProject();
+                const name = project ? project.a1_nombre_negocio : 'Negocio';
+                const desc = project ? project.a2_descripcion_negocio : '';
 
-            // DIO
-            const dio = costoMercancias > 0 ? (inventarioActual / costoMercancias) * 365 : 0;
+                if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
 
-            // CCC
-            const ccc = dio + dso - dpo;
-            document.getElementById('cccValue').textContent = ccc.toFixed(0) + ' días';
-            document.getElementById('cccValue').className = 'kpi-value ' + (ccc <= 30 ? 'positive' : ccc <= 60 ? 'warning' : 'negative');
-        }
+                window.Moltbot.toggle();
+                // Simple Prompt for Operations
+                const prompt = `Actúa como Gerente de Operaciones.
+             Negocio: ${name}. ${desc}.
 
-        async function saveProjectData() {
-            if (!currentProjectId) { PlanIA.notifySaveError(); return; }
+             Estima métricas operativas REALISTAS para este tipo de negocio en etapa inicial/media.
+             
+             Dame valores para:
+             - Pedidos a tiempo (OTD)
+             - Costos y Inventarios (Rotación)
+             - Cuentas por Cobrar/Pagar (Ciclo de efectivo)
 
-            const data = {
-                pedidosTiempo: parseFloat(document.getElementById('pedidosTiempo').value),
-                pedidosTotales: parseFloat(document.getElementById('pedidosTotales').value),
-                empleados: parseFloat(document.getElementById('empleados').value),
-                costoMercancias: parseFloat(document.getElementById('costoMercancias').value),
-                inventarioPromedio: parseFloat(document.getElementById('inventarioPromedio').value),
-                inventarioActual: parseFloat(document.getElementById('inventarioActual').value),
-                cuentasCobrar: parseFloat(document.getElementById('cuentasCobrar').value),
-                cuentasPagar: parseFloat(document.getElementById('cuentasPagar').value),
-                ventasAnuales: parseFloat(document.getElementById('ventasAnuales').value),
-            };
+             Formato JSON EXACTO:
+             {
+                "pedidosTiempo": 950,
+                "pedidosTotales": 1000,
+                "empleados": 5,
+                "costoMercancias": 500000,
+                "inventarioPromedio": 50000,
+                "inventarioActual": 40000,
+                "cuentasCobrar": 20000,
+                "cuentasPagar": 15000,
+                "ventasAnuales": 1200000
+             }
+             Solo JSON.`;
 
-            try {
-                const res = await fetch(PlanIA.API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'update', id_proyecto: currentProjectId, i4_operaciones_json: JSON.stringify(data) })
-                });
-                const result = await res.json();
-                result.success ? PlanIA.notifySaved() : PlanIA.notifySaveError();
-            } catch (err) { PlanIA.notifySaveError(); }
-        }
-    </script>
-    <script src="js/moltbot_widget.js"></script>
+                const oldParse = window.Moltbot.parseAndFillFields;
+                window.Moltbot.parseAndFillFields = function (response) {
+                    try {
+                        const match = response.match(/\{[\s\S]*\}/);
+                        if (match) {
+                            const data = JSON.parse(match[0]);
+                            Object.keys(data).forEach(key => {
+                                const el = document.getElementById(key);
+                                if (el) el.value = data[key];
+                            });
+                            calculate();
+                            window.Moltbot.addMessage(`✅ Métricas operativas estimadas.`, 'system');
+                        }
+                    } catch (e) { console.error(e); }
+                    window.Moltbot.parseAndFillFields = oldParse;
+                };
+                window.Moltbot.send(prompt);
+            }
+        </script>
+        <script src="js/moltbot_widget.js"></script>
 </body>
 
 </html>

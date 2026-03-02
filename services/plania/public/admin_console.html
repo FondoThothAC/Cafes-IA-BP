@@ -116,13 +116,28 @@
         <!-- Section: Projects (Hidden) -->
         <section id="section-projects" class="space-y-6 hidden">
             <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold">Asignación de Proyectos</h2>
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                    Asignar Proyecto
-                </button>
+                <h2 class="text-2xl font-bold">Todos los Proyectos</h2>
+                <button onclick="loadProjects()"
+                    class="text-purple-400 hover:text-purple-300 text-sm">Actualizar</button>
             </div>
-            <div class="glass-panel rounded-xl p-8 text-center text-gray-400">
-                <p>Lista de proyectos disponible próximamente.</p>
+            <div class="glass-panel rounded-xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-800/50 text-gray-400 text-xs uppercase">
+                        <tr>
+                            <th class="px-6 py-4">ID</th>
+                            <th class="px-6 py-4">Negocio</th>
+                            <th class="px-6 py-4">Emprendedor</th>
+                            <th class="px-6 py-4">Creador (UUID)</th>
+                            <th class="px-6 py-4">Estatus</th>
+                            <th class="px-6 py-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-gray-800" id="projectsTableBody">
+                        <tr>
+                            <td class="px-6 py-4" colspan="6">Cargando proyectos...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -194,6 +209,7 @@
             event.currentTarget.classList.add('active');
 
             if (id === 'users') loadUsers();
+            if (id === 'projects') loadProjects();
             if (id === 'logs') loadLogs();
         }
 
@@ -216,6 +232,57 @@
                     <td class="px-6 py-4"><button class="text-gray-400 hover:text-white">Editar</button></td>
                 </tr>
             `;
+        }
+
+        async function loadProjects() {
+            const tbody = document.getElementById('projectsTableBody');
+            tbody.innerHTML = '<tr><td class="px-6 py-4" colspan="6">Cargando...</td></tr>';
+
+            try {
+                const res = await fetch('save_row.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'list',
+                        uuid_usuario: session.username,
+                        role: 'admin'
+                    })
+                });
+                const data = await res.json();
+                const projects = data.projects || [];
+
+                if (projects.length === 0) {
+                    tbody.innerHTML = '<tr><td class="px-6 py-4" colspan="6">No hay proyectos registrados.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = projects.map(p => `
+                    <tr class="table-row">
+                        <td class="px-6 py-4 text-gray-400">#${p.id_proyecto}</td>
+                        <td class="px-6 py-4 font-medium text-white">${p.a1_nombre_negocio || 'Sin nombre'}</td>
+                        <td class="px-6 py-4">${p.a2_nombre_emprendedor || 'N/A'}</td>
+                        <td class="px-6 py-4 text-xs text-gray-500">${p.uuid_usuario || 'demo'}</td>
+                        <td class="px-6 py-4">
+                            <span class="status-badge px-2 py-1 rounded-md text-xs
+                                ${p.estatus_proyecto === 'completo' ? 'bg-green-500/20 text-green-400' :
+                        p.estatus_proyecto === 'borrador' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-blue-500/20 text-blue-400'}">
+                                ${p.estatus_proyecto}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button onclick="openProject(${p.id_proyecto})" class="text-purple-400 hover:text-purple-300">Abrir</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td class="px-6 py-4 text-red-400" colspan="6">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        function openProject(id) {
+            localStorage.setItem('plania_current_project', id);
+            window.location.href = `wizard.html?edit=${id}`;
         }
 
         async function loadLogs() {

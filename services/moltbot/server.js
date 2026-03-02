@@ -3,6 +3,10 @@ const cors = require('cors');
 const puppeteer = require('puppeteer-core');
 const { exec } = require('child_process');
 
+// Importaciones de Capacidades (Skills)
+const { deepResearch } = require('./src/capabilities/researcher');
+const { createPDF, createVideo } = require('./src/capabilities/producer');
+
 const app = express();
 // ==========================================
 // CONFIGURACIÓN

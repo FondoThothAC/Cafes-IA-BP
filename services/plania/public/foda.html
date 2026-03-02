@@ -396,7 +396,18 @@ DESCRIPCIÓN: Análisis FODA (SWOT) interactivo
         let currentProjectId = null;
 
         window.addEventListener('plania:projectChanged', loadProject);
-        window.addEventListener('DOMContentLoaded', () => setTimeout(loadProject, 500));
+        // Use plania:ready if available, otherwise wait for DOMContentLoaded + small delay
+        document.addEventListener('DOMContentLoaded', () => {
+            // Try immediately - PlanIA may already be initialized from cache
+            setTimeout(() => {
+                if (PlanIA && PlanIA.state && PlanIA.state.currentProject) {
+                    loadProject();
+                } else {
+                    // PlanIA not ready yet, event listener will handle it
+                    loadProject(); // Still call to populate empty items
+                }
+            }, 300);
+        });
 
         async function loadProject() {
             // Reset to defaults first
@@ -502,8 +513,12 @@ DESCRIPCIÓN: Análisis FODA (SWOT) interactivo
         }
 
         async function saveFoda() {
-            if (!currentProjectId) {
-                alert('Selecciona un proyecto primero');
+            // FIXED: Read project directly from PlanIA (avoids race condition with currentProjectId)
+            const project = PlanIA.getCurrentProject();
+            const projectId = project?.id_proyecto || currentProjectId;
+
+            if (!projectId) {
+                alert('⚠️ No hay proyecto activo. Selecciona un proyecto desde el menú superior.');
                 return;
             }
 
@@ -515,13 +530,13 @@ DESCRIPCIÓN: Análisis FODA (SWOT) interactivo
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'update',
-                        id_proyecto: currentProjectId,
+                        id_proyecto: projectId,
                         h3_marco_legal_json: JSON.stringify({ foda })
                     })
                 });
                 const result = await res.json();
                 if (result.success) {
-                    alert('FODA guardado exitosamente');
+                    alert('✅ FODA guardado exitosamente');
                 } else {
                     alert('Error: ' + (result.error || 'No se pudo guardar'));
                 }
@@ -531,9 +546,10 @@ DESCRIPCIÓN: Análisis FODA (SWOT) interactivo
         }
 
         function generateFODAAI() {
+            if (!PlanIA.requireProject('analizar riesgos FODA')) return;
+
             const project = PlanIA.getCurrentProject();
-            const name = project ? project.a1_nombre_negocio : 'Tu Negocio';
-            const desc = project ? project.a2_descripcion_negocio : '';
+            const contextMD = PlanIA.getProjectContextMD();
 
             if (!window.Moltbot) {
                 alert("BoB IA no está listo aún.");
@@ -543,10 +559,13 @@ DESCRIPCIÓN: Análisis FODA (SWOT) interactivo
             window.Moltbot.toggle(); // Open chat
 
             const prompt = `Actúa como un Consultor de Negocios "Abogado del Diablo".
-            Analiza este negocio: "${name}" - ${desc}.
+            
+            DATOS COMPLETOS DEL PROYECTO:
+            ${contextMD}
             
             Tu objetivo es encontrar los RIESGOS OCULTOS y ser BRUTALMENTE HONESTO.
             No quiero halagos. Quiero que identifiques las Debilidades y Amenazas que el emprendedor ignora.
+            BASA tu análisis en los DATOS REALES del proyecto (costos, mercado, competencia, ubicación, etc.).
             
             Genera un análisis FODA completo y Estrategias CAME.
             

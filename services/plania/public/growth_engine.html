@@ -40,20 +40,7 @@ DESCRIPCIÓN: Motores de Crecimiento (Viral, Pegajoso, Remunerado)
             padding: 2rem;
         }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
 
-        h1 {
-            font-size: 1.75rem;
-            background: linear-gradient(135deg, var(--primary), #60a5fa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
 
         .engine-selector {
             display: flex;
@@ -171,10 +158,36 @@ DESCRIPCIÓN: Motores de Crecimiento (Viral, Pegajoso, Remunerado)
     <div id="plania-navbar"></div>
 
     <div class="container">
-        <header>
+        <header class="flex justify-between items-center mb-6">
             <div>
-                <h1>🚀 Motor de Crecimiento</h1>
-                <p style="color: var(--text-muted);">Identifica y afina la máquina que impulsa tu startup.</p>
+                <h1 style="color: var(--market);">🚀 Motor de Crecimiento</h1>
+                <p class="text-muted">Identifica y afina la máquina que impulsa tu startup.</p>
+            </div>
+
+            <div class="nav-actions" style="display: flex; gap: 1rem; align-items: center;">
+                <a href="marketing_plan.html" class="btn"
+                    style="text-decoration: none; color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 4px; transition: color 0.2s;">
+                    ⬅ <span style="border-bottom: 1px solid transparent;">Atrás</span>
+                </a>
+                <a href="surveys.html" class="btn"
+                    style="text-decoration: none; color: var(--market); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 4px; transition: transform 0.2s;">
+                    <span style="border-bottom: 1px solid currentColor;">Siguiente: Encuestas</span> ➡
+                </a>
+            </div>
+
+            <div class="flex gap-1" style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-ai" onclick="tuneEngineAI()"
+                    style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    🤖 Afinar (IA)
+                </button>
+                <button class="btn btn-secondary" onclick="location.reload()" title="Recargar"
+                    style="background: var(--surface); border: 1px solid var(--surface-light); color: var(--text); padding: 0.5rem; border-radius: 8px; cursor: pointer;">
+                    🔄
+                </button>
+                <button class="btn btn-primary" onclick="alert('Guardado Automático')"
+                    style="background: var(--market); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    💾 Guardar
+                </button>
             </div>
         </header>
 
@@ -210,9 +223,6 @@ DESCRIPCIÓN: Motores de Crecimiento (Viral, Pegajoso, Remunerado)
                 <div class="metric-label" id="main-label">-</div>
                 <div id="health-status" style="margin-top: 1rem; font-weight: 600;"></div>
 
-                <button class="btn-ai" onclick="tuneEngineAI()">
-                    🛠️ Afinar Motor con IA
-                </button>
             </div>
         </div>
     </div>

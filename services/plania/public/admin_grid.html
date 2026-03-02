@@ -324,11 +324,12 @@ DESCRIPCIÓN: Vista de administración tipo hoja de cálculo para proyectos.
 
         async function loadProjects() {
             const uuid = localStorage.getItem('uuid_usuario') || 'demo-user';
+            const role = localStorage.getItem('user_role') || 'emprendedor';
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'list', uuid_usuario: uuid })
+                    body: JSON.stringify({ action: 'list', uuid_usuario: uuid, role: role })
                 });
                 const data = await res.json();
                 currentProjects = data.projects || [];

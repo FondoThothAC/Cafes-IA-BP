@@ -35,7 +35,7 @@ const AI_BACKEND = 'ollama';
 const AI_HOST = OLLAMA_HOST;
 // User requested "gemma3n" -> mapping to available gemma model (likely gemma2 or custom)
 // If 'gemma3n' fails, ensure user has done 'ollama pull gemma3n' or 'ollama pull gemma2'
-const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'gemma3:1b';
+const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'qwen3:14b';
 
 // Service hosts
 const MOLTBOT_CONTAINER = 'http://ai-moltbot:8080';
@@ -119,34 +119,59 @@ app.all('/api/agent/*', async (req, res) => {
 // ============================================
 app.post('/api/agent/ocr-upload', upload.single('file'), async (req, res) => {
     try {
+        console.log('--- OCR UPLOAD START ---');
+
         if (!req.file) {
+            console.error('❌ No file in gateway request');
             return res.status(400).json({ success: false, error: 'No file uploaded to gateway' });
         }
 
-        console.log(`📄 Proxying OCR upload: ${req.file.originalname}`);
+        console.log(`📄 Received file: ${req.file.originalname}`);
+        console.log(`   Path: ${req.file.path}`);
+        console.log(`   Size: ${req.file.size}`);
+        console.log(`   Mime: ${req.file.mimetype}`);
 
+        const FormData = require('form-data');
+        const axios = require('axios');
         const form = new FormData();
-        form.append('file', fs.createReadStream(req.file.path), req.file.originalname);
+        const fileStream = fs.createReadStream(req.file.path);
 
-        const response = await fetch(`${PLANIA_PYTHON_HOST}/api/agent/ocr-upload`, {
-            method: 'POST',
-            body: form,
-            headers: form.getHeaders() // Crucial for multipart boundary
+        form.append('file', fileStream, {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+            knownLength: req.file.size
         });
 
+        console.log('🚀 Forwarding to Python:', `${PLANIA_PYTHON_HOST}/api/agent/ocr-upload`);
+
+        const response = await axios.post(`${PLANIA_PYTHON_HOST}/api/agent/ocr-upload`, form, {
+            headers: {
+                ...form.getHeaders()
+            }
+        });
+
+        console.log(`📩 Python Response Status: ${response.status}`);
+
         // Cleanup temp file
-        fs.unlink(req.file.path, (err) => { if (err) console.error('Cleanup error:', err); });
+        fs.unlink(req.file.path, (err) => {
+            if (err) console.error('Cleanup error:', err);
+            else console.log('🧹 Temp file cleaned');
+        });
 
-        if (!response.ok) {
-            throw new Error(`Python Service Error: ${response.statusText}`);
-        }
-
-        const data = await response.json();
+        // Axios natively throws on 4xx/5xx, but we caught it in try/catch block
+        const data = response.data;
+        console.log('✅ OCR Success:', data.success);
         res.json(data);
 
     } catch (error) {
-        console.error('OCR Upload Proxy Error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        // Handle Axios specific errors gracefully
+        const status = error.response ? error.response.status : 500;
+        const errorText = error.response && error.response.data ? JSON.stringify(error.response.data) : error.message;
+
+        console.error(`❌ OCR Upload Proxy Error (${status}):`, errorText);
+        res.status(status).json({ success: false, error: `Python Backend Error: ${errorText}` });
+    } finally {
+        console.log('--- OCR UPLOAD END ---');
     }
 });
 
@@ -208,7 +233,7 @@ app.post('/api/generate', async (req, res) => {
                 const response = await fetch(`${OLLAMA_HOST}/api/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: 'gemma3:1b', prompt, stream, options })
+                    body: JSON.stringify({ model: 'qwen3:14b', prompt, stream, options })
                 });
                 const data = await response.json();
                 data.backend = 'ollama-fallback';
@@ -223,8 +248,8 @@ app.post('/api/generate', async (req, res) => {
                         user_id: user_id || 'anonymous',
                         prompt: prompt,
                         response: data.response,
-                        model: 'gemma3:1b',
-                        metadata: { backend: 'ollama-fallback', options }
+                        model: 'qwen3:14b',
+                        metadata: { backend: 'ollama-fallback', options: { ...options, num_ctx: 256000 } }
                     });
                 } catch (errLog) { console.error('Log error', errLog); }
                 return;
@@ -295,7 +320,7 @@ app.post('/api/chat', async (req, res) => {
             try {
                 const { messages, model, stream = false, source, user_id } = req.body;
                 // Force fallback model
-                const fallbackModel = 'gemma3:1b';
+                const fallbackModel = 'qwen3:14b';
 
                 const response = await fetch(`${OLLAMA_HOST}/api/chat`, {
                     method: 'POST',
@@ -382,19 +407,37 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 
     try {
         const FormData = require('form-data');
+        const axios = require('axios');
         const form = new FormData();
-        form.append('audio_file', fs.createReadStream(req.file.path));
+        const fileStream = fs.createReadStream(req.file.path);
 
-        const response = await fetch(`${WHISPER_HOST}/asr?output=json`, {
-            method: 'POST',
-            body: form
+        form.append('audio_file', fileStream, {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+            knownLength: req.file.size
         });
 
-        const data = await response.json();
-        fs.unlinkSync(req.file.path);
-        res.json(data);
+        const response = await axios.post(`${WHISPER_HOST}/asr?output=json`, form, {
+            headers: {
+                ...form.getHeaders()
+            }
+        });
+
+        const data = response.data;
+        console.log(`✅ Whisper Success`);
+
+        // Cleanup temp file
+        fs.unlink(req.file.path, (err) => {
+            if (err) console.error('Cleanup error:', err);
+        });
+
+        res.json({ success: true, text: data.text });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        const status = error.response ? error.response.status : 500;
+        const errorText = error.response && error.response.data ? JSON.stringify(error.response.data) : error.message;
+
+        console.error(`❌ Whisper Proxy Error (${status}):`, errorText);
+        res.status(status).json({ success: false, error: errorText });
     }
 });
 

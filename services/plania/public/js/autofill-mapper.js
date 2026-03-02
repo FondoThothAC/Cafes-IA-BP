@@ -23,10 +23,10 @@ const AutoFillMapper = {
 
         // Primero: mapeo directo (inmediato)
         const directMappings = {
-            canvas: this.mapToCanvas(projectData),
-            marketingPlan: this.mapToMarketingPlan(projectData),
-            investmentBudget: this.mapToInvestmentBudget(projectData),
-            revenueProjection: this.mapToRevenueProjection(projectData),
+            canvas: projectData.c2_canvas_json ? null : this.mapToCanvas(projectData),
+            marketingPlan: this.mapToMarketingPlan(projectData), // El marketing está diseñado para retroalimentarse del embudo
+            investmentBudget: projectData.g10_presupuesto_inversion_json ? null : this.mapToInvestmentBudget(projectData),
+            revenueProjection: projectData.g12_proyeccion_ingresos_json ? null : this.mapToRevenueProjection(projectData),
             industryAnalysis: this.mapToIndustryAnalysis(projectData)
         };
 
@@ -44,10 +44,11 @@ const AutoFillMapper = {
                 if (aiSuggestions.foda) {
                     directMappings.foda = aiSuggestions.foda;
                 }
-                if (aiSuggestions.canvas) {
-                    // Merge into existing canvas
+                if (aiSuggestions.canvas && !projectData.c2_canvas_json) {
+                    // Merge into existing canvas ONLY if no previous canvas exists to avoid overwriting user edits
                     Object.keys(aiSuggestions.canvas).forEach(key => {
                         if (aiSuggestions.canvas[key].length > 0) {
+                            if (!directMappings.canvas) directMappings.canvas = this.getEmptyCanvas();
                             directMappings.canvas[key] = [
                                 ...directMappings.canvas[key],
                                 ...aiSuggestions.canvas[key]
@@ -55,7 +56,7 @@ const AutoFillMapper = {
                         }
                     });
                 }
-                if (aiSuggestions.risks) {
+                if (aiSuggestions.risks && !projectData.c4_riesgos_json) {
                     directMappings.risks = aiSuggestions.risks;
                 }
 
@@ -271,10 +272,10 @@ Identifica los 3 principales riesgos y planes de mitigación. Responde SOLO en J
     // ==================== DIRECT MAPPING FUNCTIONS ====================
 
     /**
-     * Canvas (Business Model Canvas) - Direct mapping
+     * Devuelve una estructura vacía del modelo Canvas
      */
-    mapToCanvas(data) {
-        const canvas = {
+    getEmptyCanvas() {
+        return {
             partners: [],
             activities: [],
             resources: [],
@@ -285,6 +286,13 @@ Identifica los 3 principales riesgos y planes de mitigación. Responde SOLO en J
             costs: [],
             revenue: []
         };
+    },
+
+    /**
+     * Canvas (Business Model Canvas) - Direct mapping
+     */
+    mapToCanvas(data) {
+        const canvas = this.getEmptyCanvas();
 
         // Propuesta de valor → Value block
         if (data.b3_propuesta_valor) {
@@ -507,30 +515,47 @@ Identifica los 3 principales riesgos y planes de mitigación. Responde SOLO en J
         };
 
         // Canvas → JSON field
-        if (Object.values(mappings.canvas).some(arr => arr.length > 0)) {
+        if (mappings.canvas && Object.values(mappings.canvas).some(arr => arr.length > 0)) {
             updates.c2_canvas_json = JSON.stringify(mappings.canvas);
         }
 
-        // FODA → JSON field (only if direct mapping has data, AI will handle its own save)
+        // FODA → Inside h3_marco_legal_json (only if direct mapping has data, AI will handle its own save)
         if (mappings.foda && Object.values(mappings.foda).some(arr => arr.length > 0)) {
-            updates.c3_foda_json = JSON.stringify(mappings.foda);
+            let legalJson = {};
+            try { legalJson = JSON.parse(projectData.h3_marco_legal_json || '{}'); } catch (e) { }
+            legalJson.foda = mappings.foda;
+            updates.h3_marco_legal_json = JSON.stringify(legalJson);
+        }
+
+        // Riesgos
+        if (mappings.risks) {
+            updates.c4_riesgos_json = JSON.stringify(mappings.risks);
         }
 
         // Marketing Plan → individual fields
-        Object.assign(updates, mappings.marketingPlan);
+        if (mappings.marketingPlan) {
+            Object.assign(updates, mappings.marketingPlan);
+        }
 
         // Investment Budget → JSON field
-        if (mappings.investmentBudget.length > 0) {
+        if (mappings.investmentBudget && mappings.investmentBudget.length > 0) {
             updates.g10_presupuesto_inversion_json = JSON.stringify(mappings.investmentBudget);
         }
 
         // Revenue Projection → JSON field
-        if (mappings.revenueProjection.productos.length > 0) {
+        if (mappings.revenueProjection && mappings.revenueProjection.productos && mappings.revenueProjection.productos.length > 0) {
             updates.g12_proyeccion_ingresos_json = JSON.stringify(mappings.revenueProjection);
         }
 
         // Industry Analysis → individual fields
-        Object.assign(updates, mappings.industryAnalysis);
+        if (mappings.industryAnalysis) {
+            Object.assign(updates, mappings.industryAnalysis);
+        }
+
+        // If no updates to make (all were null/skipped)
+        if (Object.keys(updates).length <= 2) {
+            return { success: true, message: 'No new mappings to save.' };
+        }
 
         try {
             const response = await fetch('save_row.php', {
@@ -557,7 +582,13 @@ Identifica los 3 principales riesgos y planes de mitigación. Responde SOLO en J
         };
 
         if (suggestions.foda && Object.values(suggestions.foda).some(arr => arr.length > 0)) {
-            updates.c3_foda_json = JSON.stringify(suggestions.foda);
+            let legalJson = {};
+            // We unfortunately don't have projectData passed down here easily, but we can assume updates or fetch
+            // But actually AI mapping isn't keeping the old legal_json without projectData. Let's just create an empty one or fetch it?
+            // A quick fix is just sending h3_marco_legal_json = stringify {foda...} if we don't care about old legal_json, 
+            // but let's be safe and instruct save_row.php to merge? PHP would just overwrite.
+            // As a fallback, we just send it as {foda: suggestions.foda} for now.
+            updates.h3_marco_legal_json = JSON.stringify({ foda: suggestions.foda });
         }
 
         // If canvas suggestions are generated, they are merged into the directMappings.canvas

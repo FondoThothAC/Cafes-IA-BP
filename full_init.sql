@@ -117,4 +117,5 @@ INSERT IGNORE INTO users (username, password_hash, full_name, role) VALUES
 ('darinka', '$2y$10$FyndsII2jDKy.BuOa5.Siet7rAc1LagsFw9lparFa82kmUrNEcNJi', 'Darinka', 'asesor'),
 ('heidi', '$2y$10$FyndsII2jDKy.BuOa5.Siet7rAc1LagsFw9lparFa82kmUrNEcNJi', 'Heidi', 'asesor'),
 ('angel', '$2y$10$FyndsII2jDKy.BuOa5.Siet7rAc1LagsFw9lparFa82kmUrNEcNJi', 'Angel', 'asesor'),
-('nico', '$2y$10$FyndsII2jDKy.BuOa5.Siet7rAc1LagsFw9lparFa82kmUrNEcNJi', 'Nico', 'asesor');
+('nico', '$2y$10$FyndsII2jDKy.BuOa5.Siet7rAc1LagsFw9lparFa82kmUrNEcNJi', 'Nico', 'asesor'),
+('ever', '$2y$10$FyndsII2jDKy.BuOa5.Siet7rAc1LagsFw9lparFa82kmUrNEcNJi', 'Ever', 'asesor');

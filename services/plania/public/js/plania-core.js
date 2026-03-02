@@ -209,7 +209,8 @@ const PlanIA = {
                     { id: 'projects_list', icon: '📋', label: 'Mis Proyectos', href: 'projects_list.html' },
                     { id: 'export_pdf', icon: '📄', label: 'Exportar PDF', href: 'export_pdf.html' },
                     { id: 'admin_grid', icon: '🔐', label: 'Admin Global', href: 'admin_grid.html' },
-                ]
+                    userRole === 'admin' ? { id: 'admin_console', icon: '🛠️', label: 'Consola Admin', href: 'admin_console.html' } : null,
+                ].filter(Boolean)
             }
         ];
 
@@ -685,6 +686,133 @@ const PlanIA = {
     // Called by modules on save error
     notifySaveError() {
         this.updateSaveIndicator('error');
+    },
+
+    // Build a Markdown context summary from the selected project's DB data
+    // Used by Moltbot and all AI-generation modules for context-aware responses
+    getProjectContextMD() {
+        const p = this.getCurrentProject();
+        if (!p) return '';
+
+        const sections = [];
+        sections.push(`# Proyecto: ${p.a1_nombre_negocio || 'Sin nombre'}`);
+        sections.push(`**Emprendedor:** ${p.a2_nombre_emprendedor || 'N/A'}`);
+        sections.push(`**Estatus:** ${p.estatus_proyecto || 'borrador'}`);
+
+        // Resumen ejecutivo
+        const resumen = [];
+        if (p.b1_descripcion_negocio) resumen.push(`- **Descripción:** ${p.b1_descripcion_negocio}`);
+        if (p.b2_problema_oportunidad) resumen.push(`- **Problema/Oportunidad:** ${p.b2_problema_oportunidad}`);
+        if (p.b3_propuesta_valor) resumen.push(`- **Propuesta de Valor:** ${p.b3_propuesta_valor}`);
+        if (p.b4_cliente_objetivo_resumen) resumen.push(`- **Cliente Objetivo:** ${p.b4_cliente_objetivo_resumen}`);
+        if (p.b5_monto_solicitado) resumen.push(`- **Monto Solicitado:** $${Number(p.b5_monto_solicitado).toLocaleString('es-MX')}`);
+        if (resumen.length > 0) {
+            sections.push('\n## Resumen Ejecutivo');
+            sections.push(resumen.join('\n'));
+        }
+
+        // Perfil emprendedor
+        const perfil = [];
+        if (p.c1_experiencia_previa) perfil.push(`- **Experiencia:** ${p.c1_experiencia_previa}`);
+        if (p.c2_motivacion) perfil.push(`- **Motivación:** ${p.c2_motivacion}`);
+        if (p.c3_disponibilidad_tiempo) perfil.push(`- **Tiempo disponible:** ${p.c3_disponibilidad_tiempo}`);
+        if (perfil.length > 0) {
+            sections.push('\n## Perfil del Emprendedor');
+            sections.push(perfil.join('\n'));
+        }
+
+        // Mercado
+        const mercado = [];
+        if (p.d1_segmento_cliente) mercado.push(`- **Segmento de Cliente:** ${p.d1_segmento_cliente}`);
+        if (p.d2_necesidades_gustos) mercado.push(`- **Necesidades/Gustos:** ${p.d2_necesidades_gustos}`);
+        if (p.d5_ventaja_competitiva) mercado.push(`- **Ventaja Competitiva:** ${p.d5_ventaja_competitiva}`);
+        if (p.d8_direccion_formateada) mercado.push(`- **Ubicación:** ${p.d8_direccion_formateada}`);
+        if (mercado.length > 0) {
+            sections.push('\n## Estudio de Mercado');
+            sections.push(mercado.join('\n'));
+        }
+
+        // Competidores (JSON)
+        try {
+            const comps = JSON.parse(p.d3_competidores_json || '[]');
+            if (Array.isArray(comps) && comps.length > 0) {
+                sections.push('\n### Competidores');
+                comps.forEach(c => {
+                    sections.push(`- ${c.nombre || c.name || JSON.stringify(c)}`);
+                });
+            }
+        } catch (e) { }
+
+        // Producción / Operación
+        const produccion = [];
+        if (p.e1_proceso_produccion) produccion.push(`- **Proceso:** ${p.e1_proceso_produccion}`);
+        if (p.e2_capacidad_produccion) produccion.push(`- **Capacidad:** ${p.e2_capacidad_produccion}`);
+        if (produccion.length > 0) {
+            sections.push('\n## Producción y Operación');
+            sections.push(produccion.join('\n'));
+        }
+
+        // Productos (JSON)
+        try {
+            const prods = JSON.parse(p.e3_productos_bom_json || '[]');
+            if (Array.isArray(prods) && prods.length > 0) {
+                sections.push('\n### Productos/Servicios');
+                prods.forEach(prod => {
+                    sections.push(`- **${prod.producto || prod.name || 'Producto'}** — Precio: $${prod.precio_venta || 'N/A'}`);
+                });
+            }
+        } catch (e) { }
+
+        // Marketing
+        const mkt = [];
+        if (p.f1_identidad_marca) mkt.push(`- **Marca:** ${p.f1_identidad_marca}`);
+        if (p.f2_estrategia_precios) mkt.push(`- **Estrategia de Precios:** ${p.f2_estrategia_precios}`);
+        if (p.f4_estrategia_promocion) mkt.push(`- **Promoción:** ${p.f4_estrategia_promocion}`);
+        try {
+            const canales = JSON.parse(p.f3_canales_venta || '[]');
+            if (Array.isArray(canales) && canales.length > 0) {
+                mkt.push(`- **Canales de Venta:** ${canales.join(', ')}`);
+            } else if (typeof p.f3_canales_venta === 'string' && p.f3_canales_venta) {
+                mkt.push(`- **Canales de Venta:** ${p.f3_canales_venta}`);
+            }
+        } catch (e) {
+            if (p.f3_canales_venta) mkt.push(`- **Canales de Venta:** ${p.f3_canales_venta}`);
+        }
+        if (mkt.length > 0) {
+            sections.push('\n## Marketing y Ventas');
+            sections.push(mkt.join('\n'));
+        }
+
+        // Finanzas
+        const fin = [];
+        if (p.g5_costos_fijos_mensuales) fin.push(`- **Costos Fijos Mensuales:** $${Number(p.g5_costos_fijos_mensuales).toLocaleString('es-MX')}`);
+        if (p.g8_inversion_inicial) fin.push(`- **Inversión Inicial:** $${Number(p.g8_inversion_inicial).toLocaleString('es-MX')}`);
+        if (p.g10_rentabilidad_roi) fin.push(`- **ROI:** ${p.g10_rentabilidad_roi}`);
+        if (fin.length > 0) {
+            sections.push('\n## Plan Financiero');
+            sections.push(fin.join('\n'));
+        }
+
+        // Impacto
+        const impacto = [];
+        if (p.h1_impacto_social) impacto.push(`- **Impacto Social:** ${p.h1_impacto_social}`);
+        if (p.h2_impacto_economico) impacto.push(`- **Impacto Económico:** ${p.h2_impacto_economico}`);
+        if (impacto.length > 0) {
+            sections.push('\n## Impacto');
+            sections.push(impacto.join('\n'));
+        }
+
+        return sections.join('\n');
+    },
+
+    // Guard: require a project to be selected before performing an action
+    requireProject(actionLabel) {
+        const project = this.getCurrentProject();
+        if (!project) {
+            alert(`⚠️ Selecciona un proyecto antes de ${actionLabel || 'continuar'}.`);
+            return false;
+        }
+        return true;
     },
 
     // Utility: Format currency

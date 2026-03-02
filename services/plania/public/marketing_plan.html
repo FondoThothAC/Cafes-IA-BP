@@ -36,6 +36,8 @@ DESCRIPCIÓN: Plan de marketing completo: estrategia de precio, canales,
             border-radius: var(--border-radius);
             padding: 1.5rem;
             border: 1px solid var(--surface-light);
+            border-top: 4px solid var(--market);
+            /* Blue Theme */
         }
 
         .marketing-card h3 {
@@ -174,16 +176,39 @@ DESCRIPCIÓN: Plan de marketing completo: estrategia de precio, canales,
     <div id="plania-navbar"></div>
 
     <div class="page-container">
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 1.5rem 0;">
-            <h1>📣 Plan de Marketing</h1>
-            <button class="btn btn-ai" onclick="generateMarketingAI()"
-                style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
-                🤖 Generar Estrategia (IA)
-            </button>
+        <div class="actions-bar"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 1.5rem 0.5rem;">
+            <div>
+                <h1 style="color: var(--market);">📣 Plan de Marketing</h1>
+                <p class="text-muted">Estrategia para llegar a tus clientes y mantenerlos.</p>
+            </div>
+
+            <div class="nav-actions" style="display: flex; gap: 1rem; align-items: center;">
+                <a href="customer_research.html" class="btn"
+                    style="text-decoration: none; color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 4px; transition: color 0.2s;">
+                    ⬅ <span style="border-bottom: 1px solid transparent;">Atrás</span>
+                </a>
+                <a href="growth_engine.html" class="btn"
+                    style="text-decoration: none; color: var(--market); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 4px; transition: transform 0.2s;">
+                    <span style="border-bottom: 1px solid currentColor;">Siguiente: Motor Crecimiento</span> ➡
+                </a>
+            </div>
+
+            <div class="flex gap-1" style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-ai" onclick="generateMarketingAI()"
+                    style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    🤖 Generar (IA)
+                </button>
+                <button class="btn btn-secondary" onclick="resetMarketing()"
+                    style="background: var(--surface); border: 1px solid var(--surface-light); color: var(--text); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+                    🔄 Reiniciar
+                </button>
+                <button class="btn btn-primary" onclick="saveData()"
+                    style="background: var(--market); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    💾 Guardar
+                </button>
+            </div>
         </div>
-        <p style="padding: 0 1.5rem; color: var(--text-muted);">
-            Estrategia para llegar a tus clientes y convertirlos en compradores. Basado en Harvard/MIT.
-        </p>
 
         <div class="marketing-grid">
             <!-- Estrategia de Precio -->
@@ -640,6 +665,18 @@ DESCRIPCIÓN: Plan de marketing completo: estrategia de precio, canales,
             };
 
             window.Moltbot.send(prompt);
+        }
+        function resetMarketing() {
+            if (!confirm('¿Reiniciar el Plan de Marketing? Se borrarán los datos no guardados.')) return;
+            // Clear inputs
+            document.querySelectorAll('input, select, textarea').forEach(el => el.value = '');
+            // Clear selections
+            selectedChannels = [];
+            selectedPromos = [];
+            updateChannelVisuals();
+            updatePromoVisuals();
+            // Recalculate defaults
+            calculateMetrics();
         }
     </script>
 </body>

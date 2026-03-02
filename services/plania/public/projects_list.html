@@ -390,6 +390,8 @@ DESCRIPCIÓN: Lista de proyectos con acciones CRUD
                     <span>🔍</span>
                     <input type="text" id="searchInput" placeholder="Buscar proyectos...">
                 </div>
+                <button onclick="runPopulate()" class="btn" style="background: var(--warning); color: black;">⚡ Poblar
+                    Demos</button>
                 <a href="wizard.html" class="btn btn-primary">+ Nuevo Proyecto</a>
             </div>
         </header>
@@ -464,12 +466,13 @@ DESCRIPCIÓN: Lista de proyectos con acciones CRUD
 
         async function loadProjects() {
             const uuid = localStorage.getItem('uuid_usuario') || 'demo-user';
+            const role = localStorage.getItem('user_role') || 'emprendedor';
 
             try {
                 const res = await fetch(PlanIA.API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'list', uuid_usuario: uuid })
+                    body: JSON.stringify({ action: 'list', uuid_usuario: uuid, role: role })
                 });
                 const data = await res.json();
                 projects = data.projects || [];
@@ -636,6 +639,17 @@ DESCRIPCIÓN: Lista de proyectos con acciones CRUD
             // Set current project and go to export page
             localStorage.setItem('plania_current_project', id);
             window.location.href = `export_pdf.html?id=${id}`;
+        }
+
+        async function runPopulate() {
+            try {
+                const res = await fetch('populate_demos.php');
+                const text = await res.text();
+                alert(text);
+                loadProjects();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
         }
     </script>
 </body>

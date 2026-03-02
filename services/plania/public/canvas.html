@@ -32,43 +32,49 @@
         .canvas-block.partners {
             grid-column: 1;
             grid-row: 1 / 3;
-            background: linear-gradient(180deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
-            border-color: rgba(139, 92, 246, 0.3);
+            /* Operation - Orange */
+            background: linear-gradient(180deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05));
+            border-color: var(--operation);
         }
 
         .canvas-block.activities {
             grid-column: 2;
             grid-row: 1;
-            background: linear-gradient(180deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05));
-            border-color: rgba(236, 72, 153, 0.3);
+            /* Operation - Orange */
+            background: linear-gradient(180deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05));
+            border-color: var(--operation);
         }
 
         .canvas-block.resources {
             grid-column: 2;
             grid-row: 2;
-            background: linear-gradient(180deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05));
-            border-color: rgba(236, 72, 153, 0.3);
+            /* Operation - Orange */
+            background: linear-gradient(180deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05));
+            border-color: var(--operation);
         }
 
         .canvas-block.value {
             grid-column: 3;
             grid-row: 1 / 3;
-            background: linear-gradient(180deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
-            border-color: rgba(16, 185, 129, 0.3);
+            /* Strategy - Purple */
+            background: linear-gradient(180deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
+            border-color: var(--strategy);
         }
 
         .canvas-block.relationships {
             grid-column: 4;
             grid-row: 1;
-            background: linear-gradient(180deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05));
-            border-color: rgba(6, 182, 212, 0.3);
+            /* Market - Blue */
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+            border-color: var(--market);
         }
 
         .canvas-block.channels {
             grid-column: 4;
             grid-row: 2;
-            background: linear-gradient(180deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05));
-            border-color: rgba(6, 182, 212, 0.3);
+            /* Market - Blue */
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+            border-color: var(--market);
         }
 
         .canvas-block.segments {
@@ -81,15 +87,17 @@
         .canvas-block.costs {
             grid-column: 1 / 3;
             grid-row: 3;
-            background: linear-gradient(180deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
-            border-color: rgba(245, 158, 11, 0.3);
+            /* Finance - Green */
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+            border-color: var(--finance);
         }
 
         .canvas-block.revenue {
             grid-column: 3 / 6;
             grid-row: 3;
+            /* Finance - Green */
             background: linear-gradient(180deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
-            border-color: rgba(16, 185, 129, 0.3);
+            border-color: var(--finance);
         }
 
         .block-header {
@@ -209,6 +217,22 @@
                 <h1 class="project-name" id="project-name">🎯 Business Model Canvas</h1>
                 <p class="text-muted">Define los 9 bloques de tu modelo de negocio</p>
             </div>
+            <div>
+                <h1 class="project-name" id="project-name">🎯 Business Model Canvas</h1>
+                <p class="text-muted">Define los 9 bloques de tu modelo de negocio</p>
+            </div>
+
+            <div class="nav-actions" style="display: flex; gap: 1rem; align-items: center;">
+                <a href="delta_dashboard.html" class="btn"
+                    style="text-decoration: none; color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 4px; transition: color 0.2s;">
+                    ⬅ <span style="border-bottom: 1px solid transparent;">Atrás</span>
+                </a>
+                <a href="foda.html" class="btn"
+                    style="text-decoration: none; color: var(--strategy); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 4px; transition: transform 0.2s;">
+                    <span style="border-bottom: 1px solid currentColor;">Siguiente: FODA</span> ➡
+                </a>
+            </div>
+
             <div class="flex gap-1">
                 <button class="btn btn-ai" onclick="generateCanvasAI()"
                     style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; border: none; font-weight: 600;">🤖
@@ -459,9 +483,10 @@
 
         // AI Integration
         function generateCanvasAI() {
+            if (!PlanIA.requireProject('generar Canvas')) return;
+
             const project = PlanIA.getCurrentProject();
-            const name = project ? project.a1_nombre_negocio : 'Negocio';
-            const desc = project ? project.a2_descripcion_negocio : '';
+            const contextMD = PlanIA.getProjectContextMD();
 
             if (!window.Moltbot) { alert("BoB IA no está disponible."); return; }
 
@@ -471,11 +496,14 @@
 
             window.Moltbot.toggle();
             const prompt = `Actúa como Consultor de Negocios Experto.
-            Negocio: ${name}. ${desc}.
+            
+            DATOS COMPLETOS DEL PROYECTO:
+            ${contextMD}
 
-            Genera un BUSINESS MODEL CANVAS completo.
+            Genera un BUSINESS MODEL CANVAS completo y ESPECÍFICO para este negocio.
             Dame 3-5 puntos clave para CADA uno de los 9 bloques.
-            SÉ ESPECÍFICO y práctico.
+            SÉ MUY ESPECÍFICO usando los datos reales del proyecto (nombre, descripción, propuesta de valor, segmento de clientes, canales, costos, etc.).
+            NO inventes datos genéricos, BASA todo en la información del proyecto.
             
             Formato JSON EXACTO:
             {
