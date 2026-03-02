@@ -1,6 +1,12 @@
-# 🤖 AI-Toolkit v1.2
+# 🤖 AI-Toolkit v1.3
 
 Sistema de IA local containerizado. 100% aislado, portable entre Mac y Windows.
+
+## 🌟 Novedades en v1.3
+- 🔒 **Candados Protectores (Wizard)**: Interfaz para bloquear/desbloquear campos para que la IA no sobrescriba tus datos manuales.
+- 🦅 **OpenClaw (Agentes locales)**: Integración base del gateway para futuras capacidades de navegación y skills sin depender de APIs en línea.
+- ✨ **Mejoras UX/UI**: Estilos renovados (`plania-core.css`, `moltbot.css`) en FODA, Canvas, Operaciones y todos los módulos, con diseño más unificado y moderno.
+- 🐳 **Bugs y Estabilidad**: Importación de JSON mapeada a inputs correctos y ajustes en cómo API Gateway transporta la info a RAG Engine de Python.
 
 ## 🚀 Instalación Rápida
 
